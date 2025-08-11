@@ -1,0 +1,351 @@
+.pedidos-container {
+  padding: 15px;
+  overflow-x: hidden; /* Previene desbordamiento horizontal */
+}
+
+.search-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.search-input {
+  flex-grow: 1;
+  max-width: 400px;
+  padding: 6px 10px; /* Reducido */
+  border: 1px solid #ddd;
+  border-radius: 3px; /* Reducido */
+  font-size: 0.85rem; /* Reducido */
+}
+
+.create-button {
+  background-color: #3498db; /* Color más suave */
+  color: white;
+  border: none;
+  border-radius: 3px; /* Reducido */
+  padding: 6px 12px; /* Reducido */
+  font-size: 0.85rem; /* Reducido */
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.create-button:hover {
+  background-color: #2980b9; /* Color más oscuro */
+  transform: translateY(-1px);
+}
+
+.table-container {
+  margin-top: 1.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.15rem 0.35rem rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.pedidos-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Evita que las columnas se deslicen */
+}
+
+.pedidos-table th {
+  background-color: #f8f9fa; /* Color más claro */
+  color: #7f8c8d;
+  padding: 8px 10px; /* Reducido */
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem; /* Reducido */
+}
+
+.pedidos-table td {
+  padding: 8px 10px; /* Reducido */
+  border-top: 1px solid #eee;
+  color: #34495e;
+  font-size: 0.85rem; /* Reducido */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pedidos-table tr:hover {
+  background-color: #f8f9fa; /* Color de hover más claro */
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 0 0.25rem;
+  font-size: 0.85rem; /* Reducido */
+  padding: 0.5rem;
+  border-radius: 3px; /* Reducido */
+  color: #3498db; /* Color más suave */
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.icon-button:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+  color: #2980b9; /* Color más oscuro */
+}
+
+.icon-button.delete {
+  color: #e74c3c;
+}
+
+.icon-button.delete:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.status-toggle {
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.status-toggle.active {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: #38a169;
+}
+
+.status-toggle.inactive {
+  background-color: rgba(229, 62, 62, 0.2);
+  color: #e53e3e;
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.5rem;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+
+.close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+/* Formularios */
+.form-body {
+  padding: 15px; /* Reducido */
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 6px 10px; /* Reducido */
+  border: 1px solid #ddd;
+  border-radius: 3px; /* Reducido */
+  font-size: 0.85rem; /* Reducido */
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+  font-weight: normal;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-button {
+  background-color: #e74c3c; /* Color más suave */
+  color: white;
+}
+
+.submit-button {
+  background-color: #3498db; /* Color más suave */
+  color: white;
+}
+
+.cancel-button,
+.submit-button {
+  padding: 6px 12px; /* Reducido */
+  border: none;
+  border-radius: 3px; /* Reducido */
+  font-size: 0.85rem; /* Reducido */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #c0392b; /* Color más oscuro */
+}
+
+.submit-button:hover {
+  background-color: #2980b9; /* Color más oscuro */
+}
+
+/* Detalles */
+.details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.details-info {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+}
+
+.detail-row.full-width {
+  display: block;
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #4a5568;
+  min-width: 150px;
+}
+
+.detail-value {
+  color: #2d3748;
+  flex: 1;
+}
+
+.details-text {
+  background: #edf2f7;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  white-space: pre-line;
+}
+
+.modal-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-container {
+    flex-direction: column;
+  }
+  
+  .create-button {
+    width: 100%;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .detail-label {
+    min-width: auto;
+  }
+  
+  .pedidos-table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .icon-button {
+    margin: 0.25rem 0;
+    display: flex;
+    width: 100%;
+  }
+}
+
+/* Estilos para el estado Anulado */
+.status-toggle.anulado {
+  background-color: #6c757d;
+  color: white;
+}
+
+.icon-button.anulado {
+  background-color: #6c757d;
+  color: white;
+  cursor: not-allowed;
+}
+
+.detail-value.anulado {
+  color: #6c757d;
+  font-weight: bold;
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

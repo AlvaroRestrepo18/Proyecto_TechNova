@@ -1,0 +1,24 @@
+.app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 250px; /* Same as sidebar width */
+  right: 0;
+  height: 30px;
+  background-color: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  padding: 20px;
+}
+
+.footer-content {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Adjust main content to accommodate footer */
+.main-content {
+  padding-bottom: 70px; /* Footer height + extra space */
+}

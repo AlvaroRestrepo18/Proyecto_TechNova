@@ -1,0 +1,154 @@
+.app-header {
+  background-color: #f7f7f7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 60px; /* Altura fija para consistencia */
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  margin-left: 80px; /* Espacio para la sidebar */
+}
+
+.app-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  margin-left: 100px;
+}
+
+.highlighted-brand {
+  color: white;
+  padding: 26.8px 25px;
+  background: linear-gradient(90deg, #1e3c72, #1861e0);
+  clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+  display: inline-block;
+}
+
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Reducido de 16px */
+}
+
+/* Botones de sesión compactos */
+.Hlogin-button {
+  background: linear-gradient(90deg, #1e3c72, #1861e0, #1e3c72);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-position 1.5s ease-in-out;
+  height: 32px;
+  margin-top: 0px;
+}
+
+.Hlogin-button:hover,
+.Hlogout-button:hover {
+  background-position: 100% 0%;
+}
+
+.Hlogout-button {
+  background: linear-gradient(90deg, #712e2e, #d73a3a, #773232);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-position 1.5s ease-in-out;
+  height: 32px;
+  margin-top: 0px;
+}
+
+/* Información de usuario compacta */
+.admin-info {
+  text-align: right;
+  margin-right: 10px; /* Reducido de 15px */
+}
+
+.admin-role {
+  font-size: 0.75rem; /* 12px */
+  color: #777;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.admin-name {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.admin-avatar {
+  width: 32px; /* Reducido de 40px */
+  height: 32px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem; /* Tamaño de texto reducido */
+}
+
+/* Menú desplegable ajustado */
+.dropdown-menu {
+  position: absolute;
+  top: 50px; /* Ajustado por la altura reducida del header */
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1000;
+  min-width: 160px;
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 8px 12px; /* Reducido */
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 0.8rem;
+}
+
+/* Asegurar que el header no se superponga con la sidebar */
+@media (min-width: 768px) {
+  
+  .header-left {
+    margin-left: 0; /* Eliminar margen cuando la sidebar está visible */
+  }
+}
