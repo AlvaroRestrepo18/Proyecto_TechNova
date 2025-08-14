@@ -1,7 +1,7 @@
 // src/roles/ModulePermissions.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./Roles.css";
+import "../roles.css";
 import { FiSettings, FiKey, FiUsers, FiShoppingCart, FiBox, FiTruck, FiTag, FiTool, FiClock, FiServer, FiDollarSign, FiShoppingBag, FiUser, FiPieChart } from "react-icons/fi";
 
 // Tu estructura de módulos

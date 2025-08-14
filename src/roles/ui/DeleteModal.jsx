@@ -1,7 +1,7 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faTrash, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
-import "./Roles.css";
+import "../roles.css";
 
 const DeleteConfirmationModal = ({ 
   isOpen, 

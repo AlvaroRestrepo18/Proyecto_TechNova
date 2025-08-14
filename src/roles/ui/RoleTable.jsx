@@ -6,7 +6,7 @@ import {
   faTrash,
   faPowerOff,
 } from "@fortawesome/free-solid-svg-icons";
-import "../app.css";
+import "../../App.css";
 
 const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
   const getEstadoClass = (estado) => (estado ? "active" : "inactive");

@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ModulePermissions from "./ModulePermissions";
 import { createRole, updateRole, getRoleById, assignPermissionsToRole } from "../api/roles";
-import "./Roles.css";
+import "../roles.css";
 
 const RoleFormModal = ({
   isOpen,
