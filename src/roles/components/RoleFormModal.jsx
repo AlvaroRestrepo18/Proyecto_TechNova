@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ModulePermissions from "./ModulePermissions";
-import { createRole, updateRole, getRoleById, assignPermissionsToRole } from "../api/roles";
+import { createRole, updateRole, getRoleById, assignPermissionsToRole } from "../services/roles";
 import "../roles.css";
 
 const RoleFormModal = ({

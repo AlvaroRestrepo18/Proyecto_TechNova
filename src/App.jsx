@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './header/header';
-import Sidebar from './sidebar/sidebar';
+import Sidebar from './shared/sidebar/sidebar';
 import Users from './usuarios/usuarios';
 import Productos from './Productos/productos';
 import Proveedores from './Proveedores/Proveedores';

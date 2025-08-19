@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
-import RoleFormModal from "./ui/RoleFormModal.jsx";
-import DeleteConfirmationModal from "./ui/DeleteModal.jsx";
-import RoleTable from "./ui/RoleTable.jsx";
+import RoleFormModal from "./components/RoleFormModal.jsx";
+import DeleteConfirmationModal from "./components/DeleteModal.jsx";
+import RoleTable from "./components/RoleTable.jsx";
 
 import "../App.jsx";
 import "./roles.css";
@@ -13,7 +13,7 @@ import {
   getRoles,
   deleteRole,
   changeRoleStatus,
-} from "./api/roles.js";
+} from "./services/roles.js";
 
 const Roles = () => {
   const [searchTerm, setSearchTerm] = useState("");
