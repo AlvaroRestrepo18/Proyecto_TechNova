@@ -1,43 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPlus,
-} from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import UserFormModal from "./components/UserFormModal.jsx";
 import DeleteConfirmationModal from "./components/DeleteModal.jsx.jsx";
 import UserTable from "./components/usertable.jsx";
 import "../app.css";
 import "./usuarios.css";
 
+// Importar servicios API
+import {
+  getUsuarios,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+  toggleUsuarioEstado,
+} from "./services/usuarios.js";
+
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState("create");
-  const [isViewMode, setIsViewMode] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
-
-  const [activeTab, setActiveTab] = useState("activos"); // activos | inactivos
-
-  const [userData, setUserData] = useState([
-    { id: "U001", name: "Juan Pérez", email: "juan@example.com", role: "Administrador", tipoDocumento: "DNI", documento: "12345678", direccion: "Calle Falsa 123", estado: "activo", telefono: "+51987654321" },
-    { id: "U002", name: "María García", email: "maria@example.com", role: "Técnico", tipoDocumento: "Pasaporte", documento: "AB123456", direccion: "Avenida Siempreviva 742", estado: "activo", telefono: "+51987654322" },
-    { id: "U003", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U004", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U005", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U006", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U007", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U008", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U009", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U010", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-    { id: "U011", name: "Carlos López", email: "carlos@example.com", role: "Usuario", tipoDocumento: "DNI", documento: "87654321", direccion: "Boulevard Los Olivos 456", estado: "inactivo", telefono: "+51987654323" },
-  ]);
-
+  const [activeTab, setActiveTab] = useState("activos");
+  const [userData, setUserData] = useState([]);
   const [formData, setFormData] = useState({
     nombre: "",
     email: "",
@@ -47,7 +36,23 @@ const Users = () => {
     direccion: "",
     rol: "usuario",
   });
+  const [loading, setLoading] = useState(false); // 🔹 Loading global
 
+  // 🔹 Obtener usuarios del backend
+  const fetchUsuarios = async () => {
+    try {
+      const usuarios = await getUsuarios();
+      setUserData(usuarios);
+    } catch (error) {
+      console.error("Error cargando usuarios:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsuarios();
+  }, []);
+
+  // 🔹 Filtrar y paginar
   const filteredUsers = userData.filter(
     (u) =>
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,6 +70,7 @@ const Users = () => {
     currentPage * itemsPerPage
   );
 
+  // 🔹 Abrir modales
   const openCreateForm = () => {
     setFormMode("create");
     setIsFormOpen(true);
@@ -99,7 +105,6 @@ const Users = () => {
   const closeForm = () => {
     setIsFormOpen(false);
     setCurrentUserId(null);
-    setIsViewMode(false);
   };
 
   const openDeleteModal = (userId) => {
@@ -110,9 +115,14 @@ const Users = () => {
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (userToDelete) {
-      setUserData(userData.filter((u) => u.id !== userToDelete.id));
+      try {
+        await deleteUsuario(userToDelete.id);
+        setUserData(userData.filter((u) => u.id !== userToDelete.id));
+      } catch (error) {
+        console.error("Error eliminando usuario:", error);
+      }
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
     }
@@ -123,7 +133,6 @@ const Users = () => {
     if (u) {
       setFormMode("view");
       setIsFormOpen(true);
-      setIsViewMode(true);
       setFormData({
         nombre: u.name,
         email: u.email,
@@ -136,51 +145,47 @@ const Users = () => {
     }
   };
 
-  const toggleUserEstado = (id) => {
-    setUserData(
-      userData.map((u) =>
-        u.id === id
-          ? { ...u, estado: u.estado === "activo" ? "inactivo" : "activo" }
-          : u
-      )
-    );
-  };
+  // Cambiar estado (activar/inactivar)
+  const toggleUserEstado = async (id, estadoActual) => {
+    try {
+      await toggleUsuarioEstado(id, estadoActual); // usa el servicio ya hecho
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (formMode === "create") {
-      const newId = "U" + (userData.length + 1).toString().padStart(3, "0");
-      const newUser = {
-        id: newId,
-        name: formData.nombre,
-        email: formData.email,
-        role: formData.rol.charAt(0).toUpperCase() + formData.rol.slice(1),
-        tipoDocumento: formData.tipoDocumento,
-        documento: formData.documento,
-        direccion: formData.direccion,
-        telefono: formData.telefono,
-        estado: "activo",
-      };
-      setUserData([...userData, newUser]);
-    } else {
+      // Actualizar estado en frontend
       setUserData(
         userData.map((u) =>
-          u.id === currentUserId
+          u.id === id
             ? {
                 ...u,
-                name: formData.nombre,
-                email: formData.email,
-                role: formData.rol.charAt(0).toUpperCase() + formData.rol.slice(1),
-                tipoDocumento: formData.tipoDocumento,
-                documento: formData.documento,
-                direccion: formData.direccion,
-                telefono: formData.telefono,
+                estado: estadoActual === "activo" ? "inactivo" : "activo",
               }
             : u
         )
       );
+    } catch (error) {
+      console.error(`Error cambiando estado del usuario ${id}:`, error);
     }
-    closeForm();
+  };
+
+  // 🔹 Crear o Editar usuario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (formMode === "create") {
+        const newUser = await createUsuario(formData);
+        setUserData([...userData, newUser]); // 🔹 actualizar tabla en tiempo real
+      } else {
+        const updatedUser = await updateUsuario(currentUserId, formData);
+        setUserData(
+          userData.map((u) => (u.id === currentUserId ? updatedUser : u))
+        );
+      }
+      closeForm();
+    } catch (error) {
+      console.error("Error guardando usuario:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePageChange = (page) => {
@@ -203,7 +208,6 @@ const Users = () => {
           }}
           className="search-input"
         />
-
         <button className="create-button" onClick={openCreateForm}>
           <FontAwesomeIcon icon={faPlus} /> Crear
         </button>
@@ -211,7 +215,9 @@ const Users = () => {
 
       <div className="tabs">
         <button
-          className={`tab-button ${activeTab === "activos" ? "active-tab" : ""}`}
+          className={`tab-button ${
+            activeTab === "activos" ? "active-tab" : ""
+          }`}
           onClick={() => {
             setActiveTab("activos");
             setCurrentPage(1);
@@ -220,7 +226,9 @@ const Users = () => {
           Usuarios Activos
         </button>
         <button
-          className={`tab-button ${activeTab === "inactivos" ? "active-tab" : ""}`}
+          className={`tab-button ${
+            activeTab === "inactivos" ? "active-tab" : ""
+          }`}
           onClick={() => {
             setActiveTab("inactivos");
             setCurrentPage(1);
@@ -235,13 +243,18 @@ const Users = () => {
         onView={openDetailsModal}
         onEdit={openEditForm}
         onDelete={openDeleteModal}
-        onToggleEstado={toggleUserEstado}
-        estadoActual={activeTab}
+        onToggleEstado={(id) => {
+          const u = userData.find((user) => user.id === id);
+          toggleUserEstado(id, u.estado);
+        }}
       />
 
       {totalPages > 1 && (
         <div className="pagination-controls">
-          <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
             &lt;
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
@@ -253,7 +266,10 @@ const Users = () => {
               {i + 1}
             </button>
           ))}
-          <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
             &gt;
           </button>
         </div>
@@ -263,9 +279,12 @@ const Users = () => {
         isOpen={isFormOpen}
         onClose={closeForm}
         formData={formData}
-        onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, [e.target.name]: e.target.value })
+        }
         onSubmit={handleSubmit}
         mode={formMode}
+        loading={loading} // 🔹 prop loading
       />
 
       <DeleteConfirmationModal
