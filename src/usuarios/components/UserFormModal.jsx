@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import "../app.css"; // Usamos app.css centralizado
+import "../../app.css"; // Usamos app.css centralizado
 
 const UserFormModal = ({
   isOpen,

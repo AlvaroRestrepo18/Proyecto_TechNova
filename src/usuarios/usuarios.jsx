@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
-import UserFormModal from "./UserFormModal";
-import DeleteConfirmationModal from "./DeleteModal.jsx";
-import UserTable from "./usertable.jsx";
+import UserFormModal from "./components/UserFormModal.jsx";
+import DeleteConfirmationModal from "./components/DeleteModal.jsx.jsx";
+import UserTable from "./components/usertable.jsx";
 import "../app.css";
 import "./usuarios.css";
 

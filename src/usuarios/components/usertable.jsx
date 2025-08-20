@@ -1,8 +1,8 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faPen, faTrash, faPowerOff } from "@fortawesome/free-solid-svg-icons";
-import "../app.css";
-import './usuarios.css'
+import "../../app.css";
+import '../usuarios.css'
 
 const UserTable = ({
   users,
