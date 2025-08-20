@@ -82,6 +82,7 @@ const Users = () => {
       documento: "",
       direccion: "",
       rol: "usuario",
+      rolId: null, // opcional
     });
   };
 
@@ -99,6 +100,7 @@ const Users = () => {
       documento: u.documento,
       direccion: u.direccion,
       rol: u.role.toLowerCase(),
+      rolId: u.rolId, // necesario para enviar al backend
     });
   };
 
@@ -141,6 +143,7 @@ const Users = () => {
         documento: u.documento,
         direccion: u.direccion,
         rol: u.role.toLowerCase(),
+        rolId: u.rolId,
       });
     }
   };
