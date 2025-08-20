@@ -19,6 +19,7 @@ import Login from './acceso/login/login';
 import ClientesFidelizacion from './Clientes/ClientesFidelizacion';
 import ForgotPassword from './acceso/forgot/forgot';
 import ResetPassword from './acceso/reset/resetpassword';
+import ModalAlerta from './shared/modals/ModalAlerta';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 library.add(fas);
@@ -54,6 +55,8 @@ function App() {
         {/* Rutas con layout */}
         <Route path="*" element={
           <AppLayout>
+            <ModalAlerta />
+            {/* Aquí se definen las rutas principales de la aplicación */}
             <Routes>
               <Route path="/usuarios" element={<Users />} />
               <Route path="/Equipos" element={<Equipos />} />

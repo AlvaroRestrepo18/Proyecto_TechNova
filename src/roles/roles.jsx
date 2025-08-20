@@ -106,17 +106,27 @@ const Roles = () => {
   };
 
   const toggleRolEstado = async (id, currentEstado) => {
-    try {
-      await changeRoleStatus(id, !currentEstado);
-      await fetchRoles();
-    } catch (err) {
-      alert("Error al cambiar estado del rol.");
+  try {
+    // ⚠️ Evitamos desactivar el rol administrador (id === 1)
+    if (id === 1 && currentEstado === true) {
+      window.mostrarAlerta("El rol Administrador no puede ser inactivado.");
+      return;
     }
-  };
 
+    await changeRoleStatus(id, !currentEstado);
+    await fetchRoles();
+  } catch (err) {
+    window.mostrarAlerta("Error al cambiar estado del rol.");
+  }
+};
+
+  
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
+
+  
+
 
   if (loading) return <p>Cargando roles...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
