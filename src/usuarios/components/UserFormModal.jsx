@@ -8,17 +8,16 @@ const UserFormModal = ({
   isOpen,
   onClose,
   formData,
-  onChange,
-  onSubmit,
+  setFormData,
   mode = "create",
 }) => {
   const [errors, setErrors] = useState({});
   const [roles, setRoles] = useState([]);
-  const [loadingRoles, setLoadingRoles] = useState(false); // 🔹 loading roles
-  const [loadingSubmit, setLoadingSubmit] = useState(false); // 🔹 loading submit
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const isViewMode = mode === "view";
 
-  // 🔹 Traer roles desde la API
+  // Cargar roles
   useEffect(() => {
     if (isOpen) {
       setLoadingRoles(true);
@@ -26,21 +25,13 @@ const UserFormModal = ({
         .get(
           "https://cyber360-api.onrender.com/api/Roles/Dropdown?soloActivos=true"
         )
-        .then((res) => {
-          setRoles(res.data);
-        })
-        .catch((err) => {
-          console.error("Error al cargar roles:", err);
-        })
-        .finally(() => {
-          setLoadingRoles(false);
-        });
+        .then((res) => setRoles(res.data))
+        .catch((err) => console.error("Error al cargar roles:", err))
+        .finally(() => setLoadingRoles(false));
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  // 🔹 Validaciones
+  // Validaciones
   const validate = () => {
     const newErrors = {};
     if (!formData.tipoDocumento) newErrors.tipoDocumento = "Requerido";
@@ -65,39 +56,48 @@ const UserFormModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔹 Función para crear usuario
-  const createUsuario = async (payload) => {
-    return axios.post("https://cyber360-api.onrender.com/usuarios", payload);
-  };
+  // Funciones API
+  const createUsuario = async (payload) =>
+    axios.post("https://cyber360-api.onrender.com/usuarios", payload);
 
-  // 🔹 Enviar datos
+  const updateUsuario = async (id, payload) =>
+    axios.put(`https://cyber360-api.onrender.com/usuarios/${id}`, payload);
+
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      setLoadingSubmit(true); // 🔹 comenzamos el loading
-      try {
-        const payload = {
-          TipoDoc: formData.tipoDocumento,
-          Documento: formData.documento,
-          Nombre: formData.nombre,
-          Celular: formData.telefono,
-          Email: formData.email,
-          Direccion: formData.direccion,
-          FkRol: formData.rol,
-          Contrasena: formData.contrasena || "123456",
-        };
+    if (!validate()) return;
 
+    setLoadingSubmit(true);
+    const payload = {
+      TipoDoc: formData.tipoDocumento,
+      Documento: formData.documento,
+      Nombre: formData.nombre,
+      Celular: formData.telefono,
+      Email: formData.email,
+      Direccion: formData.direccion,
+      FkRol: formData.rol,
+      Contrasena: formData.contrasena || "123456",
+    };
+
+    try {
+      if (mode === "edit") {
+        await updateUsuario(formData.id, payload);
+        alert("✅ Usuario actualizado con éxito");
+      } else {
         await createUsuario(payload);
         alert("✅ Usuario creado con éxito");
-        onClose();
-      } catch (error) {
-        console.error("Error guardando usuario: ", error);
-        alert("❌ Hubo un error al guardar el usuario");
-      } finally {
-        setLoadingSubmit(false); // 🔹 terminamos el loading
       }
+      onClose();
+    } catch (err) {
+      console.error("Error guardando usuario:", err);
+      alert("❌ Hubo un error al guardar el usuario");
+    } finally {
+      setLoadingSubmit(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -116,7 +116,7 @@ const UserFormModal = ({
         </div>
 
         <form className="form-body" onSubmit={handleSubmit}>
-          {/* 🔹 Tipo Documento + Documento */}
+          {/* Tipo Documento + Documento */}
           <div className="form-row">
             <div className="form-group inline-group">
               <label>
@@ -125,16 +125,20 @@ const UserFormModal = ({
               <select
                 name="tipoDocumento"
                 value={formData.tipoDocumento}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, tipoDocumento: e.target.value })
+                }
                 disabled={isViewMode || loadingRoles}
               >
                 <option value="">
                   {loadingRoles ? "Cargando..." : "Seleccione..."}
                 </option>
-                <option value="DNI">DNI</option>
+                <option value="CC">C.C.</option>
+                <option value="TI">T.I.</option>
+                <option value="CE">C.E.</option>
+                <option value="RUC">R.U.C.</option>
+                <option value="DNI">D.N.I.</option>
                 <option value="Pasaporte">Pasaporte</option>
-                <option value="Cédula">Cédula</option>
-                <option value="RUC">RUC</option>
               </select>
               {errors.tipoDocumento && (
                 <small className="error">{errors.tipoDocumento}</small>
@@ -150,7 +154,9 @@ const UserFormModal = ({
                 type="text"
                 name="documento"
                 value={formData.documento}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, documento: e.target.value })
+                }
                 placeholder="12345678"
                 disabled={isViewMode}
               />
@@ -160,7 +166,7 @@ const UserFormModal = ({
             </div>
           </div>
 
-          {/* 🔹 Nombre + Teléfono */}
+          {/* Nombre + Teléfono */}
           <div className="form-row">
             <div className="form-group inline-group">
               <label>
@@ -170,7 +176,9 @@ const UserFormModal = ({
                 type="text"
                 name="nombre"
                 value={formData.nombre}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, nombre: e.target.value })
+                }
                 placeholder="Nombre del usuario"
                 disabled={isViewMode}
               />
@@ -187,7 +195,9 @@ const UserFormModal = ({
                 type="tel"
                 name="telefono"
                 value={formData.telefono}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, telefono: e.target.value })
+                }
                 placeholder="+1234567890"
                 disabled={isViewMode}
               />
@@ -197,7 +207,7 @@ const UserFormModal = ({
             </div>
           </div>
 
-          {/* 🔹 Email + Dirección */}
+          {/* Email + Dirección */}
           <div className="form-row">
             <div className="form-group inline-group">
               <label>
@@ -207,7 +217,9 @@ const UserFormModal = ({
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="usuario@example.com"
                 disabled={isViewMode}
               />
@@ -222,7 +234,9 @@ const UserFormModal = ({
                 type="text"
                 name="direccion"
                 value={formData.direccion}
-                onChange={onChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, direccion: e.target.value })
+                }
                 placeholder="Dirección completa"
                 disabled={isViewMode}
               />
@@ -232,7 +246,7 @@ const UserFormModal = ({
             </div>
           </div>
 
-          {/* 🔹 Contraseña (solo create) */}
+          {/* Contraseña solo en create */}
           {mode === "create" && (
             <div className="form-row">
               <div className="form-group inline-group">
@@ -243,7 +257,9 @@ const UserFormModal = ({
                   type="password"
                   name="contrasena"
                   value={formData.contrasena}
-                  onChange={onChange}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contrasena: e.target.value })
+                  }
                   placeholder="********"
                   disabled={loadingSubmit}
                 />
@@ -254,32 +270,50 @@ const UserFormModal = ({
             </div>
           )}
 
-          {/* 🔹 Roles dinámicos */}
+          {/* Roles */}
           <div className="form-row">
             <div className="form-group inline-group">
               <label>
                 Rol: <span className="required-asterisk">*</span>
               </label>
-              <select
-                name="rol"
-                value={formData.rol}
-                onChange={onChange}
-                disabled={isViewMode || loadingRoles}
-              >
-                <option value="">
-                  {loadingRoles ? "Cargando roles..." : "Seleccione..."}
-                </option>
-                {roles.map((rol) => (
-                  <option key={rol.idRol} value={rol.idRol}>
-                    {rol.nombreRol}
+
+              {isViewMode ? (
+                // 🔹 Mostrar rol como input solo lectura
+                <input
+                  type="text"
+                  value={
+                    roles.find((r) => r.idRol === formData.rol)?.nombreRol ||
+                    formData.rol
+                  }
+                  readOnly
+                  disabled={isViewMode}
+                />
+              ) : (
+                // 🔹 Select normal para create / edit
+                <select
+                  name="rol"
+                  value={formData.rol}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rol: e.target.value })
+                  }
+                  disabled={loadingRoles}
+                >
+                  <option value="">
+                    {loadingRoles ? "Cargando roles..." : "Seleccione..."}
                   </option>
-                ))}
-              </select>
+                  {roles.map((rol) => (
+                    <option key={rol.idRol} value={rol.idRol}>
+                      {rol.nombreRol}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               {errors.rol && <small className="error">{errors.rol}</small>}
             </div>
           </div>
 
-          {/* 🔹 Botones */}
+          {/* Botones */}
           <div className="form-actions">
             <button
               type="button"

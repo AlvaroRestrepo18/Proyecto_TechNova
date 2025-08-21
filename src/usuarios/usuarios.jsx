@@ -78,7 +78,7 @@ const Users = () => {
       nombre: "",
       email: "",
       telefono: "",
-      tipoDocumento: "DNI",
+      tipoDocumento: "",
       documento: "",
       direccion: "",
       rol: "usuario",
@@ -93,6 +93,7 @@ const Users = () => {
     setCurrentUserId(userId);
     setIsFormOpen(true);
     setFormData({
+      id: u.id, // 🔹 agregar id
       nombre: u.name,
       email: u.email,
       telefono: u.telefono || "",
@@ -279,16 +280,13 @@ const Users = () => {
       )}
 
       <UserFormModal
-        isOpen={isFormOpen}
-        onClose={closeForm}
-        formData={formData}
-        onChange={(e) =>
-          setFormData({ ...formData, [e.target.name]: e.target.value })
-        }
-        onSubmit={handleSubmit}
-        mode={formMode}
-        loading={loading} // 🔹 prop loading
-      />
+  isOpen={isFormOpen}
+  onClose={closeForm}
+  formData={formData}
+  setFormData={setFormData} // 🔹 PASAMOS setFormData
+  mode={formMode}
+  loading={loading}
+/>
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
