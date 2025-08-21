@@ -10,7 +10,7 @@ import "../../App.css";
 
 const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
   const getEstadoClass = (estado) => (estado ? "active" : "inactive");
-  const getEstadoText = (estado) => (estado ? " Activo" : " Inactivo");
+  const getEstadoText = (estado) => (estado ? "Activo" : "Inactivo");
 
   return (
     <div className="table-container">
@@ -29,7 +29,7 @@ const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
             <tr key={rol.id}>
               <td>{rol.nombre}</td>
               <td>{rol.descripcion}</td>
-              {/* <td>{rol.permisos || "-"}</td> Si quieres mostrar permisos, ajusta aquí */}
+              {/* <td>{rol.permisos || "-"} </td> Si quieres mostrar permisos */}
               <td>
                 <button
                   className={`status-toggle ${getEstadoClass(rol.activo)}`}
@@ -44,7 +44,6 @@ const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
                 <button
                   className="icon-button"
                   title="Ver"
-                  // Todos pueden ver, no se deshabilita
                   onClick={() => onView(rol.id)}
                 >
                   <FontAwesomeIcon icon={faEye} />
@@ -53,7 +52,6 @@ const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
                 <button
                   className="icon-button"
                   title="Editar"
-                  // Solo se puede editar si está activo
                   disabled={!rol.activo}
                   onClick={() => onEdit(rol.id)}
                 >
@@ -63,7 +61,6 @@ const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
                 <button
                   className="icon-button"
                   title="Eliminar"
-                  // Solo se puede eliminar si está inactivo
                   disabled={rol.activo}
                   onClick={() => onDelete(rol.id)}
                 >
@@ -72,6 +69,15 @@ const RoleTable = ({ roles, onView, onEdit, onDelete, onToggleEstado }) => {
               </td>
             </tr>
           ))}
+
+          {/* Mensaje cuando no hay roles */}
+          {roles.length === 0 && (
+            <tr>
+              <td colSpan="4" style={{ textAlign: "center", padding: "1rem" }}>
+                No hay roles para mostrar.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

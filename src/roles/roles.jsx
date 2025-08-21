@@ -128,8 +128,8 @@ const Roles = () => {
   
 
 
-  if (loading) return <p>Cargando roles...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
+  // if (loading) return <p>Cargando roles...</p>;
+  // if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div className="container">

@@ -64,38 +64,51 @@ const UserFormModal = ({
     axios.put(`https://cyber360-api.onrender.com/usuarios/${id}`, payload);
 
   // Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+  // 🔹 Nuevo estado para errores de backend
+const [apiError, setApiError] = useState("");
 
-    setLoadingSubmit(true);
-    const payload = {
-      TipoDoc: formData.tipoDocumento,
-      Documento: formData.documento,
-      Nombre: formData.nombre,
-      Celular: formData.telefono,
-      Email: formData.email,
-      Direccion: formData.direccion,
-      FkRol: formData.rol,
-      Contrasena: formData.contrasena || "123456",
-    };
+// Submit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!validate()) return;
 
-    try {
-      if (mode === "edit") {
-        await updateUsuario(formData.id, payload);
-        alert("✅ Usuario actualizado con éxito");
-      } else {
-        await createUsuario(payload);
-        alert("✅ Usuario creado con éxito");
-      }
-      onClose();
-    } catch (err) {
-      console.error("Error guardando usuario:", err);
-      alert("❌ Hubo un error al guardar el usuario");
-    } finally {
-      setLoadingSubmit(false);
-    }
+  setLoadingSubmit(true);
+  setApiError(""); // limpiar error previo
+
+  const payload = {
+    TipoDoc: formData.tipoDocumento,
+    Documento: formData.documento,
+    Nombre: formData.nombre,
+    Celular: formData.telefono,
+    Email: formData.email,
+    Direccion: formData.direccion,
+    FkRol: formData.rol,
+    Contrasena: formData.contrasena || "123456",
   };
+
+  try {
+    if (mode === "edit") {
+      await updateUsuario(formData.id, payload);
+      alert("✅ Usuario actualizado con éxito");
+    } else {
+      await createUsuario(payload);
+      alert("✅ Usuario creado con éxito");
+    }
+    onClose();
+  } catch (err) {
+  console.error("Error guardando usuario:", err);
+
+  let mensaje = "Hubo un error inesperado al guardar el usuario.";
+  if (err.response && err.response.data) {
+    mensaje = err.response.data;
+  }
+
+  // 🔹 Usamos tu modal de alerta global
+  window.mostrarAlerta(mensaje);
+} finally {
+    setLoadingSubmit(false);
+  }
+};
 
   if (!isOpen) return null;
 
