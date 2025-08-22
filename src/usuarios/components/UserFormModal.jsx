@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import "../../app.css";
+import { parseErrorResponse } from "../../utils/parseErrorResponse.js"; // Asegúrate de tener este archivo para manejar errores
 
 const UserFormModal = ({
   isOpen,
@@ -10,6 +11,7 @@ const UserFormModal = ({
   formData,
   setFormData,
   mode = "create",
+  onSaved,
 }) => {
   const [errors, setErrors] = useState({});
   const [roles, setRoles] = useState([]);
@@ -28,6 +30,13 @@ const UserFormModal = ({
         .then((res) => setRoles(res.data))
         .catch((err) => console.error("Error al cargar roles:", err))
         .finally(() => setLoadingRoles(false));
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setErrors({});
+      setApiError("");
     }
   }, [isOpen]);
 
@@ -65,50 +74,60 @@ const UserFormModal = ({
 
   // Submit
   // 🔹 Nuevo estado para errores de backend
-const [apiError, setApiError] = useState("");
+  const [apiError, setApiError] = useState("");
 
-// Submit
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validate()) return;
+  // Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-  setLoadingSubmit(true);
-  setApiError(""); // limpiar error previo
+    setLoadingSubmit(true);
+    setApiError(""); // limpiar error previo
 
-  const payload = {
-    TipoDoc: formData.tipoDocumento,
-    Documento: formData.documento,
-    Nombre: formData.nombre,
-    Celular: formData.telefono,
-    Email: formData.email,
-    Direccion: formData.direccion,
-    FkRol: formData.rol,
-    Contrasena: formData.contrasena || "123456",
-  };
+    const payload = {
+      TipoDoc: formData.tipoDocumento,
+      Documento: formData.documento,
+      Nombre: formData.nombre,
+      Celular: formData.telefono,
+      Email: formData.email,
+      Direccion: formData.direccion,
+      FkRol: formData.rol,
+      Contrasena: formData.contrasena || "123456",
+    };
 
-  try {
-    if (mode === "edit") {
-      await updateUsuario(formData.id, payload);
-      alert("✅ Usuario actualizado con éxito");
-    } else {
-      await createUsuario(payload);
-      alert("✅ Usuario creado con éxito");
+    try {
+      if (mode === "edit") {
+        await updateUsuario(formData.id, payload);
+        window.mostrarAlerta("✅ Usuario actualizado con éxito");
+      } else {
+        await createUsuario(payload);
+        window.mostrarAlerta("✅ Usuario creado con éxito");
+      }
+
+      if (onSaved) {
+        await onSaved(); // 🔹 refresca usuarios desde el backend
+      }
+      onClose();
+    } catch (err) {
+      console.error("Error guardando usuario:", err);
+
+      // 🔹 Usamos helper para extraer mensaje seguro
+      const mensaje = parseErrorResponse(err);
+
+      // 🔹 Mostrar alerta global
+      window.mostrarAlerta(mensaje);
+
+      // 🔹 También marcar en campos específicos
+      if (mensaje.toLowerCase().includes("email")) {
+        setErrors((prev) => ({ ...prev, email: mensaje }));
+      }
+      if (mensaje.toLowerCase().includes("documento")) {
+        setErrors((prev) => ({ ...prev, documento: mensaje }));
+      }
+    } finally {
+      setLoadingSubmit(false);
     }
-    onClose();
-  } catch (err) {
-  console.error("Error guardando usuario:", err);
-
-  let mensaje = "Hubo un error inesperado al guardar el usuario.";
-  if (err.response && err.response.data) {
-    mensaje = err.response.data;
-  }
-
-  // 🔹 Usamos tu modal de alerta global
-  window.mostrarAlerta(mensaje);
-} finally {
-    setLoadingSubmit(false);
-  }
-};
+  };
 
   if (!isOpen) return null;
 

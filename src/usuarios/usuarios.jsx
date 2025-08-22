@@ -283,9 +283,10 @@ const Users = () => {
   isOpen={isFormOpen}
   onClose={closeForm}
   formData={formData}
-  setFormData={setFormData} // 🔹 PASAMOS setFormData
+  setFormData={setFormData}
   mode={formMode}
   loading={loading}
+  onSaved={fetchUsuarios}   // 🔹 NUEVO: refresca lista al guardar
 />
 
       <DeleteConfirmationModal

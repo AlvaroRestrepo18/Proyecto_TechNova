@@ -139,7 +139,7 @@ const Roles = () => {
       <div className="search-container">
         <input
           type="text"
-          placeholder="Buscar rol"
+          placeholder="Buscar rol (nombre o descripción)"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
