@@ -5,13 +5,7 @@ import ModulePermissions from "./ModulePermissions";
 import { createRole, updateRole, getRoleById, assignPermissionsToRole } from "../services/roles";
 import "../roles.css";
 
-const RoleFormModal = ({
-  isOpen,
-  onClose,
-  roleId,
-  mode = "create",
-  onSaved,
-}) => {
+const RoleFormModal = ({ isOpen, onClose, roleId, mode = "create", onSaved }) => {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -25,7 +19,6 @@ const RoleFormModal = ({
       async function fetchData() {
         try {
           const role = await getRoleById(roleId);
-          // Asegurar que permissions sea un array de ids
           const permisosIds = Array.isArray(role.permissions)
             ? role.permissions.map((p) => {
                 if (typeof p === "object" && p !== null) {
@@ -41,15 +34,12 @@ const RoleFormModal = ({
           });
         } catch (error) {
           console.error("Error cargando rol y permisos:", error);
+          window.mostrarAlerta("Error cargando el rol", "error");
         }
       }
       fetchData();
     } else if (mode === "create") {
-      setFormData({
-        nombre: "",
-        descripcion: "",
-        permissions: [],
-      });
+      setFormData({ nombre: "", descripcion: "", permissions: [] });
       setErrors({});
     }
   }, [mode, roleId]);
@@ -61,12 +51,10 @@ const RoleFormModal = ({
 
   const handlePermissionToggle = (permissionId) => {
     if (isViewMode) return;
-
     const currentPermissions = formData.permissions || [];
     const newPermissions = currentPermissions.includes(permissionId)
       ? currentPermissions.filter((p) => p !== permissionId)
       : [...currentPermissions, permissionId];
-
     setFormData((f) => ({ ...f, permissions: newPermissions }));
   };
 
@@ -92,27 +80,34 @@ const RoleFormModal = ({
       let savedRole;
       if (mode === "create") {
         savedRole = await createRole({
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
+          nombre: formData.nombre.trim(),
+          descripcion: formData.descripcion.trim(),
           activo: true,
         });
       } else if (mode === "edit" && roleId) {
         await updateRole(roleId, {
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
+          nombre: formData.nombre.trim(),
+          descripcion: formData.descripcion.trim(),
           activo: true,
         });
         savedRole = { id: roleId };
       }
 
       const rolId = savedRole?.id || roleId;
-
       await assignPermissionsToRole(rolId, formData.permissions);
 
       if (onSaved) onSaved();
       onClose();
     } catch (error) {
       console.error("Error al guardar rol y permisos:", error);
+
+      // 🔹 Captura el mensaje del backend si hay nombre duplicado
+      const mensaje =
+        error.response?.data ||
+        "Error al guardar el rol. Verifique los datos e intente de nuevo.";
+
+      // 🔹 Mostramos alerta global
+      window.mostrarAlerta(mensaje, "error");
     }
   };
 
@@ -179,11 +174,7 @@ const RoleFormModal = ({
               {isViewMode ? "Cerrar" : "Cancelar"}
             </button>
             {!isViewMode && (
-              <button
-                type="button"
-                className="submit-button"
-                onClick={handleSubmit}
-              >
+              <button type="button" className="submit-button" onClick={handleSubmit}>
                 {mode === "create" ? "Crear" : "Guardar"}
               </button>
             )}
