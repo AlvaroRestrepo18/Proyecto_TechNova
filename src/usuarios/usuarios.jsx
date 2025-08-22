@@ -75,35 +75,37 @@ const Users = () => {
     setFormMode("create");
     setIsFormOpen(true);
     setFormData({
-      nombre: "",
-      email: "",
-      telefono: "",
-      tipoDocumento: "",
-      documento: "",
-      direccion: "",
-      rol: "usuario",
-      rolId: null, // opcional
-    });
+  nombre: "",
+  email: "",
+  telefono: "",
+  tipoDocumento: "",
+  documento: "",
+  direccion: "",
+  rol: "usuario",
+  rolId: null, // 🔹 Importante, inicializamos rolId vacío
+});
   };
 
   const openEditForm = (userId) => {
-    const u = userData.find((u) => u.id === userId);
-    if (!u) return;
-    setFormMode("edit");
-    setCurrentUserId(userId);
-    setIsFormOpen(true);
-    setFormData({
-      id: u.id, // 🔹 agregar id
-      nombre: u.name,
-      email: u.email,
-      telefono: u.telefono || "",
-      tipoDocumento: u.tipoDocumento,
-      documento: u.documento,
-      direccion: u.direccion,
-      rol: u.role.toLowerCase(),
-      rolId: u.rolId, // necesario para enviar al backend
-    });
-  };
+  const u = userData.find((u) => u.id === userId);
+  if (!u) return;
+
+  setFormMode("edit");
+  setCurrentUserId(userId);
+  setIsFormOpen(true);
+
+  setFormData({
+    id: u.id,
+    nombre: u.name,
+    email: u.email,
+    telefono: u.telefono || "",
+    tipoDocumento: u.tipoDocumento,
+    documento: u.documento,
+    direccion: u.direccion,
+    rol: u.role?.toLowerCase() || "", // nombre del rol para view mode
+    rolId: u.rolId || null,           // 🔹 id real del rol
+  });
+};
 
   const closeForm = () => {
     setIsFormOpen(false);
@@ -137,15 +139,15 @@ const Users = () => {
       setFormMode("view");
       setIsFormOpen(true);
       setFormData({
-        nombre: u.name,
-        email: u.email,
-        telefono: u.telefono || "",
-        tipoDocumento: u.tipoDocumento,
-        documento: u.documento,
-        direccion: u.direccion,
-        rol: u.role.toLowerCase(),
-        rolId: u.rolId,
-      });
+  nombre: u.name,
+  email: u.email,
+  telefono: u.telefono || "",
+  tipoDocumento: u.tipoDocumento,
+  documento: u.documento,
+  direccion: u.direccion,
+  rol: u.role?.toLowerCase() || "",
+  rolId: u.rolId || null,
+});
     }
   };
 
