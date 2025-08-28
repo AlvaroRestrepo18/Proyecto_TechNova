@@ -97,6 +97,9 @@ const RoleFormModal = ({ isOpen, onClose, roleId, mode = "create", onSaved }) =>
       await assignPermissionsToRole(rolId, formData.permissions);
 
       if (onSaved) onSaved();
+      window.mostrarAlerta("Rol y permisos guardados correctamente", "success");
+      setFormData({ nombre: "", descripcion: "", permissions: [] });
+      setErrors({});
       onClose();
     } catch (error) {
       console.error("Error al guardar rol y permisos:", error);
