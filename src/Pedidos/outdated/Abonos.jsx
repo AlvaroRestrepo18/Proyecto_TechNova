@@ -89,11 +89,9 @@ const Abonos = ({ abonos, pedidos, onCreate, onAnular }) => {
                   <button 
                     className="icon-button"
                     onClick={() => {
-                      if (abono.estado === 'anulado') return;
                       setCurrentAbono(abono);
                       setShowDetails(true);
                     }}
-                    disabled={abono.estado === 'anulado'}
                   >
                     <FontAwesomeIcon icon={faEye} />
                   </button>
@@ -106,8 +104,7 @@ const Abonos = ({ abonos, pedidos, onCreate, onAnular }) => {
                   </button>
                   <button 
                     className="icon-button"
-                    onClick={() => abono.estado !== 'anulado' && generatePDF(abono)}
-                    disabled={abono.estado === 'anulado'}
+                    onClick={() => generatePDF(abono)}
                   >
                     <FontAwesomeIcon icon={faFilePdf} />
                   </button>
@@ -215,7 +212,10 @@ const Abonos = ({ abonos, pedidos, onCreate, onAnular }) => {
                   <div className="detail-value">{currentAbono.numeroAbono}</div>
                 </div>
                 
-               
+                <div className="detail-row">
+                  <div className="detail-label">Número de Pedido:</div>
+                  <div className="detail-value">{currentAbono.numeroPedido}</div>
+                </div>
                 
                 <div className="detail-row">
                   <div className="detail-label">Fecha del Abono:</div>

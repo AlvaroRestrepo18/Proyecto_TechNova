@@ -1,0 +1,47 @@
+/* catpro.css adaptado: solo clases únicas del módulo */
+
+.equipment-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+/* Estilos únicos para detalles en vista */
+.detail-group {
+  margin-bottom: 15px;
+}
+
+.detail-group label {
+  font-weight: 600;
+  color: #444;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.detail-group p {
+  margin: 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* Confirmación eliminación específica */
+.confirm-modal .form-body p {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}

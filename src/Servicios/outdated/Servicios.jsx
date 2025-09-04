@@ -4,7 +4,6 @@ import {
   faPlus, faTimes, faEye, faPen, faTrash, faPowerOff
 } from '@fortawesome/free-solid-svg-icons';
 import '../app.css';
-import './servicios.css';
 
 const Productos = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -174,69 +173,50 @@ const Productos = () => {
       </div>
 
       <div className="table-container">
-        <table className="pedidos-table servicios-table">
+        <table className="table">
           <thead>
             <tr>
               <th>Nombre</th>
               <th>Imagen</th>
               <th>Precio</th>
               <th>Estado</th>
-              <th className="actions-header">Acciones</th>
+              <th className="Action">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {filteredServices.map((servicio) => {
-              const isInactive = !servicio.active;
-              return (
-                <tr key={servicio.id} className={isInactive ? 'anulado-row' : ''}>
-                  <td>{servicio.name}</td>
-                  <td>
-                    <img
-                      src={servicio.image}
-                      alt={servicio.name}
-                      className="servicio-img"
-                    />
-                  </td>
-                  <td>${servicio.price}</td>
-                  <td>
-                    <button
-                      className={`status-toggle ${servicio.active ? 'active' : 'anulado'}`}
-                      onClick={() => toggleServiceStatus(servicio.id)}
-                      disabled={isInactive}
-                      title={servicio.active ? 'Desactivar' : 'Inactivo'}
-                    >
-                      {servicio.active ? 'Activo' : 'Inactivo'}
-                    </button>
-                  </td>
-                  <td>
-                    <button
-                      className="icon-button"
-                      title="Ver detalles"
-                      onClick={() => showServiceDetails(servicio)}
-                      disabled={isInactive}
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                    </button>
-                    <button
-                      className="icon-button"
-                      title="Editar"
-                      onClick={() => openEditForm(servicio)}
-                      disabled={isInactive}
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </button>
-                    <button
-                      className={`icon-button ${isInactive ? 'anulado' : 'delete'}`}
-                      title={isInactive ? 'Inactivo' : 'Eliminar'}
-                      onClick={() => confirmDelete(servicio.id)}
-                      disabled={isInactive}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {filteredServices.map((servicio) => (
+              <tr key={servicio.id}>
+                <td>{servicio.name}</td>
+                <td>
+                  <img
+                    src={servicio.image}
+                    alt={servicio.name}
+                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                  />
+                </td>
+                <td>${servicio.price}</td>
+                <td>
+                  <button
+                    className={`status-toggle ${servicio.active ? 'active' : 'inactive'}`}
+                    onClick={() => toggleServiceStatus(servicio.id)}
+                  >
+                    <FontAwesomeIcon icon={faPowerOff} />
+                    <span>{servicio.active ? ' Activo' : ' Inactivo'}</span>
+                  </button>
+                </td>
+                <td>
+                  <button className="icon-button" onClick={() => showServiceDetails(servicio)} title="Ver">
+                    <FontAwesomeIcon icon={faEye} />
+                  </button>
+                  <button className="icon-button" onClick={() => openEditForm(servicio)} title="Editar">
+                    <FontAwesomeIcon icon={faPen} />
+                  </button>
+                  <button className="icon-button" onClick={() => confirmDelete(servicio.id)} title="Eliminar">
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -253,35 +233,29 @@ const Productos = () => {
             </div>
 
             <form className="form-body" onSubmit={(e) => { e.preventDefault(); setShowConfirmation(true); }}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nombre</label>
-                  <input name="name" value={formData.name} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Precio</label>
-                  <input type="number" name="price" value={formData.price} onChange={handleChange} required />
-                </div>
+              <div className="form-group">
+                <label>Nombre</label>
+                <input name="name" value={formData.name} onChange={handleChange} required />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Detalles</label>
-                  <textarea name="details" value={formData.details} onChange={handleChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Imagen</label>
-                  <input type="file" accept="image/*" onChange={handleImageChange} />
-                  {formData.image && <img src={formData.image} alt="preview" style={{ width: '100px', marginTop: '10px' }} />}
-                </div>
+              <div className="form-group">
+                <label>Precio</label>
+                <input type="number" name="price" value={formData.price} onChange={handleChange} required />
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Estado</label>
-                  <select name="estado" value={formData.estado} onChange={handleChange}>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                  </select>
-                </div>
+              <div className="form-group">
+                <label>Detalles</label>
+                <textarea name="details" value={formData.details} onChange={handleChange} required />
+              </div>
+              <div className="form-group">
+                <label>Imagen</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                {formData.image && <img src={formData.image} alt="preview" style={{ width: '100px', marginTop: '10px' }} />}
+              </div>
+              <div className="form-group">
+                <label>Estado</label>
+                <select name="estado" value={formData.estado} onChange={handleChange}>
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
               </div>
               <div className="form-actions">
                 <button type="button" className="cancel-button" onClick={closeForm}>Cancelar</button>
@@ -309,18 +283,10 @@ const Productos = () => {
       {showDeleteConfirmation && (
         <div className="modal-overlay">
           <div className="modal-content delete-modal">
-            <div className="modal-header" style={{ backgroundColor: '#1e3c72' }}>
-              <h2>Confirmar Eliminación</h2>
-              <button className="close-button" onClick={() => setShowDeleteConfirmation(false)}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className="form-body">
-              <p>¿Estás seguro que deseas eliminar este servicio?</p>
-              <div className="form-actions">
-                <button className="cancel-button" onClick={() => setShowDeleteConfirmation(false)}>Cancelar</button>
-                <button className="delete-confirm-button" onClick={executeDelete}>Eliminar</button>
-              </div>
+            <h3>¿Eliminar este servicio?</h3>
+            <div className="form-actions">
+              <button className="cancel-button" onClick={() => setShowDeleteConfirmation(false)}>Cancelar</button>
+              <button className="delete-confirm-button" onClick={executeDelete}>Eliminar</button>
             </div>
           </div>
         </div>

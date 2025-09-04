@@ -15,7 +15,7 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
   const [formData, setFormData] = useState({
     clienteCedula: '',
     estado: 'Activo',
-    prioridad: 'Media',
+    prioridad: false,
     fecha: new Date().toISOString().split('T')[0],
     fechaReparacion: '',
     fechaEstimada: '',
@@ -84,6 +84,7 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
   const getEstadoClass = (estado) => {
     switch(estado) {
       case 'Activo': return 'active';
+      case 'Inactivo': return 'inactive';
       case 'Anulado': return 'anulado';
       default: return '';
     }
@@ -92,6 +93,7 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
   const getEstadoText = (estado) => {
     switch(estado) {
       case 'Activo': return 'Activo';
+      case 'Inactivo': return 'Inactivo';
       case 'Anulado': return 'Anulado';
       default: return estado;
     }
@@ -133,43 +135,28 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
                     {getEstadoText(pedido.estado)}
                   </button>
                 </td>
-                <td>
-                  <button
-                    className={`status-toggle prioridad-select prioridad-${(pedido.prioridad || 'Media').toString().toLowerCase()}`}
-                    onClick={e => {
-                      e.stopPropagation();
-                      const actual = pedido.prioridad || 'Media';
-                      const next = actual === 'Alta' ? 'Media' : actual === 'Media' ? 'Baja' : 'Alta';
-                      onEdit({ ...pedido, prioridad: next });
-                    }}
-                    disabled={pedido.estado === 'Anulado'}
-                  >
-                    {pedido.prioridad || 'Media'}
-                  </button>
-                </td>
+                <td>{pedido.prioridad ? 'Alta' : 'Normal'}</td>
                 <td>{pedido.fecha}</td>
                 <td>
                   <button 
                     className="icon-button"
-                    title="Ver detalles"
                     onClick={() => {
                       setCurrentPedido(pedido);
                       setShowDetails(true);
                     }}
                     disabled={pedido.estado === 'Anulado'}
                   >
-                    <FontAwesomeIcon icon={faEye} />
+                    <FontAwesomeIcon icon={faEye} /> Ver
                   </button>
                   <button 
                     className="icon-button"
-                    title="Editar"
                     onClick={() => {
                       setCurrentPedido({...pedido});
                       setShowEdit(true);
                     }}
                     disabled={pedido.estado === 'Anulado'}
                   >
-                    <FontAwesomeIcon icon={faEdit} />
+                    <FontAwesomeIcon icon={faEdit} /> Editar
                   </button>
                   <button 
                     className="icon-button"
@@ -212,30 +199,30 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
               </button>
             </div>
             <div className="form-body">
-              <div className="form-row" style={{display: 'flex', gap: '1rem'}}>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Cédula del Cliente</label>
-                  <select
-                    value={formData.clienteCedula}
-                    onChange={(e) => setFormData({...formData, clienteCedula: e.target.value})}
-                    required
-                  >
-                    <option value="">Seleccione un cliente</option>
-                    {clientes.map(cliente => (
-                      <option key={cliente.cedula} value={cliente.cedula}>{cliente.nombre} - {cliente.cedula}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Fecha</label>
-                  <input
-                    type="date"
-                    value={formData.fecha}
-                    onChange={(e) => setFormData({...formData, fecha: e.target.value})}
-                    required
-                  />
-                </div>
+              <div className="form-group">
+                <label>Cédula del Cliente</label>
+                <select
+                  value={formData.clienteCedula}
+                  onChange={(e) => setFormData({...formData, clienteCedula: e.target.value})}
+                  required
+                >
+                  <option value="">Seleccione un cliente</option>
+                  {clientes.map(cliente => (
+                    <option key={cliente.cedula} value={cliente.cedula}>{cliente.nombre} - {cliente.cedula}</option>
+                  ))}
+                </select>
               </div>
+              
+              <div className="form-group">
+                <label>Fecha</label>
+                <input
+                  type="date"
+                  value={formData.fecha}
+                  onChange={(e) => setFormData({...formData, fecha: e.target.value})}
+                  required
+                />
+              </div>
+              
               <div className="form-group">
                 <label>Detalles del Daño (Máx. 500 caracteres)</label>
                 <textarea
@@ -249,6 +236,7 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
                 />
                 <small>{formData.detallesDanio.length}/500 caracteres</small>
               </div>
+              
               <div className="form-group">
                 <label>Detalles de la Solución (Máx. 500 caracteres)</label>
                 <textarea
@@ -261,26 +249,47 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
                 />
                 <small>{formData.detallesSolucion.length}/500 caracteres</small>
               </div>
-              <div className="form-row" style={{display: 'flex', gap: '1rem'}}>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Fecha Estimada de Reparación</label>
-                  <input
-                    type="date"
-                    value={formData.fechaEstimada}
-                    onChange={(e) => setFormData({...formData, fechaEstimada: e.target.value})}
-                  />
-                </div>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Valor</label>
-                  <input
-                    type="number"
-                    value={formData.valor}
-                    onChange={(e) => setFormData({...formData, valor: parseInt(e.target.value) || 0})}
-                  />
-                </div>
+              
+              <div className="form-group">
+                <label>Fecha Estimada de Reparación</label>
+                <input
+                  type="date"
+                  value={formData.fechaEstimada}
+                  onChange={(e) => setFormData({...formData, fechaEstimada: e.target.value})}
+                />
               </div>
-
-             
+              
+              <div className="form-group">
+                <label>Valor</label>
+                <input
+                  type="number"
+                  value={formData.valor}
+                  onChange={(e) => setFormData({...formData, valor: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={formData.prioridad}
+                    onChange={(e) => setFormData({...formData, prioridad: e.target.checked})}
+                  />
+                  Prioridad Alta
+                </label>
+              </div>
+              
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={formData.tipoReparacion}
+                    onChange={(e) => setFormData({...formData, tipoReparacion: e.target.checked})}
+                  />
+                  Reparación Completa
+                </label>
+              </div>
+              
               <div className="form-actions">
                 <button className="cancel-button" onClick={() => setShowCreate(false)}>Cancelar</button>
                 <button className="submit-button" onClick={handleCreate}>Guardar</button>
@@ -301,25 +310,15 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
               </button>
             </div>
             <div className="form-body">
-              <div className="form-row" style={{display: 'flex', gap: '1rem'}}>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Fecha Reparación</label>
-                  <input
-                    type="date"
-                    value={currentPedido.fechaReparacion}
-                    onChange={(e) => setCurrentPedido({...currentPedido, fechaReparacion: e.target.value})}
-                  />
-                </div>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Valor</label>
-                  <input
-                    type="number"
-                    value={currentPedido.valor}
-                    onChange={(e) => setCurrentPedido({...currentPedido, valor: parseInt(e.target.value) || 0})}
-                  />
-                </div>
+              <div className="form-group">
+                <label>Fecha Reparación</label>
+                <input
+                  type="date"
+                  value={currentPedido.fechaReparacion}
+                  onChange={(e) => setCurrentPedido({...currentPedido, fechaReparacion: e.target.value})}
+                />
               </div>
-
+              
               <div className="form-group">
                 <label>Detalles del Daño (Máx. 500 caracteres)</label>
                 <textarea
@@ -333,6 +332,7 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
                 />
                 <small>{currentPedido.detallesDanio.length}/500 caracteres</small>
               </div>
+              
               <div className="form-group">
                 <label>Detalles de la Solución (Máx. 500 caracteres)</label>
                 <textarea
@@ -345,18 +345,38 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
                 />
                 <small>{currentPedido.detallesSolucion.length}/500 caracteres</small>
               </div>
-              <div className="form-row" style={{display: 'flex', gap: '1rem'}}>
-                <div className="form-group" style={{flex: 1}}>
-                  <label>Fecha Estimada de Reparación</label>
-                  <input
-                    type="date"
-                    value={currentPedido.fechaEstimada}
-                    onChange={(e) => setCurrentPedido({...currentPedido, fechaEstimada: e.target.value})}
-                  />
-                </div>
-               
+              
+              <div className="form-group">
+                <label>Valor</label>
+                <input
+                  type="number"
+                  value={currentPedido.valor}
+                  onChange={(e) => setCurrentPedido({...currentPedido, valor: parseInt(e.target.value) || 0})}
+                />
               </div>
-             
+              
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={currentPedido.prioridad}
+                    onChange={(e) => setCurrentPedido({...currentPedido, prioridad: e.target.checked})}
+                  />
+                  Prioridad Alta
+                </label>
+              </div>
+              
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={currentPedido.tipoReparacion}
+                    onChange={(e) => setCurrentPedido({...currentPedido, tipoReparacion: e.target.checked})}
+                  />
+                  Reparación Completa
+                </label>
+              </div>
+              
               <div className="form-actions">
                 <button className="cancel-button" onClick={() => setShowEdit(false)}>Cancelar</button>
                 <button className="submit-button" onClick={handleEdit}>Guardar Cambios</button>
@@ -368,75 +388,73 @@ const Pedidos = ({ pedidos, clientes, onCreate, onEdit, onDelete, onToggleEstado
 
       {/* Modal Detalles Pedido */}
       {showDetails && currentPedido && (
-        <div className="modal-overlay" onClick={() => setShowDetails(false)}>
-          <div className="modal-content view-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content details-modal">
             <div className="modal-header">
-              <h2>Detalles de Pedido</h2>
+              <h2>Detalles del Pedido #{currentPedido.id}</h2>
               <button className="close-button" onClick={() => setShowDetails(false)}>
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
-            <div className="view-modal-body">
-              <div className="venta-info">
-                <div className="info-row">
-                  <span className="info-label">Núm Pedido:</span>
-                  <span className="info-value">{currentPedido.id}</span>
+            <div className="details-content">
+              <div className="details-info">
+                <div className="detail-row">
+                  <div className="detail-label">Cliente:</div>
+                  <div className="detail-value">{getClienteNombre(currentPedido.clienteCedula)}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Cliente:</span>
-                  <span className="info-value">{getClienteNombre(currentPedido.clienteCedula)}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Estado:</span>
-                  <span className={`info-value estado-${getEstadoClass(currentPedido.estado)}`}>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Estado:</div>
+                  <div className={`detail-value ${getEstadoClass(currentPedido.estado)}`}>
                     {getEstadoText(currentPedido.estado)}
-                  </span>
+                  </div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Prioridad:</span>
-                  <span className={`info-value prioridad-select prioridad-${(currentPedido.prioridad || 'Media').toLowerCase()}`}>
-                    {currentPedido.prioridad || 'Media'}
-                  </span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Prioridad:</div>
+                  <div className="detail-value">{currentPedido.prioridad ? 'Alta' : 'Normal'}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Fecha:</span>
-                  <span className="info-value">{currentPedido.fecha}</span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Fecha:</div>
+                  <div className="detail-value">{currentPedido.fecha}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Fecha Reparación:</span>
-                  <span className="info-value">{currentPedido.fechaReparacion || 'No reparado'}</span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Fecha Reparación:</div>
+                  <div className="detail-value">{currentPedido.fechaReparacion || 'No reparado'}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Fecha Estimada:</span>
-                  <span className="info-value">{currentPedido.fechaEstimada || 'No estimada'}</span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Fecha Estimada:</div>
+                  <div className="detail-value">{currentPedido.fechaEstimada}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Tipo Reparación:</span>
-                  <span className="info-value">{currentPedido.tipoReparacion ? 'Completa' : 'Parcial'}</span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Tipo Reparación:</div>
+                  <div className="detail-value">{currentPedido.tipoReparacion ? 'Completa' : 'Parcial'}</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">Valor:</span>
-                  <span className="info-value">${currentPedido.valor.toLocaleString()}</span>
+                
+                <div className="detail-row">
+                  <div className="detail-label">Valor:</div>
+                  <div className="detail-value">${currentPedido.valor.toLocaleString()}</div>
+                </div>
+                
+                <div className="detail-row full-width">
+                  <div className="detail-label">Detalles del Daño:</div>
+                  <div className="details-text">{currentPedido.detallesDanio}</div>
+                </div>
+                
+                <div className="detail-row full-width">
+                  <div className="detail-label">Detalles de la Solución:</div>
+                  <div className="details-text">{currentPedido.detallesSolucion || 'No hay solución registrada'}</div>
                 </div>
               </div>
-              <div className="section-divider"></div>
-              <h3>Detalles Técnicos</h3>
-              <div className="info-row full-width">
-                <span className="info-label">Detalles del Daño:</span>
-                <span className="info-value">{currentPedido.detallesDanio}</span>
-              </div>
-              <div className="info-row full-width">
-                <span className="info-label">Detalles de la Solución:</span>
-                <span className="info-value">{currentPedido.detallesSolucion || 'No hay solución registrada'}</span>
-              </div>
-              <div className="modal-actions">
-                <button className="pdf-button" onClick={() => generatePDF(currentPedido)}>
-                  <FontAwesomeIcon icon={faFilePdf} /> Generar PDF
-                </button>
-                <button className="close-modal-button" onClick={() => setShowDetails(false)}>
-                  Cerrar
-                </button>
-              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="submit-button" onClick={() => generatePDF(currentPedido)}>
+                <FontAwesomeIcon icon={faFilePdf} /> Generar PDF
+              </button>
             </div>
           </div>
         </div>

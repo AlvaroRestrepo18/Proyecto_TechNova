@@ -23,7 +23,7 @@ const GestionReparaciones = () => {
         id: 1,
         clienteCedula: '123456789',
         estado: 'Activo',
-        prioridad: false,
+        prioridad: true,
         fecha: '2023-05-15',
         fechaReparacion: '2023-05-20',
         fechaEstimada: '2023-05-25',
@@ -81,14 +81,13 @@ const GestionReparaciones = () => {
       p.id === pedidoActualizado.id ? pedidoActualizado : p
     );
     setPedidos(updatedPedidos);
+    alert('Pedido actualizado exitosamente');
   };
 
   const handleToggleEstado = (id) => {
     const updatedPedidos = pedidos.map(p => {
       if (p.id === id) {
-        // Solo permite alternar si NO está anulado
-        if (p.estado === 'Anulado') return p;
-        const newEstado = p.estado === 'Activo' ? 'Anulado' : 'Activo';
+        const newEstado = p.estado === 'Activo' ? 'Inactivo' : 'Activo';
         return {...p, estado: newEstado};
       }
       return p;
@@ -120,11 +119,6 @@ const GestionReparaciones = () => {
       a.id === id ? {...a, estado: 'anulado'} : a
     );
     setAbonos(updatedAbonos);
-    // Anula la venta asociada si existe
-    const abono = abonos.find(a => a.id === id);
-    if (abono) {
-      setPedidos(prev => prev.map(p => p.id === abono.numeroPedido ? { ...p, estado: 'Anulado' } : p));
-    }
     alert('Abono anulado exitosamente');
   };
 
@@ -140,13 +134,14 @@ const GestionReparaciones = () => {
         <button
           className={`tab-button ${activeTab === 'pedidos' ? 'active' : ''}`}
           onClick={() => setActiveTab('pedidos')}
-        > Pedidos
+        >
+          <FontAwesomeIcon icon={faClipboardList} /> Pedidos
         </button>
         <button
           className={`tab-button ${activeTab === 'abonos' ? 'active' : ''}`}
           onClick={() => setActiveTab('abonos')}
         >
-            Abonos
+          <FontAwesomeIcon icon={faMoneyBill} /> Abonos
         </button>
       </div>
 
