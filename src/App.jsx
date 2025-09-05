@@ -25,6 +25,9 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 library.add(fas);
 import './App.css';
 
+// Importamos el PrivateRoute
+import PrivateRoute from './PrivateRoute';
+
 function AppLayout({ children }) {
   const location = useLocation();
   const isAuthPage = ['/login', '/forgot', '/reset'].includes(location.pathname);
@@ -53,28 +56,45 @@ function App() {
         <Route path="/reset" element={<ResetPassword />} />
 
         {/* Rutas con layout */}
-        <Route path="*" element={
-          <AppLayout>
-            <ModalAlerta />
-            {/* Aquí se definen las rutas principales de la aplicación */}
-            <Routes>
-              <Route path="/usuarios" element={<Users />} />
-              <Route path="/Equipos" element={<Equipos />} />
-              <Route path="/Productos" element={<Productos />} />
-              <Route path="/Catser" element={<Catser />} />
-              <Route path="/Proveedores" element={<Proveedores />} />
-              <Route path="/ventas" element={<Ventas />} />
-              <Route path="/catpro" element={<Catpro />} />
-              <Route path="/Compras" element={<Compras />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/Servicios" element={<Servicios />} />
-              <Route path="/ClientesFidelizacion" element={<ClientesFidelizacion />} />
-              <Route path="/GestionReparaciones" element={<GestionReparaciones />} />
-              <Route path="/roles" element={<Roles />} />
-              <Route path="/" element={<Dashboard />} />
-            </Routes>
-          </AppLayout>
-        } />
+        <Route
+          path="*"
+          element={
+            <AppLayout>
+              <ModalAlerta />
+              {/* Aquí se definen las rutas principales de la aplicación */}
+              <Routes>
+                <Route
+                  path="/usuarios"
+                  element={
+                    <PrivateRoute>
+                      <Users />
+                    </PrivateRoute>
+                  }
+                />
+                <Route path="/Equipos" element={<Equipos />} />
+                <Route path="/Productos" element={<Productos />} />
+                <Route path="/Catser" element={<Catser />} />
+                <Route path="/Proveedores" element={<Proveedores />} />
+                <Route path="/ventas" element={<Ventas />} />
+                <Route path="/catpro" element={<Catpro />} />
+                <Route path="/Compras" element={<Compras />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/Servicios" element={<Servicios />} />
+                <Route path="/ClientesFidelizacion" element={<ClientesFidelizacion />} />
+                <Route path="/GestionReparaciones" element={<GestionReparaciones />} />
+                <Route
+                  path="/roles"
+                  element={
+                    <PrivateRoute>
+                      <Roles />
+                    </PrivateRoute>
+                  }
+                />
+                <Route path="/" element={<Dashboard />} />
+              </Routes>
+            </AppLayout>
+          }
+        />
       </Routes>
     </Router>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { login } from '../services/auth'; // 👈 Importamos el servicio real
 import './Login.css';
 
 const Login = () => {
@@ -11,24 +12,30 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      if (password.length >= 6) {
-        // Guardar sesión visual en localStorage
-        localStorage.setItem('user', JSON.stringify({
-          nombre: 'Sacardona Cardona Muñoz',
-          rol: 'Administrador'
-        }));
-        navigate('/dashboard');
-      } else {
-        setError('La contraseña debe tener al menos 6 caracteres');
-      }
+    try {
+      // Llamamos al backend
+      const data = await login(email, password);
+
+      // Opcional: guardamos también información de usuario (si viene del backend)
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          nombre: data.nombre || 'Usuario',
+          rol: data.rol || 'Usuario',
+        })
+      );
+
+      navigate('/dashboard'); // Redirigimos al dashboard
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
