@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Header from './header/header';
 import Sidebar from './shared/sidebar/sidebar';
 import Users from './usuarios/usuarios';
-import Productos from './Productos/productos';
+import Productos from './Productos/Productos';
 import Proveedores from './Proveedores/Proveedores';
 import Catser from './categoriaser/Catser';
 import Catpro from './catpro/catpro';
