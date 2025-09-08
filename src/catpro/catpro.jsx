@@ -1,56 +1,63 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faEye, faPen, faTrash, faPowerOff } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import CategoryTable from './components/CategoryTable';
+import CategoryFormModal from './components/CategoryFormModal';
+import DeleteModal from './components/DeleteModal';
 import './catpro.css';
-import '../app.css'; // Usamos app.css centralizado
 
-const CatPro = () => {
+const Categorias = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('list'); // 'list', 'view', 'edit', 'create'
+  const [currentView, setCurrentView] = useState('list');
   const [currentCategory, setCurrentCategory] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [activeTab, setActiveTab] = useState('activas'); // ← AÑADIDO: Estado para la pestaña activa
+  
 
-  // Datos de ejemplo con estado activo/inactivo
   const [categoriasData, setCategoriasData] = useState([
-    { id: generateId(), nombre: 'Soporte Técnico', descripcion: 'Servicios de soporte y mantenimiento de equipos.', activo: true },
-    { id: generateId(), nombre: 'Consultoría', descripcion: 'Asesoría en soluciones tecnológicas.', activo: true },
-    { id: generateId(), nombre: 'Capacitación', descripcion: 'Cursos y talleres de formación.', activo: false },
+    { 
+      id: generateId(), 
+      tipoCategoria: 'Producto', 
+      nombreCategoria: 'Hardware', 
+      descripcion: 'Equipos y componentes físicos para computadoras.', 
+      activo: true 
+    },
+    { 
+      id: generateId(), 
+      tipoCategoria: 'Servicio', 
+      nombreCategoria: 'Soporte Técnico', 
+      descripcion: 'Servicios de soporte y mantenimiento de equipos.', 
+      activo: true 
+    },
   ]);
 
-  const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: ''
-  });
-
-  // Generar ID automático
   function generateId() {
     return 'CAT-' + Math.random().toString(36).substr(2, 9).toUpperCase();
   }
 
-  const filteredCategorias = categoriasData.filter(cat =>
-    cat.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ← AÑADIDO: Función para cambiar el estado de las categorías
+  const toggleCategoriaEstado = (id) => {
+    setCategoriasData(categoriasData.map(cat =>
+      cat.id === id ? { ...cat, activo: !cat.activo } : cat
+    ));
+  };
+
+  // ← AÑADIDO: Separar categorías por estado
+  const categoriasActivas = categoriasData.filter(cat => cat.activo);
+  const categoriasInactivas = categoriasData.filter(cat => !cat.activo);
 
   const openCreateForm = () => {
     setIsFormOpen(true);
     setCurrentView('create');
-    setFormData({
-      nombre: '',
-      descripcion: ''
-    });
+    setCurrentCategory(null);
   };
 
   const openEditForm = (cat) => {
     setIsFormOpen(true);
     setCurrentView('edit');
     setCurrentCategory(cat);
-    setFormData({
-      nombre: cat.nombre,
-      descripcion: cat.descripcion
-    });
   };
 
   const openView = (cat) => {
@@ -63,35 +70,6 @@ const CatPro = () => {
     setIsFormOpen(false);
     setCurrentView('list');
     setCurrentCategory(null);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (currentView === 'create') {
-      // Crear nueva categoría
-      const newCategory = {
-        id: generateId(),
-        nombre: formData.nombre,
-        descripcion: formData.descripcion,
-        activo: true
-      };
-      setCategoriasData([...categoriasData, newCategory]);
-    } else if (currentView === 'edit' && currentCategory) {
-      // Editar categoría existente
-      setCategoriasData(categoriasData.map(cat =>
-        cat.id === currentCategory.id 
-          ? { ...cat, nombre: formData.nombre, descripcion: formData.descripcion }
-          : cat
-      ));
-    }
-    
-    closeForm();
   };
 
   const confirmDelete = (id) => {
@@ -110,22 +88,30 @@ const CatPro = () => {
     setCategoryToDelete(null);
   };
 
-  const toggleCategoriaEstado = (id) => {
-    setCategoriasData(categoriasData.map(cat =>
-      cat.id === id ? { ...cat, activo: !cat.activo } : cat
-    ));
-  };
-
   return (
-    <div className="container">
-      <h1>Cyber360 - Categoría de Producto</h1>
+    <div className="equipment-container">
+      <h1>Cyber360 - Categorías</h1>
       
-      <div className="section-divider"></div>
+      {/* ← AÑADIDO: Tabs para categorías activas/inactivas */}
+      <div className="tabs-container">
+        <button 
+          className={`tab-button ${activeTab === 'activas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('activas')}
+        >
+          Categorías Activas ({categoriasActivas.length})
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'inactivas' ? 'active' : ''}`}
+          onClick={() => setActiveTab('inactivas')}
+        >
+          Categorías Inactivas ({categoriasInactivas.length})
+        </button>
+      </div>
       
       <div className="search-container">
         <input
           type="text"
-          placeholder="Buscar categoría"
+          placeholder={`Buscar categoría ${activeTab === 'activas' ? 'activas' : 'inactivas'}...`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -135,162 +121,51 @@ const CatPro = () => {
         </button>
       </div>
       
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Nombre de la Categoría <span></span></th>
-              <th>Estado</th>
-              <th className='Action'>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCategorias.map((cat, index) => (
-              <tr key={index}>
-                <td>{cat.nombre}</td>
-                <td>
-                  <button
-                    className={`status-toggle ${cat.activo ? 'active' : 'inactive'}`}
-                    onClick={() => toggleCategoriaEstado(cat.id)}
-                    title={cat.activo ? 'Desactivar' : 'Activar'}
-                  >
-                    <FontAwesomeIcon icon={faPowerOff} />
-                    <span>{cat.activo ? ' Activo' : ' Inactivo'}</span>
-                  </button>
-                </td>
-                <td>
-                  <button 
-                    className="icon-button" 
-                    title="Ver" 
-                    onClick={() => openView(cat)}
-                  >
-                    <FontAwesomeIcon icon={faEye} />
-                  </button>
-                  <button 
-                    className="icon-button" 
-                    title="Editar" 
-                    onClick={() => openEditForm(cat)}
-                    disabled={!cat.activo}
-                  >
-                    <FontAwesomeIcon icon={faPen} />
-                  </button>
-                  <button 
-                    className="icon-button" 
-                    title="Eliminar" 
-                    onClick={() => confirmDelete(cat.id)}
-                    disabled={!cat.activo}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* ← MODIFICADO: Pasar las categorías según la pestaña activa y la función toggle */}
+      <CategoryTable
+        categorias={activeTab === 'activas' ? categoriasActivas : categoriasInactivas}
+        searchTerm={searchTerm}
+        onEdit={openEditForm}
+        onView={openView}
+        onDelete={confirmDelete}
+        onToggleStatus={toggleCategoriaEstado} // ← AÑADIDO: Pasar la función toggle
+      />
 
-      {/* Modal para formularios */}
       {isFormOpen && (
-        <div className="modal-overlay" onClick={closeForm}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                {currentView === 'create' && 'Crear Nueva Categoría'}
-                {currentView === 'edit' && 'Editar Categoría'}
-                {currentView === 'view' && 'Detalles de Categoría'}
-              </h2>
-              <button className="close-button" onClick={closeForm}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-
-            <div className="form-body">
-              {currentView === 'view' ? (
-                <div className="view-mode">
-                  <div className="detail-group">
-                    <label>Nombre:</label>
-                    <p>{currentCategory?.nombre}</p>
-                  </div>
-                  <div className="detail-group">
-                    <label>Descripción:</label>
-                    <p>{currentCategory?.descripcion}</p>
-                  </div>
-                  <div className="detail-group">
-                    <label>Estado:</label>
-                    <p>{currentCategory?.activo ? 'Activo' : 'Inactivo'}</p>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  <div className="form-group">
-                    <label>Nombre de la Categoría: <span className="required-asterisk">*</span></label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formData.nombre}
-                      onChange={handleChange}
-                      placeholder="Nombre de la categoría"
-                      required
-                      disabled={currentView === 'view'}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Descripción: <span className="required-asterisk">*</span></label>
-                    <textarea
-                      name="descripcion"
-                      value={formData.descripcion}
-                      onChange={handleChange}
-                      placeholder="Ingrese la descripción de la categoría"
-                      required
-                      disabled={currentView === 'view'}
-                      rows="4"
-                    />
-                  </div>
-
-                  {currentView !== 'view' && (
-                    <div className="form-actions">
-                      <button type="button" className="cancel-button" onClick={closeForm}>
-                        Cancelar
-                      </button>
-                      <button type="submit" className="submit-button">
-                        {currentView === 'create' ? 'Crear' : 'Guardar'}
-                      </button>
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
+        <CategoryFormModal
+          currentView={currentView}
+          currentCategory={currentCategory}
+          onClose={closeForm}
+          onSave={(formData) => {
+            if (currentView === 'create') {
+              const newCategory = {
+                id: generateId(),
+                ...formData,
+                activo: true
+              };
+              setCategoriasData([...categoriasData, newCategory]);
+            } else if (currentView === 'edit') {
+              setCategoriasData(categoriasData.map(cat =>
+                cat.id === currentCategory.id 
+                  ? { ...cat, ...formData }
+                  : cat
+              ));
+            }
+            closeForm();
+          }}
+        />
       )}
 
-      {/* Modal de confirmación para eliminar */}
       {showDeleteModal && (
-        <div className="modal-overlay">
-          <div className="modal-content confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Confirmar Eliminación</h2>
-              <button className="close-button" onClick={cancelDelete}>
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className="form-body">
-              <p>¿Estás seguro que deseas eliminar esta categoría?</p>
-              <div className="form-actions">
-                <button type="button" className="cancel-button" onClick={cancelDelete}>
-                  Cancelar
-                </button>
-                <button type="button" className="cancel-button" onClick={deleteCategory}>
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DeleteModal
+          onClose={cancelDelete}
+          onConfirm={deleteCategory}
+          title="Confirmar Eliminación"
+          message="¿Estás seguro que deseas eliminar esta categoría?"
+        />
       )}
     </div>
   );
 };
 
-export default CatPro;
+export default Categorias;
