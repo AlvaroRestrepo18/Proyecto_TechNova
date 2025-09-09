@@ -14,3 +14,10 @@ export const login = async (email, password) => {
   localStorage.setItem("token", data.token); // 🔑 guarda el JWT real
   return data; // ⬅ aquí deberían venir datos del usuario
 };
+
+export const logout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  // Aquí puedes agregar cualquier otra limpieza necesaria
+  window.location.href = "/login"; // Redirige al login
+};
