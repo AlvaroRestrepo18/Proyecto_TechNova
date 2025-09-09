@@ -2,17 +2,12 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faPen, faTrash, faPowerOff } from '@fortawesome/free-solid-svg-icons';
 
-const CategoryTable = ({ categorias, searchTerm, onEdit, onView, onDelete }) => {
+const CategoryTable = ({ categorias, searchTerm, onEdit, onView, onDelete, onToggleStatus }) => {
   const filteredCategorias = categorias.filter(cat =>
-    cat.nombreCategoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.tipoCategoria.toLowerCase().includes(searchTerm.toLowerCase())
+    (cat.nombreCategoria || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (cat.descripcion || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (cat.tipoCategoria || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const toggleCategoriaEstado = (id) => {
-    // Esta función debería manejarse en el componente principal
-    console.log('Toggle estado:', id);
-  };
 
   return (
     <div className="table-container">
@@ -37,7 +32,7 @@ const CategoryTable = ({ categorias, searchTerm, onEdit, onView, onDelete }) => 
               <td>
                 <button
                   className={`status-toggle ${cat.activo ? 'active' : 'inactive'}`}
-                  onClick={() => toggleCategoriaEstado(cat.id)}
+                  onClick={() => onToggleStatus(cat.id, !cat.activo)}
                   title={cat.activo ? 'Desactivar' : 'Activar'}
                 >
                   <FontAwesomeIcon icon={faPowerOff} />

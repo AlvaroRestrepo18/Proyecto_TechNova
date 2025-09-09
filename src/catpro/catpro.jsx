@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+// ...importaciones igual que antes
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import CategoryTable from './components/CategoryTable';
 import CategoryFormModal from './components/CategoryFormModal';
 import DeleteModal from './components/DeleteModal';
+import { 
+  getCategorias, 
+  createCategoria, 
+  updateCategoria, 
+  changeCategoriaStatus, 
+  deleteCategoria 
+} from "./services/Categorias.js";
 import './catpro.css';
 
 const Categorias = () => {
@@ -13,38 +21,37 @@ const Categorias = () => {
   const [currentCategory, setCurrentCategory] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState('activas'); // ← AÑADIDO: Estado para la pestaña activa
-  
+  const [activeTab, setActiveTab] = useState('activas'); 
+  const [categoriasData, setCategoriasData] = useState([]);
 
-  const [categoriasData, setCategoriasData] = useState([
-    { 
-      id: generateId(), 
-      tipoCategoria: 'Producto', 
-      nombreCategoria: 'Hardware', 
-      descripcion: 'Equipos y componentes físicos para computadoras.', 
-      activo: true 
-    },
-    { 
-      id: generateId(), 
-      tipoCategoria: 'Servicio', 
-      nombreCategoria: 'Soporte Técnico', 
-      descripcion: 'Servicios de soporte y mantenimiento de equipos.', 
-      activo: true 
-    },
-  ]);
-
-  function generateId() {
-    return 'CAT-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-  }
-
-  // ← AÑADIDO: Función para cambiar el estado de las categorías
-  const toggleCategoriaEstado = (id) => {
-    setCategoriasData(categoriasData.map(cat =>
-      cat.id === id ? { ...cat, activo: !cat.activo } : cat
-    ));
+  // 🚀 Cargar categorías desde la API
+  const fetchCategorias = async () => {
+    try {
+      const data = await getCategorias();
+      setCategoriasData(data);
+    } catch (error) {
+      console.error("Error cargando categorías:", error);
+      alert('Error al cargar categorías');
+    }
   };
 
-  // ← AÑADIDO: Separar categorías por estado
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
+
+  // 🔄 Cambiar estado activo/inactivo
+  const toggleCategoriaEstado = async (id, nuevoEstado) => {
+    try {
+      await changeCategoriaStatus(id, nuevoEstado);
+      // Refrescar la tabla
+      await fetchCategorias();
+      console.log(`Categoría ${nuevoEstado ? 'activada' : 'desactivada'} correctamente`);
+    } catch (error) {
+      console.error("Error cambiando estado:", error);
+      alert('Error al cambiar el estado de la categoría');
+    }
+  };
+
   const categoriasActivas = categoriasData.filter(cat => cat.activo);
   const categoriasInactivas = categoriasData.filter(cat => !cat.activo);
 
@@ -77,10 +84,18 @@ const Categorias = () => {
     setShowDeleteModal(true);
   };
 
-  const deleteCategory = () => {
-    setCategoriasData(categoriasData.filter(cat => cat.id !== categoryToDelete));
-    setShowDeleteModal(false);
-    setCategoryToDelete(null);
+  const deleteCategory = async () => {
+    try {
+      await deleteCategoria(categoryToDelete);
+      await fetchCategorias(); // refrescar tabla
+      console.log('Categoría eliminada correctamente');
+    } catch (error) {
+      console.error("Error eliminando categoría:", error);
+      alert('Error al eliminar la categoría');
+    } finally {
+      setShowDeleteModal(false);
+      setCategoryToDelete(null);
+    }
   };
 
   const cancelDelete = () => {
@@ -88,11 +103,36 @@ const Categorias = () => {
     setCategoryToDelete(null);
   };
 
+  // 📝 Guardar categoría
+  const handleSaveCategory = async (formData) => {
+    try {
+      if (!formData.nombreCategoria || !formData.tipoCategoria) {
+        alert("Debe completar el nombre y tipo de categoría");
+        return;
+      }
+
+      if (currentView === 'create') {
+        await createCategoria({ ...formData, activo: true });
+        console.log('Categoría creada correctamente');
+      } else if (currentView === 'edit') {
+        await updateCategoria(currentCategory.id, formData);
+        console.log('Categoría actualizada correctamente');
+      }
+
+      // 🔁 Refrescar la tabla después de crear o editar
+      await fetchCategorias();
+
+    } catch (error) {
+      console.error(`Error guardando categoría (id: ${currentCategory?.id}):`, error);
+      alert('Ocurrió un error al guardar la categoría');
+    }
+    closeForm();
+  };
+
   return (
     <div className="equipment-container">
       <h1>Cyber360 - Categorías</h1>
       
-      {/* ← AÑADIDO: Tabs para categorías activas/inactivas */}
       <div className="tabs-container">
         <button 
           className={`tab-button ${activeTab === 'activas' ? 'active' : ''}`}
@@ -121,14 +161,13 @@ const Categorias = () => {
         </button>
       </div>
       
-      {/* ← MODIFICADO: Pasar las categorías según la pestaña activa y la función toggle */}
       <CategoryTable
         categorias={activeTab === 'activas' ? categoriasActivas : categoriasInactivas}
         searchTerm={searchTerm}
         onEdit={openEditForm}
         onView={openView}
         onDelete={confirmDelete}
-        onToggleStatus={toggleCategoriaEstado} // ← AÑADIDO: Pasar la función toggle
+        onToggleStatus={toggleCategoriaEstado}
       />
 
       {isFormOpen && (
@@ -136,23 +175,7 @@ const Categorias = () => {
           currentView={currentView}
           currentCategory={currentCategory}
           onClose={closeForm}
-          onSave={(formData) => {
-            if (currentView === 'create') {
-              const newCategory = {
-                id: generateId(),
-                ...formData,
-                activo: true
-              };
-              setCategoriasData([...categoriasData, newCategory]);
-            } else if (currentView === 'edit') {
-              setCategoriasData(categoriasData.map(cat =>
-                cat.id === currentCategory.id 
-                  ? { ...cat, ...formData }
-                  : cat
-              ));
-            }
-            closeForm();
-          }}
+          onSave={handleSaveCategory}
         />
       )}
 

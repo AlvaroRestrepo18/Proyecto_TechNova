@@ -6,21 +6,24 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
   const [formData, setFormData] = useState({
     tipoCategoria: 'Producto',
     nombreCategoria: '',
-    descripcion: ''
+    descripcion: '',
+    activo: true
   });
 
   useEffect(() => {
     if (currentCategory) {
       setFormData({
-        tipoCategoria: currentCategory.tipoCategoria,
-        nombreCategoria: currentCategory.nombreCategoria,
-        descripcion: currentCategory.descripcion
+        tipoCategoria: currentCategory.tipoCategoria || 'Producto',
+        nombreCategoria: currentCategory.nombreCategoria || '',
+        descripcion: currentCategory.descripcion || '',
+        activo: currentCategory.activo ?? true
       });
     } else {
       setFormData({
         tipoCategoria: 'Producto',
         nombreCategoria: '',
-        descripcion: ''
+        descripcion: '',
+        activo: true
       });
     }
   }, [currentCategory]);
@@ -32,7 +35,14 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+
+    // Enviar todo el objeto completo
+    onSave({
+      tipoCategoria: formData.tipoCategoria,
+      nombreCategoria: formData.nombreCategoria,
+      descripcion: formData.descripcion,
+      activo: formData.activo
+    });
   };
 
   return (
