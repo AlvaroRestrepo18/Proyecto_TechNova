@@ -116,3 +116,21 @@ export const assignPermissionsToRole = async (rolId, permisosIds) => {
     throw error;
   }
 };
+
+
+// Obtener solo el nombre de un rol por ID (más liviano y seguro para Header)
+export const getRoleNameById = async (id, token) => {
+  try {
+    const roleResponse = await axios.get(`${API_BASE_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const role = roleResponse.data;
+
+    // 🔑 devolvemos solo lo que Header necesita
+    return role.nombreRol || "Rol desconocido";
+  } catch (error) {
+    console.error(`Error al obtener nombre del rol con id ${id}:`, error);
+    return "Error cargando rol";
+  }
+};

@@ -3,50 +3,33 @@ import { useNavigate } from "react-router-dom";
 import "./header.css";
 import { faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { logout } from "../../acceso/services/auth";
-
-import { getRoles } from "../../roles/services/roles.js";
+import { logout, getCurrentUser } from "../../acceso/services/auth.js";
+import { getRoleNameById } from "../../roles/services/roles.js";
 
 const Header = () => {
   const navigate = useNavigate();
-
-  const getStoredUser = () => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  };
-
-  const [user, setUser] = useState(getStoredUser());
-  const [isLoggedIn, setIsLoggedIn] = useState(!!getStoredUser());
+  const [user, setUser] = useState(getCurrentUser());
   const [rolNombre, setRolNombre] = useState("");
-
+  const isLoggedIn = !!user;
+  console.log(user)
   useEffect(() => {
-    const storedUser = getStoredUser();
-    setUser(storedUser);
-    setIsLoggedIn(!!storedUser);
-
-    // si hay usuario logueado, traemos roles
-    if (storedUser) {
-      getRoles()
-        .then((roles) => {
-          const rol = roles.find((r) => r.idRol === storedUser.fkRol);
-          if (rol) setRolNombre(rol.nombre);
-        })
+    if (user?.fkRol) {
+      const token = localStorage.getItem("token");
+      getRoleNameById(user.fkRol, token)
+        .then((nombre) => setRgolNombre(nombre || "Rol desconocido"))
         .catch((err) => {
-          console.error("Error obteniendo roles:", err);
+          console.error("Error obteniendo rol:", err);
+          setRolNombre("Error cargando rol");
         });
     }
-  }, []);
+  }, [user]);
 
-  const handleLoginClick = () => {
-    navigate("/login");
-  };
+  const handleLoginClick = () => navigate("/login");
 
   const handleLogoutClick = () => {
     logout();
     setUser(null);
-    setIsLoggedIn(false);
-    setRolNombre(""); // limpiar rol
-    navigate("/login");
+    setRolNombre("");
   };
 
   return (
