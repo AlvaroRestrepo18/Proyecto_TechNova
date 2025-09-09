@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import Header from './header/header';
+import Header from './shared/header/header';
 import Sidebar from './shared/sidebar/sidebar';
 import Users from './usuarios/usuarios';
 import Productos from './Productos/Productos';
@@ -13,7 +13,7 @@ import Dashboard from './dashboard/dashboard';
 import Equipos from './Equipos/Equipos';
 import Servicios from './Servicios/Servicios';
 import GestionReparaciones from './Pedidos/GestionReparaciones';
-import Footer from './footer/footer';
+import Footer from './shared/footer/footer';
 import Roles from './roles/roles';
 import Login from './acceso/login/login';
 import ClientesFidelizacion from './Clientes/ClientesFidelizacion';
