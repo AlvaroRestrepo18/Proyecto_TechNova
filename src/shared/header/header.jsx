@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./header.css";
 import { faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { logout } from "../../acceso/services/auth";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Header = () => {
   };
 
   const handleLogoutClick = () => {
-    localStorage.removeItem("user");
+    logout();
     setUser(null);
     setIsLoggedIn(false);
     navigate("/login");
