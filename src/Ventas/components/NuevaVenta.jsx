@@ -1,34 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import './NuevaVenta.css';
+
+// Importar servicios
+import { 
+  getProductos, 
+  getServicios, 
+  getClientes,
+  createVenta,
+  addProductoToVenta,
+  addServicioToVenta
+} from '../services/ventas';
 
 const NuevaVenta = ({ onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState("productos");
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
   const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
-  const [cliente, setCliente] = useState('');
+  const [clienteId, setClienteId] = useState('');
   const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [productoSeleccionado, setProductoSeleccionado] = useState('');
   const [cantidadProducto, setCantidadProducto] = useState(1);
   const [servicioSeleccionado, setServicioSeleccionado] = useState('');
+  
+  // Estados para datos de la API
+  const [productosDisponibles, setProductosDisponibles] = useState([]);
+  const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
+  const [clientesDisponibles, setClientesDisponibles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Datos de ejemplo
-  const productosDisponibles = [
-    { id: 1, nombre: 'Mouse Gamer', precio: 50 },
-    { id: 2, nombre: 'Teclado Mecánico', precio: 120 },
-    { id: 3, nombre: 'Monitor 24"', precio: 200 },
-    { id: 4, nombre: 'Auriculares', precio: 80 },
-    { id: 5, nombre: 'Mousepad', precio: 15 }
-  ];
+  // Cargar datos iniciales
+  useEffect(() => {
+    fetchDatosIniciales();
+  }, []);
 
-  const serviciosDisponibles = [
-    { id: 1, nombre: 'Mantenimiento PC', precio: 30 },
-    { id: 2, nombre: 'Instalación Software', precio: 20 },
-    { id: 3, nombre: 'Limpieza Interna', precio: 25 },
-    { id: 4, nombre: 'Actualización Sistema', precio: 40 },
-    { id: 5, nombre: 'Recuperación Datos', precio: 50 }
-  ];
+  const fetchDatosIniciales = async () => {
+    setLoading(true);
+    try {
+      const [productosData, serviciosData, clientesData] = await Promise.all([
+        getProductos(),
+        getServicios(),
+        getClientes()
+      ]);
+      
+      setProductosDisponibles(productosData);
+      setServiciosDisponibles(serviciosData);
+      setClientesDisponibles(clientesData);
+    } catch (err) {
+      setError("Error al cargar los datos iniciales");
+      console.error("Error fetching initial data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const agregarProducto = () => {
     if (!productoSeleccionado) return;
@@ -51,7 +76,9 @@ const NuevaVenta = ({ onClose, onSave }) => {
         ...productosSeleccionados, 
         { 
           ...producto, 
-          cantidad: cantidadProducto 
+          cantidad: cantidadProducto,
+          precioUnitario: producto.precio,
+          valorUnitario: producto.precio
         }
       ]);
     }
@@ -68,7 +95,16 @@ const NuevaVenta = ({ onClose, onSave }) => {
     if (!servicio) return;
     
     if (!serviciosSeleccionados.find(s => s.id === servicio.id)) {
-      setServiciosSeleccionados([...serviciosSeleccionados, servicio]);
+      setServiciosSeleccionados([
+        ...serviciosSeleccionados, 
+        { 
+          ...servicio, 
+          precioUnitario: servicio.precio,
+          valorUnitario: servicio.precio,
+          cantidad: 1,
+          detalles: servicio.descripcion || `Servicio: ${servicio.nombre}`
+        }
+      ]);
     }
     
     // Resetear selección
@@ -93,14 +129,14 @@ const NuevaVenta = ({ onClose, onSave }) => {
   };
 
   const calcularTotal = () => {
-    const totalProductos = productosSeleccionados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
-    const totalServicios = serviciosSeleccionados.reduce((sum, s) => sum + s.precio, 0);
+    const totalProductos = productosSeleccionados.reduce((sum, p) => sum + (p.precioUnitario * p.cantidad), 0);
+    const totalServicios = serviciosSeleccionados.reduce((sum, s) => sum + s.precioUnitario, 0);
     return totalProductos + totalServicios;
   };
 
-  const handleGuardar = () => {
-    if (!cliente) {
-      alert('Por favor ingrese el nombre del cliente');
+  const handleGuardar = async () => {
+    if (!clienteId) {
+      alert('Por favor seleccione un cliente');
       return;
     }
 
@@ -109,17 +145,61 @@ const NuevaVenta = ({ onClose, onSave }) => {
       return;
     }
 
-    const nuevaVenta = {
-      nombre: cliente,
-      metodo: metodoPago,
-      productos: productosSeleccionados,
-      servicios: serviciosSeleccionados,
-      equipos: [],
-      subtotal: calcularTotal(),
-      total: calcularTotal()
-    };
+    setLoading(true);
+    try {
+      // Crear objeto de venta para la API
+      const ventaData = {
+        clienteId: parseInt(clienteId),
+        fecha: new Date().toISOString().split('T')[0],
+        total: calcularTotal(),
+        metodoPago: metodoPago
+      };
 
-    onSave(nuevaVenta);
+      // 1. Crear la venta principal
+      const nuevaVenta = await createVenta(ventaData);
+      
+      // 2. Agregar productos a la venta
+      for (const producto of productosSeleccionados) {
+        const productoData = {
+          productoId: producto.id,
+          cantidad: producto.cantidad,
+          valorUnitario: producto.precioUnitario,
+          valorTotal: producto.precioUnitario * producto.cantidad
+        };
+        await addProductoToVenta(nuevaVenta.id, productoData);
+      }
+
+     // 3. Agregar servicios a la venta - FORMATO CORREGIDO
+for (const servicio of serviciosSeleccionados) {
+  // Crear el objeto en el formato que espera la API (sin la propiedad servicioxventum)
+  const servicioData = {
+    servicioId: servicio.id,
+    cantidad: 1,
+    valorUnitario: servicio.precioUnitario,
+    valorTotal: servicio.precioUnitario,
+    detalles: servicio.detalles || `Servicio: ${servicio.nombre}`
+  };
+  
+  await addServicioToVenta(nuevaVenta.id, servicioData);
+}
+
+      // Notificar al componente padre
+      onSave(nuevaVenta);
+      
+    } catch (err) {
+      setError("Error al guardar la venta");
+      console.error("Error saving venta:", err);
+      
+      // Mostrar detalles del error específico
+      if (err.response && err.response.data) {
+        console.error("Detalles del error:", err.response.data);
+        alert(`Error: ${JSON.stringify(err.response.data.errors || err.response.data)}`);
+      } else {
+        alert("Error al guardar la venta. Por favor intente nuevamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Combinar todos los items para mostrar en la tabla
@@ -127,6 +207,18 @@ const NuevaVenta = ({ onClose, onSave }) => {
     ...productosSeleccionados.map(p => ({ ...p, tipo: 'producto' })),
     ...serviciosSeleccionados.map(s => ({ ...s, tipo: 'servicio', cantidad: 1 }))
   ];
+
+  if (loading && !productosDisponibles.length) {
+    return (
+      <div className="modal-overlay nueva-venta-overlay" onClick={onClose}>
+        <div className="modal-content nueva-venta-container grande" onClick={e => e.stopPropagation()}>
+          <div className="loading-container">
+            <FontAwesomeIcon icon={faSpinner} spin /> Cargando datos...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="modal-overlay nueva-venta-overlay" onClick={onClose}>
@@ -139,16 +231,29 @@ const NuevaVenta = ({ onClose, onSave }) => {
         </div>
 
         <div className="nueva-venta-body">
+          {error && (
+            <div className="error-message">
+              {error}
+              <button onClick={fetchDatosIniciales}>Reintentar</button>
+            </div>
+          )}
+
           <div className="form-row">
             <div className="form-group">
-              <label>Nombre del Cliente:</label>
-              <input 
-                type="text" 
-                placeholder="Nombre completo del cliente" 
-                value={cliente}
-                onChange={(e) => setCliente(e.target.value)}
-                className="cliente-input"
-              />
+              <label>Cliente:</label>
+              <select 
+                value={clienteId} 
+                onChange={(e) => setClienteId(e.target.value)}
+                className="cliente-select"
+                required
+              >
+                <option value="">-- Seleccione un cliente --</option>
+                {clientesDisponibles.map(cliente => (
+                  <option key={cliente.id} value={cliente.id}>
+                    {cliente.nombre} {cliente.apellido || ''} - {cliente.documento || ''}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Método de Pago:</label>
@@ -290,8 +395,8 @@ const NuevaVenta = ({ onClose, onSave }) => {
                             <span>1</span>
                           )}
                         </td>
-                        <td>${item.precio.toFixed(2)}</td>
-                        <td>${(item.precio * item.cantidad).toFixed(2)}</td>
+                        <td>${item.precioUnitario?.toFixed(2) || '0.00'}</td>
+                        <td>${((item.precioUnitario || 0) * item.cantidad).toFixed(2)}</td>
                         <td>
                           <button 
                             className="remove-item-button"
@@ -317,11 +422,15 @@ const NuevaVenta = ({ onClose, onSave }) => {
           </div>
 
           <div className="form-actions">
-            <button className="cancel-button" onClick={onClose}>
+            <button className="cancel-button" onClick={onClose} disabled={loading}>
               Cancelar
             </button>
-            <button className="submit-button" onClick={handleGuardar}>
-              Guardar Venta
+            <button 
+              className="submit-button" 
+              onClick={handleGuardar}
+              disabled={loading || !clienteId || todosLosItems.length === 0}
+            >
+              {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Guardar Venta'}
             </button>
           </div>
         </div>

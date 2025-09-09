@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import ViewModal from './components/ViewModal';
@@ -6,102 +6,95 @@ import PdfModal from './components/PdfModal';
 import TablaVentas from './components/TablaVentas';
 import NuevaVenta from './components/NuevaVenta';
 
+import {
+  getVentas,
+  changeVentaStatus
+} from './services/ventas';
+
 const Ventas = () => {
   // Estados principales
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState("activas");
-  const [modalVenta, setModalVenta] = useState(null);
+  const [currentVentaId, setCurrentVentaId] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ventasData, setVentasData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Datos de ejemplo de ventas
-  const [ventasData, setVentasData] = useState([
-    { 
-      id: '120-45-67', 
-      nombre: 'Alejo', 
-      fecha: '08/04/2025', 
-      metodo: 'Efectivo', 
-      estado: 'Activo',
-      productos: [
-        { id: 1, nombre: 'Mouse Gamer', cantidad: 1, precio: 50 }
-      ],
-      servicios: [],
-      equipos: [],
-      subtotal: 50,
-      total: 50
-    },
-    { 
-      id: '234-56-78', 
-      nombre: 'Samuel', 
-      fecha: '09/04/2025', 
-      metodo: 'Efectivo', 
-      estado: 'Inactivo',
-      productos: [
-        { id: 2, nombre: 'Teclado Mecánico', cantidad: 1, precio: 120 }
-      ],
-      servicios: [],
-      equipos: [],
-      subtotal: 120,
-      total: 120
-    },
-    { 
-      id: '345-67-89', 
-      nombre: 'Camilo', 
-      fecha: '10/04/2025', 
-      metodo: 'Efectivo', 
-      estado: 'Activo',
-      productos: [],
-      servicios: [
-        { id: 1, nombre: 'Mantenimiento PC', precio: 30 }
-      ],
-      equipos: [],
-      subtotal: 30,
-      total: 30
+  const itemsPerPage = 7;
+
+  useEffect(() => {
+    fetchVentas();
+  }, [activeTab]);
+
+  const fetchVentas = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("Cargando ventas...");
+      const ventas = await getVentas();
+      console.log("Ventas obtenidas:", ventas);
+      
+      const filteredVentas = ventas.filter(venta =>
+        activeTab === "activas" ? venta.estado === 'Activo' : venta.estado === 'Inactivo'
+      );
+      
+      console.log("Ventas filtradas:", filteredVentas);
+      setVentasData(filteredVentas);
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Error al cargar ventas:", err);
+      setError("Error al cargar ventas. Verifica la consola para más detalles.");
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   // Filtros de ventas
-  const filteredActivas = ventasData.filter(venta => 
-    (venta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venta.id.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    venta.estado === 'Activo'
+  const filteredVentas = ventasData.filter(venta => 
+    (venta.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    venta.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const filteredInactivas = ventasData.filter(venta => 
-    (venta.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venta.id.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    venta.estado === 'Inactivo'
+  const totalPages = Math.ceil(filteredVentas.length / itemsPerPage);
+  const paginatedVentas = filteredVentas.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // Handlers
-  const toggleEstado = (id) => {
-    setVentasData(ventasData.map(venta => 
-      venta.id === id && venta.estado === 'Activo'
-        ? { ...venta, estado: 'Inactivo' }
-        : venta
-    ));
+  const toggleEstado = async (id, currentEstado) => {
+    try {
+      await changeVentaStatus(id, currentEstado === 'Activo' ? 'Inactivo' : 'Activo');
+      await fetchVentas();
+    } catch (err) {
+      console.error("Error al cambiar estado:", err);
+      window.mostrarAlerta("Error al cambiar estado de la venta.");
+    }
   };
 
   // Modal de visualización
-  const openViewModal = (venta) => {
-    setModalVenta(venta);
+  const openViewModal = (ventaId) => {
+    setCurrentVentaId(ventaId);
     setIsViewModalOpen(true);
   };
 
   const closeViewModal = () => {
     setIsViewModalOpen(false);
-    setModalVenta(null);
+    setCurrentVentaId(null);
   };
 
-  const openPdfModal = (venta) => {
-    setModalVenta(venta);
+  const openPdfModal = (ventaId) => {
+    setCurrentVentaId(ventaId);
     setIsPdfModalOpen(true);
   };
 
   const closePdfModal = () => {
     setIsPdfModalOpen(false);
-    setModalVenta(null);
+    setCurrentVentaId(null);
   };
 
   const openNuevaVenta = () => {
@@ -112,44 +105,45 @@ const Ventas = () => {
     setIsNuevaVentaOpen(false);
   };
 
-  const handleSaveVenta = (nuevaVenta) => {
-    // Generar ID único para la nueva venta
-    const nuevoId = `${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}-${Math.floor(10 + Math.random() * 90)}`;
-    
-    // Obtener fecha actual
-    const fechaActual = new Date();
-    const fechaFormateada = `${fechaActual.getDate().toString().padStart(2, '0')}/${(fechaActual.getMonth() + 1).toString().padStart(2, '0')}/${fechaActual.getFullYear()}`;
-    
-    // Crear objeto de venta
-    const ventaCompleta = {
-      ...nuevaVenta,
-      id: nuevoId,
-      fecha: fechaFormateada,
-      estado: 'Activo'
-    };
-    
-    // Agregar a los datos
-    setVentasData([...ventasData, ventaCompleta]);
-    setIsNuevaVentaOpen(false);
+  const handleSaveVenta = async (nuevaVenta) => {
+    try {
+      await fetchVentas();
+      setIsNuevaVentaOpen(false);
+    } catch (err) {
+      alert("Error al guardar la venta.");
+    }
   };
 
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  if (loading) return <p>Cargando ventas...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
+
   return (
-    <div className="ventas-container">
+    <div className="container">
       <h1>Cyber360 - Ventas</h1>
       
       <div className="section-divider"></div>
       
       {/* Pestañas */}
-      <div className="items-buttons">
+      <div className="tabs">
         <button
-          className={`tab-button productos${activeTab === "activas" ? " active" : ""}`}
-          onClick={() => setActiveTab("activas")}
+          className={`tab-button ${activeTab === "activas" ? "active-tab" : ""}`}
+          onClick={() => {
+            setActiveTab("activas");
+            setCurrentPage(1);
+          }}
         >
           Ventas Activas
         </button>
         <button
-          className={`tab-button servicios${activeTab === "inactivas" ? " active" : ""}`}
-          onClick={() => setActiveTab("inactivas")}
+          className={`tab-button ${activeTab === "inactivas" ? "active-tab" : ""}`}
+          onClick={() => {
+            setActiveTab("inactivas");
+            setCurrentPage(1);
+          }}
         >
           Ventas Inactivas
         </button>
@@ -160,7 +154,10 @@ const Ventas = () => {
           type="text"
           placeholder={activeTab === "activas" ? "Buscar ventas activas" : "Buscar ventas inactivas"}
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
           className="search-input"
         />
         {activeTab === "activas" && (
@@ -171,31 +168,51 @@ const Ventas = () => {
       </div>
       
       <div className="table-container">
-        {activeTab === "activas" ? (
-          <TablaVentas 
-            ventas={filteredActivas} 
-            toggleEstado={toggleEstado}
-            openViewModal={openViewModal}
-            openPdfModal={openPdfModal}
-          />
-        ) : (
-          <TablaVentas 
-            ventas={filteredInactivas} 
-            toggleEstado={toggleEstado}
-            openViewModal={openViewModal}
-            openPdfModal={openPdfModal}
-          />
-        )}
+        <TablaVentas 
+          ventas={paginatedVentas} 
+          toggleEstado={toggleEstado}
+          openViewModal={openViewModal}
+          openPdfModal={openPdfModal}
+        />
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+            &lt;
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              className={currentPage === i + 1 ? "active-page" : ""}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            &gt;
+          </button>
+        </div>
+      )}
 
       {/* Modal de visualización */}
       {isViewModalOpen && (
-        <ViewModal venta={modalVenta} onClose={closeViewModal} />
+        <ViewModal 
+          ventaId={currentVentaId} 
+          onClose={closeViewModal} 
+        />
       )}
 
       {/* Modal de PDF */}
       {isPdfModalOpen && (
-        <PdfModal venta={modalVenta} onClose={closePdfModal} />
+        <PdfModal 
+          ventaId={currentVentaId} 
+          onClose={closePdfModal} 
+        />
       )}
 
       {/* Modal de Nueva Venta */}

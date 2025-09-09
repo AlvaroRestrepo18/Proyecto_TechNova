@@ -1,120 +1,183 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://cyber360-api.onrender.com/api/ventas";
-const API_PRODUCTO_VENTA_URL = "https://cyber360-api.onrender.com/api/productoxventa";
-const API_SERVICIO_VENTA_URL = "https://cyber360-api.onrender.com/api/servicioxventums";
+const API_BASE_URL = "https://cyber360-api.onrender.com/api";
+const VENTAS_URL = `${API_BASE_URL}/ventas`;
+const PRODUCTO_VENTA_URL = `${API_BASE_URL}/productoxventa`;
+const SERVICIO_VENTA_URL = `${API_BASE_URL}/servicioxventums`;
+const PRODUCTOS_URL = `${API_BASE_URL}/productos`;
+const SERVICIOS_URL = `${API_BASE_URL}/servicios`;
+const CLIENTES_URL = `${API_BASE_URL}/clientes`;
 
+// Mapeo backend -> frontend venta (versión mejorada)
+const mapBackendToFrontend = (venta) => {
+  console.log("Venta cruda desde API:", venta);
+  
+  // Manejo flexible del estado
+  const estado = venta.activo !== undefined ? 
+    (venta.activo ? 'Activo' : 'Inactivo') : 
+    venta.estado || 'Activo';
+  
+  // Manejo flexible del cliente - ahora incluye nombre completo
+  const clienteNombreCompleto = venta.cliente?.nombre && venta.cliente?.apellido 
+    ? `${venta.cliente.nombre} ${venta.cliente.apellido}`
+    : venta.cliente?.nombre || venta.nombreCliente || venta.nombre || 'N/A';
 
-// Mapeo backend -> frontend rol
-const mapBackendToFrontend = (role, permisos = []) => ({
-  id: role.idRol,
-  nombre: role.nombreRol,
-  descripcion: role.descripcion,
-  activo: role.activo,
-  permissions: permisos, // permisos asignados al rol (solo array de IDs)
+  return {
+    id: venta.id || venta.ID,
+    fecha: venta.fecha || venta.fechaVenta,
+    clienteId: venta.clienteId || venta.idCliente,
+    total: venta.total || venta.montoTotal || 0,
+    cliente: {
+      id: venta.cliente?.id,
+      nombre: venta.cliente?.nombre,
+      apellido: venta.cliente?.apellido,
+      nombreCompleto: clienteNombreCompleto
+    },
+    productos: venta.productoxventa || venta.productos || [],
+    servicios: venta.servicioxventa || venta.servicios || [],
+    metodo: venta.metodo || venta.metodoPago || 'Efectivo',
+    estado: estado
+  };
+};
+
+// Mapeo frontend -> backend venta
+const mapFrontendToBackend = (venta) => ({
+  fecha: venta.fecha,
+  clienteId: venta.clienteId,
+  total: venta.total,
+  metodo: venta.metodo,
+  activo: venta.estado === 'Activo'
 });
 
-// Mapeo frontend -> backend rol
-const mapFrontendToBackend = (role) => ({
-  idRol: role.id,
-  nombreRol: role.nombre,
-  descripcion: role.descripcion,
-  activo: role.activo,
-});
-
-// Obtener todos los roles, opcionalmente solo activos
-export const getRoles = async (soloActivos = null) => {
+// Obtener todas las ventas
+export const getVentas = async () => {
   try {
-    const params = soloActivos !== null ? { soloActivos } : {};
-    const response = await axios.get(API_BASE_URL, { params });
-    return response.data.map(role => mapBackendToFrontend(role));
+    console.log("Haciendo petición a:", VENTAS_URL);
+    const response = await axios.get(VENTAS_URL);
+    console.log("Respuesta de la API:", response.data);
+    return response.data.map(venta => mapBackendToFrontend(venta));
   } catch (error) {
-    console.error("Error al obtener roles:", error);
+    console.error("Error al obtener ventas:", error);
+    if (error.response) {
+      console.error("Respuesta del error:", error.response.data);
+      console.error("Status del error:", error.response.status);
+    }
     throw error;
   }
 };
 
-// Obtener un rol por ID incluyendo permisos asignados (retorna permisos como array de IDs)
-export const getRoleById = async (id) => {
+// Obtener una venta por ID
+export const getVentaById = async (id) => {
   try {
-    const roleResponse = await axios.get(`${API_BASE_URL}/${id}`);
-    const permisosResponse = await axios.get(`${API_PERMISOS_ROL_URL}/rol/${id}`);
-
-    // Mapear permisos a array solo de IDs
-    const permisosIds = permisosResponse.data.map(p => p.idPermiso || p.IdPermiso || p.FkPermiso);
-
-    return mapBackendToFrontend(roleResponse.data, permisosIds);
+    const response = await axios.get(`${VENTAS_URL}/${id}`);
+    return mapBackendToFrontend(response.data);
   } catch (error) {
-    console.error(`Error al obtener rol con id ${id}:`, error);
+    console.error(`Error al obtener venta con id ${id}:`, error);
     throw error;
   }
 };
 
-// Crear un nuevo rol
-export const createRole = async (roleData) => {
+// Resto de las funciones se mantienen igual...
+export const createVenta = async (ventaData) => {
+  try {
+    const payload = mapFrontendToBackend(ventaData);
+    const response = await axios.post(VENTAS_URL, payload);
+    return mapBackendToFrontend(response.data);
+  } catch (error) {
+    console.error("Error al crear venta:", error);
+    throw error;
+  }
+};
+
+export const updateVenta = async (id, ventaData) => {
+  try {
+    const payload = mapFrontendToBackend(ventaData);
+    const response = await axios.put(`${VENTAS_URL}/${id}`, payload);
+    return mapBackendToFrontend(response.data);
+  } catch (error) {
+    console.error(`Error al actualizar venta con id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const changeVentaStatus = async (id, activo) => {
+  try {
+    const response = await axios.patch(`${VENTAS_URL}/${id}/estado`, { activo });
+    return mapBackendToFrontend(response.data);
+  } catch (error) {
+    console.error(`Error al cambiar estado de venta con id ${id}:`, error);
+    throw error;
+  }
+};
+
+export const addProductoToVenta = async (ventaId, productoData) => {
   try {
     const payload = {
-      nombreRol: roleData.nombre,
-      descripcion: roleData.descripcion,
-      activo: roleData.activo ?? true,
+      ventaId: ventaId,
+      productoId: productoData.productoId,
+      cantidad: productoData.cantidad,
+      precioUnitario: productoData.precioUnitario
     };
-    const response = await axios.post(API_BASE_URL, payload);
-    return {
-      id: response.data.idRol,
-      nombreRol: response.data.nombreRol,
-      descripcion: response.data.descripcion,
-    };
-  } catch (error) {
-    console.error("Error al crear rol:", error);
-    throw error;
-  }
-};
-
-// Actualizar un rol
-export const updateRole = async (id, roleData) => {
-  try {
-    const payload = {
-      idRol: id,
-      nombreRol: roleData.nombre,
-      descripcion: roleData.descripcion,
-      activo: roleData.activo ?? true,
-    };
-    await axios.put(`${API_BASE_URL}/${id}`, payload);
-  } catch (error) {
-    console.error(`Error al actualizar rol con id ${id}:`, error);
-    throw error;
-  }
-};
-
-// Cambiar estado activo/inactivo del rol (PATCH)
-export const changeRoleStatus = async (id, activo) => {
-  try {
-    await axios.patch(`${API_BASE_URL}/CambiarEstado/${id}`, null, {
-      params: { activo },
-    });
-  } catch (error) {
-    console.error(`Error al cambiar estado del rol con id ${id}:`, error);
-    throw error;
-  }
-};
-
-// Eliminar un rol (borrado físico)
-export const deleteRole = async (id) => {
-  try {
-    await axios.delete(`${API_BASE_URL}/${id}`);
-  } catch (error) {
-    console.error(`Error al eliminar rol con id ${id}:`, error);
-    throw error;
-  }
-};
-
-// Asignar permisos a un rol (reemplaza los actuales)
-export const assignPermissionsToRole = async (rolId, permisosIds) => {
-  try {
-    const response = await axios.post(`${API_PERMISOS_ROL_URL}/rol/${rolId}/asignar`, permisosIds);
+    const response = await axios.post(PRODUCTO_VENTA_URL, payload);
     return response.data;
   } catch (error) {
-    console.error(`Error al asignar permisos para rol ${rolId}:`, error);
+    console.error(`Error al agregar producto a venta ${ventaId}:`, error);
+    throw error;
+  }
+};
+
+export const addServicioToVenta = async (ventaId, servicioData) => {
+  try {
+    const payload = {
+      ventaId: ventaId,
+      servicioId: servicioData.servicioId,
+      cantidad: servicioData.cantidad,
+      precioUnitario: servicioData.precioUnitario
+    };
+    const response = await axios.post(SERVICIO_VENTA_URL, payload);
+    return response.data;
+  } catch (error) {
+    console.error(`Error al agregar servicio a venta ${ventaId}:`, error);
+    throw error;
+  }
+};
+
+export const getProductos = async () => {
+  try {
+    const response = await axios.get(PRODUCTOS_URL);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener productos:", error);
+    throw error;
+  }
+};
+
+export const getServicios = async () => {
+  try {
+    const response = await axios.get(SERVICIOS_URL);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener servicios:", error);
+    throw error;
+  }
+};
+
+export const getClientes = async () => {
+  try {
+    const response = await axios.get(CLIENTES_URL);
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener clientes:", error);
+    throw error;
+  }
+};
+
+export const getClienteById = async (id) => {
+  try {
+    const response = await axios.get(`${CLIENTES_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error al obtener cliente con id para la venta ${id}:`, error);
     throw error;
   }
 };
