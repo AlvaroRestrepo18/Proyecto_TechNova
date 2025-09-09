@@ -5,6 +5,8 @@ import { faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { logout } from "../../acceso/services/auth";
 
+import { getRoles } from "../../roles/services/roles.js";
+
 const Header = () => {
   const navigate = useNavigate();
 
@@ -15,11 +17,24 @@ const Header = () => {
 
   const [user, setUser] = useState(getStoredUser());
   const [isLoggedIn, setIsLoggedIn] = useState(!!getStoredUser());
+  const [rolNombre, setRolNombre] = useState("");
 
   useEffect(() => {
     const storedUser = getStoredUser();
     setUser(storedUser);
     setIsLoggedIn(!!storedUser);
+
+    // si hay usuario logueado, traemos roles
+    if (storedUser) {
+      getRoles()
+        .then((roles) => {
+          const rol = roles.find((r) => r.idRol === storedUser.fkRol);
+          if (rol) setRolNombre(rol.nombre);
+        })
+        .catch((err) => {
+          console.error("Error obteniendo roles:", err);
+        });
+    }
   }, []);
 
   const handleLoginClick = () => {
@@ -30,6 +45,7 @@ const Header = () => {
     logout();
     setUser(null);
     setIsLoggedIn(false);
+    setRolNombre(""); // limpiar rol
     navigate("/login");
   };
 
@@ -49,7 +65,7 @@ const Header = () => {
         ) : (
           <>
             <div className="admin-info">
-              <p className="admin-role">{user?.rol}</p>
+              <p className="admin-role">{rolNombre || "Cargando rol..."}</p>
               <p className="admin-name">{user?.nombre}</p>
             </div>
             <div className="admin-avatar">

@@ -10,6 +10,7 @@ export const login = async (email, password) => {
     throw new Error("Credenciales inválidas"); // ❌ si la API dice que no está ok
   }
 
+
   const data = await response.json();
   localStorage.setItem("token", data.token); // 🔑 guarda el JWT real
   return data; // ⬅ aquí deberían venir datos del usuario
