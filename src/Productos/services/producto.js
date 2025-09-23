@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://cyber360-api.onrender.com/api/productos";
-const API_CATEGORIA_URL = "https://cyber360-api.onrender.com/api/categorias";
+const API_BASE_URL = "";
+const API_CATEGORIA_URL = "";
 
 // Mapeo backend -> frontend producto
 const mapBackendToFrontend = (producto) => ({

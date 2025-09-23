@@ -36,7 +36,7 @@ const Header = () => {
     <header className="app-header">
       <div className="header-left">
         <h1 className="app-title">
-          <span className="highlighted-brand">CyberConect@2</span>
+          <span className="highlighted-brand">TechNova</span>
         </h1>
       </div>
 

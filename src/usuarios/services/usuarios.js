@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://cyber360-api.onrender.com/usuarios";
+const API_BASE_URL = "";
 
 // ====================
 // Mapeos

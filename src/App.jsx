@@ -5,18 +5,12 @@ import Sidebar from './shared/sidebar/sidebar';
 import Users from './usuarios/usuarios';
 import Productos from './Productos/Productos';
 import Proveedores from './Proveedores/Proveedores';
-import Catser from './categoriaser/Catser';
 import Catpro from './catpro/catpro';
 import Ventas from './Ventas/ventas';
 import Compras from './Compras/Compras';
-import Dashboard from './dashboard/dashboard';
-import Equipos from './Equipos/Equipos';
-import Servicios from './Servicios/Servicios';
-import GestionReparaciones from './Pedidos/GestionReparaciones';
 import Footer from './shared/footer/footer';
 import Roles from './roles/roles';
 import Login from './acceso/login/login';
-import ClientesFidelizacion from './Clientes/ClientesFidelizacion';
 import ForgotPassword from './acceso/forgot/forgot';
 import ResetPassword from './acceso/reset/resetpassword';
 import ModalAlerta from './shared/modals/ModalAlerta';
@@ -71,17 +65,11 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-                <Route path="/Equipos" element={<Equipos />} />
                 <Route path="/Productos" element={<Productos />} />
-                <Route path="/Catser" element={<Catser />} />
                 <Route path="/Proveedores" element={<Proveedores />} />
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/catpro" element={<Catpro />} />
                 <Route path="/Compras" element={<Compras />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/Servicios" element={<Servicios />} />
-                <Route path="/ClientesFidelizacion" element={<ClientesFidelizacion />} />
-                <Route path="/GestionReparaciones" element={<GestionReparaciones />} />
                 <Route
                   path="/roles"
                   element={
@@ -90,7 +78,8 @@ function App() {
                     </PrivateRoute>
                   }
                 />
-                <Route path="/" element={<Dashboard />} />
+                {/* Página raíz ahora apunta a Usuarios */}
+                <Route path="/" element={<Users />} />
               </Routes>
             </AppLayout>
           }

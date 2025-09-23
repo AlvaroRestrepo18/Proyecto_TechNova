@@ -6,11 +6,6 @@ import PdfModal from './components/PdfModal';
 import TablaVentas from './components/TablaVentas';
 import NuevaVenta from './components/NuevaVenta';
 
-import {
-  getVentas,
-  changeVentaStatus
-} from './services/ventas';
-
 const Ventas = () => {
   // Estados principales
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,36 +16,28 @@ const Ventas = () => {
   const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [ventasData, setVentasData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const itemsPerPage = 7;
+
+  // Datos mockeados (simulan la API)
+  const ventasMock = [
+    { id: 1, cliente: { nombre: "Juan Pérez" }, estado: "Activo" },
+    { id: 2, cliente: { nombre: "María López" }, estado: "Activo" },
+    { id: 3, cliente: { nombre: "Carlos Gómez" }, estado: "Inactivo" },
+    { id: 4, cliente: { nombre: "Ana Torres" }, estado: "Activo" },
+    { id: 5, cliente: { nombre: "Luis Fernández" }, estado: "Inactivo" },
+  ];
 
   useEffect(() => {
     fetchVentas();
   }, [activeTab]);
 
-  const fetchVentas = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log("Cargando ventas...");
-      const ventas = await getVentas();
-      console.log("Ventas obtenidas:", ventas);
-      
-      const filteredVentas = ventas.filter(venta =>
-        activeTab === "activas" ? venta.estado === 'Activo' : venta.estado === 'Inactivo'
-      );
-      
-      console.log("Ventas filtradas:", filteredVentas);
-      setVentasData(filteredVentas);
-      setCurrentPage(1);
-    } catch (err) {
-      console.error("Error al cargar ventas:", err);
-      setError("Error al cargar ventas. Verifica la consola para más detalles.");
-    } finally {
-      setLoading(false);
-    }
+  const fetchVentas = () => {
+    const filteredVentas = ventasMock.filter(venta =>
+      activeTab === "activas" ? venta.estado === 'Activo' : venta.estado === 'Inactivo'
+    );
+    setVentasData(filteredVentas);
+    setCurrentPage(1);
   };
 
   // Filtros de ventas
@@ -66,14 +53,14 @@ const Ventas = () => {
   );
 
   // Handlers
-  const toggleEstado = async (id, currentEstado) => {
-    try {
-      await changeVentaStatus(id, currentEstado === 'Activo' ? 'Inactivo' : 'Activo');
-      await fetchVentas();
-    } catch (err) {
-      console.error("Error al cambiar estado:", err);
-      window.mostrarAlerta("Error al cambiar estado de la venta.");
-    }
+  const toggleEstado = (id, currentEstado) => {
+    setVentasData(prev =>
+      prev.map(venta =>
+        venta.id === id
+          ? { ...venta, estado: currentEstado === "Activo" ? "Inactivo" : "Activo" }
+          : venta
+      )
+    );
   };
 
   // Modal de visualización
@@ -105,25 +92,18 @@ const Ventas = () => {
     setIsNuevaVentaOpen(false);
   };
 
-  const handleSaveVenta = async (nuevaVenta) => {
-    try {
-      await fetchVentas();
-      setIsNuevaVentaOpen(false);
-    } catch (err) {
-      alert("Error al guardar la venta.");
-    }
+  const handleSaveVenta = (nuevaVenta) => {
+    setVentasData(prev => [...prev, { ...nuevaVenta, id: prev.length + 1, estado: "Activo" }]);
+    setIsNuevaVentaOpen(false);
   };
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  if (loading) return <p>Cargando ventas...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-
   return (
     <div className="container">
-      <h1>Cyber360 - Ventas</h1>
+      <h1>Ventas</h1>
       
       <div className="section-divider"></div>
       

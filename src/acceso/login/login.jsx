@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { login } from '../services/auth'; // 👈 Importamos el servicio real
+// import { login } from '../services/auth'; // ❌ API aún no existe
 import './Login.css';
 
 const Login = () => {
@@ -18,19 +18,20 @@ const Login = () => {
     setError('');
 
     try {
-      // Llamamos al backend
-      const data = await login(email, password);
+      // 🚨 Simulación temporal sin API
+      if (email && password) {
+        localStorage.setItem(
+          'user',
+          JSON.stringify({
+            nombre: 'Usuario Demo',
+            rol: 'Administrador',
+          })
+        );
 
-      // Opcional: guardamos también información de usuario (si viene del backend)
-      localStorage.setItem(
-        'user',
-        JSON.stringify({
-          nombre: data.nombre || 'Usuario',
-          rol: data.rol || 'Usuario',
-        })
-      );
-
-      navigate('/dashboard'); // Redirigimos al dashboard
+        navigate('/dashboard'); // Redirige igual al dashboard
+      } else {
+        throw new Error('Credenciales inválidas');
+      }
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {

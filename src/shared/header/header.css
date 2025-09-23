@@ -1,7 +1,24 @@
+:root {
+  --header-height: 64px;
+  --header-bg-color: #ffffff;
+  --header-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --brand-gradient: linear-gradient(135deg, #8e6bff 0%, #4ecdc4 100%);
+  --login-gradient: linear-gradient(135deg, #8e6bff 0%, #4ecdc4 100%);
+  --logout-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  --primary-spacing: 24px;
+  --compact-spacing: 16px;
+  --transition-duration: 0.3s;
+  --border-radius: 8px;
+  --primary-color: #5563de;
+  --text-color: #2d3436;
+  --text-light: #636e72;
+  --success-color: #00b894;
+}
+
 .app-header {
-  background-color: #f7f7f7;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 10px 24px;
+  background-color: var(--header-bg-color);
+  box-shadow: var(--header-shadow);
+  padding: 0 var(--primary-spacing);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -10,56 +27,82 @@
   left: 0;
   right: 0;
   z-index: 100;
-  height: 60px; /* Altura fija para consistencia */
+  height: var(--header-height);
+  transition: all var(--transition-duration) ease;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  margin-left: 80px; /* Espacio para la sidebar */
+  transition: margin-left 0.3s ease;
 }
 
 .app-title {
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 700;
   margin: 0;
   display: flex;
   align-items: center;
-  margin-left: 100px;
+  color: var(--text-color);
+  position: relative;
+  left: 100px;
 }
 
 .highlighted-brand {
   color: white;
-  padding: 26.8px 25px;
-  background: linear-gradient(90deg, #1e3c72, #1861e0);
-  clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
+  padding: 22px 28px;
+  background: var(--brand-gradient);
+  clip-path: polygon(12% 0%, 100% 0%, 88% 100%, 0% 100%);
   display: inline-block;
+  margin-right: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  font-weight: 800;
 }
 
+.highlighted-brand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 12px; /* Reducido de 16px */
+  gap: var(--compact-spacing);
 }
 
-/* Botones de sesión compactos */
-.Hlogin-button {
-  background: linear-gradient(90deg, #1e3c72, #1861e0, #1e3c72);
-  background-size: 200% 100%;
-  background-position: 0% 0%;
+/* Botones base con propiedades comunes */
+.Hbutton {
   color: white;
   border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background-position 1.5s ease-in-out;
-  height: 32px;
-  margin-top: 0px;
+  gap: 8px;
+  transition: all var(--transition-duration) ease;
+  height: 40px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.Hbutton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.Hlogin-button {
+  background: var(--login-gradient);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+}
+
+.Hlogout-button {
+  background: var(--logout-gradient);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
 }
 
 .Hlogin-button:hover,
@@ -67,88 +110,144 @@
   background-position: 100% 0%;
 }
 
-.Hlogout-button {
-  background: linear-gradient(90deg, #712e2e, #d73a3a, #773232);
-  background-size: 200% 100%;
-  background-position: 0% 0%;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background-position 1.5s ease-in-out;
-  height: 32px;
-  margin-top: 0px;
-}
-
-/* Información de usuario compacta */
+/* Información de usuario */
 .admin-info {
   text-align: right;
-  margin-right: 10px; /* Reducido de 15px */
+  margin-right: 12px;
 }
 
 .admin-role {
-  font-size: 0.75rem; /* 12px */
-  color: #777;
+  font-size: 0.8rem;
+  color: var(--text-light);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 .admin-name {
-  font-size: 0.8125rem; /* 13px */
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.3;
+  color: var(--text-color);
 }
 
 .admin-avatar {
-  width: 32px; /* Reducido de 40px */
-  height: 32px;
-  background-color: #4CAF50;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #8c7ae6 100%);
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.8rem; /* Tamaño de texto reducido */
+  font-size: 0.9rem;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--primary-color);
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-/* Menú desplegable ajustado */
+.admin-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--primary-color), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Menú desplegable */
 .dropdown-menu {
   position: absolute;
-  top: 50px; /* Ajustado por la altura reducida del header */
+  top: calc(var(--header-height) + 8px);
   right: 20px;
   background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  min-width: 160px;
+  min-width: 200px;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .dropdown-item {
   width: 100%;
-  padding: 8px 12px; /* Reducido */
+  padding: 12px 16px;
   text-align: left;
   border: none;
   background: none;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #333;
-  font-size: 0.8rem;
+  gap: 10px;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
-/* Asegurar que el header no se superponga con la sidebar */
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #eaeaea;
+  margin: 4px 0;
+}
+
+/* Media queries para responsividad */
 @media (min-width: 768px) {
-  
   .header-left {
-    margin-left: 0; /* Eliminar margen cuando la sidebar está visible */
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --primary-spacing: 16px;
+    --compact-spacing: 12px;
+  }
+  
+  .app-header {
+    padding: 0 var(--primary-spacing);
+  }
+  
+  .app-title {
+    left: 0;
+  }
+  
+  .admin-info {
+    display: none;
+  }
+  
+  .highlighted-brand {
+    padding: 18px 22px;
+    clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+    margin-right: 12px;
+    font-size: 0.9rem;
+  }
+  
+  .Hbutton {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    height: 36px;
+  }
+  
+  .admin-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
   }
 }

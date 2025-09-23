@@ -9,13 +9,7 @@ import {
   FiBox, 
   FiTruck,
   FiTag,
-  FiTool,
-  FiClock,
-  FiServer,
-  FiDollarSign,
-  FiShoppingBag,
-  FiUser,
-  FiPieChart
+  FiDollarSign
 } from 'react-icons/fi';
 
 const menuSections = [
@@ -31,36 +25,17 @@ const menuSections = [
     title: "Compras",
     icon: <FiShoppingCart />,
     items: [
-      { name: 'Compras', path: '/compras', icon: <FiShoppingCart /> },
-      { name: 'Productos', path: '/productos', icon: <FiBox /> },
-      { name: 'Proveedores', path: '/proveedores', icon: <FiTruck /> },
-      { name: 'Categorías de producto', path: '/catpro', icon: <FiTag /> }
-    ]
-  },
-  {
-    title: "Servicios",
-    icon: <FiTool />,
-    items: [
-      { name: 'Servicios', path: '/servicios', icon: <FiTool /> },
-      { name: 'Categoría de servicios', path: '/catser', icon: <FiTag /> },
-      { name: 'Tiempos', path: '/tiempos', icon: <FiClock /> },
-      { name: 'Equipos', path: '/equipos', icon: <FiServer /> }
+      { name: 'Gestion de compras', path: '/compras', icon: <FiShoppingCart /> },
+      { name: 'Gestion de productos', path: '/productos', icon: <FiBox /> },
+      { name: 'Gestion de  proveedores', path: '/proveedores', icon: <FiTruck /> },
+      { name: 'Gestion de categorías', path: '/catpro', icon: <FiTag /> }
     ]
   },
   {
     title: "Ventas",
     icon: <FiDollarSign />,
     items: [
-      { name: 'Ventas', path: '/ventas', icon: <FiDollarSign /> },
-      { name: 'Pedidos', path: '/gestionReparaciones', icon: <FiShoppingBag /> },
-      { name: 'Clientes', path: '/clientesFidelizacion', icon: <FiUser /> }
-    ]
-  },
-  {
-    title: "Dashboard",
-    icon: <FiPieChart />,
-    items: [
-      { name: 'Dashboard', path: '/dashboard', icon: <FiPieChart /> }
+      { name: 'Gestion de ventas', path: '/ventas', icon: <FiDollarSign /> }
     ]
   }
 ];
@@ -69,9 +44,7 @@ const Sidebar = () => {
   const [openSections, setOpenSections] = useState({
     configuración: false,
     compras: false,
-    ventas: false,
-    servicios: false,
-    dashboard: false
+    ventas: false
   });
 
   const toggleSection = (section) => {

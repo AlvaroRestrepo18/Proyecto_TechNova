@@ -511,7 +511,7 @@ const Compras = () => {
 
   return (
     <div>
-      <h1>Cyber360 - Compras</h1>
+      <h1>Compras</h1>
       
       <div className="section-divider"></div>
       
@@ -666,94 +666,103 @@ const Compras = () => {
               </div>
 
               <div className="form-group">
-                <h3>Productos</h3>
-                {formData.productos.map((item, index) => {
-                  const productoSeleccionado = productosDisponibles.find(p => p.id.toString() === item.productoId);
-                  const errorProducto = formErrors[`producto-${index}`];
-                  const errorCantidad = formErrors[`cantidad-${index}`];
-                  
-                  return (
-                    <div key={item.id} className="form-row" style={{alignItems: 'end', marginBottom: '15px'}}>
-                      <div className="inline-group">
-                        <div className="form-group">
-                          <label>Producto <span className="required-asterisk">*</span></label>
-                          <select
-                            name="productoId"
-                            value={item.productoId}
-                            onChange={(e) => handleProductoChange(e, index)}
-                            className={errorProducto ? 'input-error' : ''}
-                            required
-                          >
-                            <option value="">Seleccione un producto...</option>
-                            {productosDisponibles.map(opcion => (
-                              <option key={opcion.id} value={opcion.id}>
-                                {opcion.nombre} (${opcion.precio})
-                              </option>
-                            ))}
-                          </select>
-                          {errorProducto && <span className="error">{errorProducto}</span>}
-                        </div>
-                      </div>
-
-                      <div className="inline-group">
-                        <div className="form-group">
-                          <label>Cantidad <span className="required-asterisk">*</span></label>
-                          <input
-                            type="number"
-                            name="cantidad"
-                            value={item.cantidad}
-                            onChange={(e) => handleProductoChange(e, index)}
-                            min="1"
-                            className={errorCantidad ? 'input-error' : ''}
-                            required
-                          />
-                          {errorCantidad && <span className="error">{errorCantidad}</span>}
-                        </div>
-                      </div>
-
-                      <div className="inline-group">
-                        <div className="form-group">
-                          <label>Precio Unitario</label>
-                          <input
-                            type="text"
-                            value={`$${item.precio.toFixed(2)}`}
-                            disabled
-                          />
-                        </div>
-                      </div>
-
-                      <div className="inline-group">
-                        <div className="form-group">
-                          <label>Subtotal</label>
-                          <input
-                            type="text"
-                            value={`$${(item.precio * item.cantidad).toFixed(2)}`}
-                            disabled
-                          />
-                        </div>
-                      </div>
-
-                      <button 
-                        type="button" 
-                        className="icon-button"
-                        onClick={() => removeProducto(index)}
-                        title="Eliminar producto"
-                        style={{marginBottom: '8px'}}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
-                  );
-                })}
+                <div className="products-header">
+                  <h3>Productos</h3>
+                  <button 
+                    type="button" 
+                    className="primary-button"
+                    onClick={addProducto}
+                  >
+                    <FontAwesomeIcon icon={faPlus} /> Agregar Producto
+                  </button>
+                </div>
                 
-                <button 
-                  type="button" 
-                  className="primary-button"
-                  onClick={addProducto}
-                  style={{marginTop: '10px'}}
-                >
-                  <FontAwesomeIcon icon={faPlus} /> Agregar Producto
-                </button>
+                <div className="products-list">
+                  {formData.productos.map((item, index) => {
+                    const productoSeleccionado = productosDisponibles.find(p => p.id.toString() === item.productoId);
+                    const errorProducto = formErrors[`producto-${index}`];
+                    const errorCantidad = formErrors[`cantidad-${index}`];
+                    
+                    return (
+                      <div key={item.id} className="product-item">
+                        <div className="product-item-header">
+                          <h4>Producto {index + 1}</h4>
+                          {formData.productos.length > 1 && (
+                            <button 
+                              type="button" 
+                              className="icon-button"
+                              onClick={() => removeProducto(index)}
+                              title="Eliminar producto"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="form-row" style={{alignItems: 'end', marginBottom: '15px'}}>
+                          <div className="inline-group">
+                            <div className="form-group">
+                              <label>Producto <span className="required-asterisk">*</span></label>
+                              <select
+                                name="productoId"
+                                value={item.productoId}
+                                onChange={(e) => handleProductoChange(e, index)}
+                                className={errorProducto ? 'input-error' : ''}
+                                required
+                              >
+                                <option value="">Seleccione un producto...</option>
+                                {productosDisponibles.map(opcion => (
+                                  <option key={opcion.id} value={opcion.id}>
+                                    {opcion.nombre} (${opcion.precio})
+                                  </option>
+                                ))}
+                              </select>
+                              {errorProducto && <span className="error">{errorProducto}</span>}
+                            </div>
+                          </div>
+
+                          <div className="inline-group">
+                            <div className="form-group">
+                              <label>Cantidad <span className="required-asterisk">*</span></label>
+                              <input
+                                type="number"
+                                name="cantidad"
+                                value={item.cantidad}
+                                onChange={(e) => handleProductoChange(e, index)}
+                                min="1"
+                                className={errorCantidad ? 'input-error' : ''}
+                                required
+                              />
+                              {errorCantidad && <span className="error">{errorCantidad}</span>}
+                            </div>
+                          </div>
+
+                          <div className="inline-group">
+                            <div className="form-group">
+                              <label>Precio Unitario</label>
+                              <input
+                                type="text"
+                                value={`$${item.precio.toFixed(2)}`}
+                                disabled
+                              />
+                            </div>
+                          </div>
+
+                          <div className="inline-group">
+                            <div className="form-group">
+                              <label>Subtotal</label>
+                              <input
+                                type="text"
+                                value={`$${(item.precio * item.cantidad).toFixed(2)}`}
+                                disabled
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="form-row" style={{justifyContent: 'flex-end', marginTop: '20px'}}>

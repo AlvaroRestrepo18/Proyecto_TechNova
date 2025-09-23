@@ -1,94 +1,83 @@
 /* Contenedor principal de la barra lateral */
 .app-sidebar {
   width: 250px;
-  background-color: #ededed; /* Nuevo color de fondo claro */
-  color: #2c2c2c; /* Nuevo color de texto oscuro */
+  background-color: #f7f7f9;
+  color: #2c2c2c;
   height: calc(100vh - 72px);
   position: fixed;
   left: 0;
   top: 72px;
   overflow-y: auto;
   padding: 16px 0;
-  border-right: 1px solid #d0d0d0; /* Borde sutil para contraste */
+  border-right: 1px solid #ddd;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Secciones principales del menú */
+/* Scrollbar estilizado */
+.app-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.app-sidebar::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 3px;
+}
+.app-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Secciones principales */
 .sidebar-section {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 /* Títulos de sección */
 .sidebar-section-title {
   padding: 12px 20px;
-  color: #5a5a5a; /* Color más oscuro para títulos */
+  color: #1e3c72; /* Azul oscuro que combina con el header */
   font-weight: 600;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(30, 60, 114, 0.05); /* Fondo sutil que combina */
 }
-
-
 
 .sidebar-section-title:hover {
-  color: #2c2c2c; /* Color más oscuro al hacer hover */
-  background-color: #e0e0e0; /* Fondo más claro al hacer hover */
+  color: #1e3c72;
+  background-color: rgba(30, 60, 114, 0.1); /* Fondo hover que combina */
 }
 
-/* Elementos del menú */
-.sidebar-menu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar-menu li {
-  margin: 0;
-}
-
+/* Items de menú */
 .menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 20px 10px 30px;
-  color: #2c2c2c; /* Color de texto oscuro */
+  color: #333;
   text-decoration: none;
-  transition: all 0.2s;
   font-size: 0.95rem;
-  position: relative;
+  transition: all 0.25s ease;
+  border-radius: 6px;
+  margin: 2px 8px;
 }
 
 .menu-item:hover {
-  background-color: #d8d8d8; /* Gris claro al hacer hover */
-  color: #2c2c2c;
+  background-color: rgba(30, 60, 114, 0.1); /* Azul suave que combina con header */
+  color: #1e3c72; /* Azul oscuro que combina */
 }
 
 .menu-item.active {
-  background-color: #cecece; /* Color de submenu para activo */
-  color: #2c2c2c;
-  font-weight: 500;
-  border-left: 3px solid rgb(50, 109, 157); /* Borde izquierdo para activo */
+  background-color: rgba(30, 60, 114, 0.15); /* Fondo activo que combina */
+  color: #1e3c72; /* Azul oscuro que combina */
+  font-weight: 600;
+  border-left: 4px solid #1e3c72; /* Borde azul que combina */
 }
 
-.menu-item.active:hover {
-  background-position: 100% 0%;
-}
-
-/* Indicador de submenu */
-.menu-item.has-submenu::after {
-  content: "›";
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%) rotate(90deg);
-  transition: transform 0.2s;
-  color: #5a5a5a; /* Color del indicador */
-}
-
-.menu-item.has-submenu.open::after {
-  transform: translateY(-50%) rotate(0deg);
-  color: #2c2c2c; /* Color más oscuro cuando está abierto */
-}
-
-/* Elementos de submenu */
+/* Submenu */
 .submenu {
   list-style: none;
   padding: 0;
@@ -96,7 +85,6 @@
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease-out;
-  background-color: #cecece; /* Nuevo color de fondo para submenus */
 }
 
 .submenu.open {
@@ -104,39 +92,31 @@
 }
 
 .submenu .menu-item {
-  padding-left: 40px;
+  padding-left: 45px;
   font-size: 0.9rem;
-  color: #2c2c2c; /* Color oscuro para subitems */
-}
-
-.submenu .menu-item:hover {
-  background-position: 100% 0%;
 }
 
 .submenu .menu-item.active {
-  background: linear-gradient(90deg, #1e3c72, #1861e0, #1e3c72);
-  background-size: 200% 100%;
-  background-position: 0% 0%;
-  color: #fff;
+  background: linear-gradient(90deg, rgba(30, 60, 114, 0.2), rgba(30, 60, 114, 0.3)); /* Degradado suave que combina */
+  color: #1e3c72; /* Azul oscuro que combina */
+  border-left: 4px solid #1e3c72; /* Borde azul que combina */
   font-weight: 500;
-  border-left: 3px solid rgb(7, 78, 201);
-  transition: background-position 1.5s ease-in-out;
 }
 
-.sidebar-section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+/* Íconos */
 .section-icon, .item-icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #1e3c72; /* Azul oscuro que combina con header */
+  transition: color 0.2s;
+}
+
+.menu-item:hover .item-icon,
+.sidebar-section-title:hover .section-icon {
+  color: #1e3c72; /* Azul oscuro que combina */
+}
+
+.menu-item.active .item-icon {
+  color: #1e3c72; /* Azul oscuro que combina */
 }

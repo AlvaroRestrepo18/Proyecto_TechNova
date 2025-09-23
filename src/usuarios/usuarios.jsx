@@ -7,14 +7,8 @@ import UserTable from "./components/usertable.jsx";
 import "../app.css";
 import "./usuarios.css";
 
-// Importar servicios API
-import {
-  getUsuarios,
-  createUsuario,
-  updateUsuario,
-  deleteUsuario,
-  toggleUsuarioEstado,
-} from "./services/usuarios.js";
+// ❌ Quitamos servicios reales
+// import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, toggleUsuarioEstado } from "./services/usuarios.js";
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,20 +30,37 @@ const Users = () => {
     direccion: "",
     rol: "usuario",
   });
-  const [loading, setLoading] = useState(false); // 🔹 Loading global
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Obtener usuarios del backend
-  const fetchUsuarios = async () => {
-    try {
-      const usuarios = await getUsuarios();
-      setUserData(usuarios);
-    } catch (error) {
-      console.error("Error cargando usuarios:", error);
-    }
-  };
-
+  // 🔹 Simulación con datos de prueba
   useEffect(() => {
-    fetchUsuarios();
+    const fakeUsers = [
+      {
+        id: 1,
+        name: "Juan Pérez",
+        email: "juan@example.com",
+        telefono: "3001234567",
+        tipoDocumento: "DNI",
+        documento: "12345678",
+        direccion: "Calle 123",
+        role: "Admin",
+        rolId: 1,
+        estado: "activo",
+      },
+      {
+        id: 2,
+        name: "Ana López",
+        email: "ana@example.com",
+        telefono: "3017654321",
+        tipoDocumento: "DNI",
+        documento: "87654321",
+        direccion: "Carrera 45",
+        role: "Usuario",
+        rolId: 2,
+        estado: "inactivo",
+      },
+    ];
+    setUserData(fakeUsers);
   }, []);
 
   // 🔹 Filtrar y paginar
@@ -75,37 +86,37 @@ const Users = () => {
     setFormMode("create");
     setIsFormOpen(true);
     setFormData({
-  nombre: "",
-  email: "",
-  telefono: "",
-  tipoDocumento: "",
-  documento: "",
-  direccion: "",
-  rol: "usuario",
-  rolId: null, // 🔹 Importante, inicializamos rolId vacío
-});
+      nombre: "",
+      email: "",
+      telefono: "",
+      tipoDocumento: "",
+      documento: "",
+      direccion: "",
+      rol: "usuario",
+      rolId: null,
+    });
   };
 
   const openEditForm = (userId) => {
-  const u = userData.find((u) => u.id === userId);
-  if (!u) return;
+    const u = userData.find((u) => u.id === userId);
+    if (!u) return;
 
-  setFormMode("edit");
-  setCurrentUserId(userId);
-  setIsFormOpen(true);
+    setFormMode("edit");
+    setCurrentUserId(userId);
+    setIsFormOpen(true);
 
-  setFormData({
-    id: u.id,
-    nombre: u.name,
-    email: u.email,
-    telefono: u.telefono || "",
-    tipoDocumento: u.tipoDocumento,
-    documento: u.documento,
-    direccion: u.direccion,
-    rol: u.role?.toLowerCase() || "", // nombre del rol para view mode
-    rolId: u.rolId || null,           // 🔹 id real del rol
-  });
-};
+    setFormData({
+      id: u.id,
+      nombre: u.name,
+      email: u.email,
+      telefono: u.telefono || "",
+      tipoDocumento: u.tipoDocumento,
+      documento: u.documento,
+      direccion: u.direccion,
+      rol: u.role?.toLowerCase() || "",
+      rolId: u.rolId || null,
+    });
+  };
 
   const closeForm = () => {
     setIsFormOpen(false);
@@ -122,12 +133,7 @@ const Users = () => {
 
   const confirmDelete = async () => {
     if (userToDelete) {
-      try {
-        await deleteUsuario(userToDelete.id);
-        setUserData(userData.filter((u) => u.id !== userToDelete.id));
-      } catch (error) {
-        console.error("Error eliminando usuario:", error);
-      }
+      setUserData(userData.filter((u) => u.id !== userToDelete.id));
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
     }
@@ -139,51 +145,49 @@ const Users = () => {
       setFormMode("view");
       setIsFormOpen(true);
       setFormData({
-  nombre: u.name,
-  email: u.email,
-  telefono: u.telefono || "",
-  tipoDocumento: u.tipoDocumento,
-  documento: u.documento,
-  direccion: u.direccion,
-  rol: u.role?.toLowerCase() || "",
-  rolId: u.rolId || null,
-});
+        nombre: u.name,
+        email: u.email,
+        telefono: u.telefono || "",
+        tipoDocumento: u.tipoDocumento,
+        documento: u.documento,
+        direccion: u.direccion,
+        rol: u.role?.toLowerCase() || "",
+        rolId: u.rolId || null,
+      });
     }
   };
 
-  // Cambiar estado (activar/inactivar)
-  const toggleUserEstado = async (id, estadoActual) => {
-    try {
-      await toggleUsuarioEstado(id, estadoActual); // usa el servicio ya hecho
-
-      // Actualizar estado en frontend
-      setUserData(
-        userData.map((u) =>
-          u.id === id
-            ? {
-                ...u,
-                estado: estadoActual === "activo" ? "inactivo" : "activo",
-              }
-            : u
-        )
-      );
-    } catch (error) {
-      console.error(`Error cambiando estado del usuario ${id}:`, error);
-    }
+  // Cambiar estado (activar/inactivar) en mock
+  const toggleUserEstado = (id, estadoActual) => {
+    setUserData(
+      userData.map((u) =>
+        u.id === id
+          ? {
+              ...u,
+              estado: estadoActual === "activo" ? "inactivo" : "activo",
+            }
+          : u
+      )
+    );
   };
 
-  // 🔹 Crear o Editar usuario
+  // 🔹 Crear o Editar usuario en mock
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (formMode === "create") {
-        const newUser = await createUsuario(formData);
-        setUserData([...userData, newUser]); // 🔹 actualizar tabla en tiempo real
+        const newUser = {
+          ...formData,
+          id: Date.now(),
+          estado: "activo",
+        };
+        setUserData([...userData, newUser]);
       } else {
-        const updatedUser = await updateUsuario(currentUserId, formData);
         setUserData(
-          userData.map((u) => (u.id === currentUserId ? updatedUser : u))
+          userData.map((u) =>
+            u.id === currentUserId ? { ...u, ...formData } : u
+          )
         );
       }
       closeForm();
@@ -200,7 +204,7 @@ const Users = () => {
 
   return (
     <div className="container">
-      <h1>Cyber360 - Usuarios</h1>
+      <h1>Usuarios</h1>
       <div className="section-divider" />
 
       <div className="search-container">
@@ -282,14 +286,15 @@ const Users = () => {
       )}
 
       <UserFormModal
-  isOpen={isFormOpen}
-  onClose={closeForm}
-  formData={formData}
-  setFormData={setFormData}
-  mode={formMode}
-  loading={loading}
-  onSaved={fetchUsuarios}   // 🔹 NUEVO: refresca lista al guardar
-/>
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        formData={formData}
+        setFormData={setFormData}
+        mode={formMode}
+        loading={loading}
+        onSaved={() => {}} // ya no necesita llamar API
+        onSubmit={handleSubmit}
+      />
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}

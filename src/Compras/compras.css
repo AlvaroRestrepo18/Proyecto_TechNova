@@ -1,84 +1,223 @@
-/* Estilos específicos para Compras */
-.create-header {
+/* ===== ESTILOS PARA FORMULARIO INLINE DE COMPRAS ===== */
+
+/* Contenedor inline del formulario */
+.inline-form-container {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  margin-top: 20px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Formulario compacto */
+.form-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Grid más ancho para información básica */
+.form-grid-wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Grid más ancho para productos */
+.product-grid-wide {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 15px;
+  align-items: end;
+}
+
+/* Lista de productos */
+.products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.product-item {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Grid para totales más ancho */
+.totals-grid-wide {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  max-width: 500px;
+  margin-left: auto;
+}
+
+/* Secciones del formulario */
+.form-section {
+  padding: 25px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.form-section:nth-child(even) {
+  background: #ffffff;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+}
+
+.form-section h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 1.2em;
+  font-weight: 600;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 8px;
+}
+
+/* Cabecera de sección */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Botón agregar producto */
+.add-product-button {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.add-product-button:hover {
+  background: #219a52;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+/* Inputs y selects */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9em;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95em;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Botón eliminar producto */
+.remove-product-button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 42px;
+}
+
+.remove-product-button:hover:not(:disabled) {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+.remove-product-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Inputs de totales */
+.total-input {
+  font-weight: 600;
+  font-size: 1.1em;
+  text-align: right;
+  background-color: #f8f9fa !important;
+  font-size: 1.2em;
+}
+
+.total-input.highlighted {
+  color: #e74c3c;
+  font-weight: 700;
+  background-color: #fff3f3 !important;
+  font-size: 1.3em;
+}
+
+/* Acciones del formulario */
+.form-actions.enhanced-actions {
+  padding: 25px 0;
   display: flex;
   justify-content: flex-end;
+  gap: 20px;
 }
 
-.input-error {
-  border-color: #e74c3c !important;
+/* Responsivo */
+@media (max-width: 1100px) {
+  .product-grid-wide {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .form-grid-wide {
+    grid-template-columns: 1fr;
+  }
+  
+  .totals-grid-wide {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* Ajustes para tablas */
-.table .Action {
-  text-align: center;
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+  
+  .form-actions.enhanced-actions {
+    flex-direction: column;
+  }
 }
 
-/* Estilos para botones de estado */
-.status-toggle.active { 
-  background-color: #4CAF50; 
-  color: white; 
-}
-
-.status-toggle.inactive { 
-  background-color: #f44336; 
-  color: white; 
-}
-
-.status-toggle:hover { 
-  opacity: 0.9; 
-}
-
-/* Ajustes para modales de detalles */
-.details-modal {
-  max-width: 700px;
-}
-
-.user-details-container,
-.role-details-container {
-  padding: 20px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.user-details-row,
-.role-details-row {
-  display: flex;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.detail-label {
-  font-weight: 600;
-  width: 180px;
-  color: #555;
-}
-
-.detail-value {
-  flex: 1;
-  color: #34495e;
-}
-
-.status-active {
-  color: #4CAF50;
-  font-weight: 600;
-}
-
-.status-inactive {
-  color: #F44336;
-  font-weight: 600;
-}
-
-.close-details-button {
-  background-color: #2196F3;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 20px;
-}
-
-.close-details-button:hover {
-  background-color: #0b7dda;
+/* Hover y sombra productos */
+.product-item:hover {
+  border-color: #3498db;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
 }

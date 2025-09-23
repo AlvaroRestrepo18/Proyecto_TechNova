@@ -5,7 +5,6 @@ import ProveedorTable from './components/ProveedorTable';
 import ProveedorFormModal from './components/ProveedorFormModal';
 import ViewModal from './components/ViewModal';
 import DeleteModal from './components/DeleteModal';
-import { getProveedores, createProveedor, updateProveedor, deleteProveedor } from './services/Proveedores.js';
 import './proveedores.css';
 
 const Proveedores = () => {
@@ -34,25 +33,46 @@ const Proveedores = () => {
     estado: 'Activo'
   });
 
-  // Cargar proveedores desde la API
+  // 🚫 Sin conexión al servicio → cargamos mock
   useEffect(() => {
-    const fetchProveedores = async () => {
-      try {
-        const data = await getProveedores();
-        setProveedoresData(data.map(p => ({ ...p, estado: 'Activo', tieneCompras: false })));
-      } catch (error) {
-        console.error("Error cargando proveedores:", error);
+    const dataMock = [
+      {
+        id: 1,
+        tipoPersona: "Natural",
+        tipoDocumento: "CC",
+        numeroDocumento: "123456789",
+        nombres: "Carlos",
+        apellidos: "Pérez",
+        razonSocial: "",
+        correo: "carlos@example.com",
+        telefono: "3001234567",
+        direccion: "Calle 123",
+        estado: "Activo",
+        tieneCompras: false
+      },
+      {
+        id: 2,
+        tipoPersona: "Jurídica",
+        tipoDocumento: "NIT",
+        numeroDocumento: "900123456-7",
+        nombres: "",
+        apellidos: "",
+        razonSocial: "Tech S.A.S",
+        correo: "contacto@tech.com",
+        telefono: "6041234567",
+        direccion: "Carrera 45",
+        estado: "Anulado",
+        tieneCompras: false
       }
-    };
-    fetchProveedores();
+    ];
+    setProveedoresData(dataMock);
   }, []);
 
-  // Filtros
+  // 🔽 A partir de aquí tu lógica de filtros, CRUD y modales sigue igual
   const filteredActivos = proveedoresData.filter(proveedor => {
     const nombreCompleto = proveedor.tipoPersona === 'Natural' 
       ? `${proveedor.nombres} ${proveedor.apellidos}`.toLowerCase()
       : proveedor.razonSocial.toLowerCase();
-    
     return nombreCompleto.includes(searchTerm.toLowerCase()) && proveedor.estado === 'Activo';
   });
 
@@ -60,11 +80,9 @@ const Proveedores = () => {
     const nombreCompleto = proveedor.tipoPersona === 'Natural' 
       ? `${proveedor.nombres} ${proveedor.apellidos}`.toLowerCase()
       : proveedor.razonSocial.toLowerCase();
-    
     return nombreCompleto.includes(searchTerm.toLowerCase()) && proveedor.estado === 'Anulado';
   });
 
-  // Cambiar estado (Activo/Anulado)
   const toggleEstado = (id) => {
     setProveedoresData(proveedoresData.map(proveedor => 
       proveedor.id === id 
@@ -73,28 +91,20 @@ const Proveedores = () => {
     ));
   };
 
-  // Eliminar proveedor
   const eliminarProveedor = (id) => {
     const proveedor = proveedoresData.find(p => p.id === id);
-    
     if (proveedor.tieneCompras) {
       setShowDeleteAlert(true);
       return;
     }
-
     setProveedorToDelete(proveedor);
     setShowConfirmDelete(true);
   };
 
   const confirmDelete = async () => {
-    try {
-      await deleteProveedor(proveedorToDelete.id);
-      setProveedoresData(proveedoresData.filter(p => p.id !== proveedorToDelete.id));
-      setShowConfirmDelete(false);
-      setProveedorToDelete(null);
-    } catch (error) {
-      console.error("Error eliminando proveedor:", error);
-    }
+    setProveedoresData(proveedoresData.filter(p => p.id !== proveedorToDelete.id));
+    setShowConfirmDelete(false);
+    setProveedorToDelete(null);
   };
 
   const cancelDelete = () => {
@@ -102,7 +112,6 @@ const Proveedores = () => {
     setProveedorToDelete(null);
   };
 
-  // Abrir formularios
   const openForm = () => {
     setIsFormOpen(true);
     setCurrentProveedorId(null);
@@ -124,18 +133,7 @@ const Proveedores = () => {
   const openEditForm = (proveedor) => {
     setIsFormOpen(true);
     setCurrentProveedorId(proveedor.id);
-    setFormData({
-      tipoPersona: proveedor.tipoPersona,
-      tipoDocumento: proveedor.tipoDocumento,
-      numeroDocumento: proveedor.numeroDocumento,
-      nombres: proveedor.nombres,
-      apellidos: proveedor.apellidos,
-      razonSocial: proveedor.razonSocial,
-      correo: proveedor.correo,
-      telefono: proveedor.telefono,
-      direccion: proveedor.direccion,
-      estado: proveedor.estado
-    });
+    setFormData({...proveedor});
     setErrors({});
   };
 
@@ -173,60 +171,41 @@ const Proveedores = () => {
     setFormData({...formData, tipoDocumento: value, numeroDocumento: ''});
   };
 
-  // Validaciones
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.numeroDocumento.trim()) newErrors.numeroDocumento = 'Este campo es requerido';
-    else if (formData.tipoDocumento === 'NIT' && !/^\d{9}-?\d$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'NIT inválido';
-    else if (formData.tipoDocumento === 'CC' && !/^\d{6,10}$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'Cédula inválida (6-10 dígitos)';
-    else if (formData.tipoDocumento === 'CE' && !/^[a-zA-Z0-9]{6,12}$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'Cédula extranjera inválida';
-    else if (formData.tipoDocumento === 'PAS' && !/^[a-zA-Z0-9]{6,12}$/.test(formData.numeroDocumento)) newErrors.numeroDocumento = 'Pasaporte inválido';
-
     if (formData.tipoPersona === 'Natural') {
       if (!formData.nombres.trim()) newErrors.nombres = 'Los nombres son requeridos';
-      else if (formData.nombres.length < 3) newErrors.nombres = 'Los nombres deben tener al menos 3 caracteres';
-      
       if (!formData.apellidos.trim()) newErrors.apellidos = 'Los apellidos son requeridos';
-      else if (formData.apellidos.length < 3) newErrors.apellidos = 'Los apellidos deben tener al menos 3 caracteres';
     } else {
       if (!formData.razonSocial.trim()) newErrors.razonSocial = 'La razón social es requerida';
-      else if (formData.razonSocial.length < 3) newErrors.razonSocial = 'La razón social debe tener al menos 3 caracteres';
     }
-
-    if (formData.correo && !/^\S+@\S+\.\S+$/.test(formData.correo)) newErrors.correo = 'Correo electrónico inválido';
-    if (formData.telefono && !/^[0-9]{7,15}$/.test(formData.telefono)) newErrors.telefono = 'Teléfono inválido (7-15 dígitos)';
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Guardar o actualizar proveedor
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const nuevoProveedor = {...formData};
-
-    try {
-      if (currentProveedorId) {
-        const updated = await updateProveedor(currentProveedorId, nuevoProveedor);
-        setProveedoresData(proveedoresData.map(p => 
-          p.id === currentProveedorId ? { ...p, ...updated } : p
-        ));
-      } else {
-        const created = await createProveedor(nuevoProveedor);
-        setProveedoresData([...proveedoresData, { ...created, tieneCompras: false, estado: 'Activo' }]);
-      }
-      closeForm();
-    } catch (error) {
-      console.error("Error guardando proveedor:", error);
+    if (currentProveedorId) {
+      setProveedoresData(proveedoresData.map(p => 
+        p.id === currentProveedorId ? { ...p, ...formData } : p
+      ));
+    } else {
+      const newProveedor = {
+        ...formData,
+        id: proveedoresData.length + 1,
+        tieneCompras: false
+      };
+      setProveedoresData([...proveedoresData, newProveedor]);
     }
+    closeForm();
   };
 
   return (
     <div>
-      <h1>Cyber360 - Proveedores</h1>
+      <h1>Proveedores</h1>
       <div className="section-divider"></div>
 
       {/* Pestañas */}
