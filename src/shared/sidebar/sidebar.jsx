@@ -9,7 +9,9 @@ import {
   FiBox, 
   FiTruck,
   FiTag,
-  FiDollarSign
+  FiDollarSign,
+  FiUserCheck,
+  FiTool
 } from 'react-icons/fi';
 
 const menuSections = [
@@ -35,7 +37,15 @@ const menuSections = [
     title: "Ventas",
     icon: <FiDollarSign />,
     items: [
-      { name: 'Gestion de ventas', path: '/ventas', icon: <FiDollarSign /> }
+      { name: 'Gestion de ventas', path: '/ventas', icon: <FiDollarSign /> },
+    ]
+  },
+  {
+    title: "Servicios",
+    icon: <FiTool />,
+    items: [
+      { name: 'Gestion de servicios', path: '/Servicios', icon: <FiTool /> },
+      { name: 'Gestion de clientes', path: '/Clientes', icon: <FiUserCheck /> }
     ]
   }
 ];

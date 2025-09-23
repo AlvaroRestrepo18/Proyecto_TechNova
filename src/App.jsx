@@ -11,11 +11,14 @@ import Compras from './Compras/Compras';
 import Footer from './shared/footer/footer';
 import Roles from './roles/roles';
 import Login from './acceso/login/login';
+import Servicios from './Servicios/servicios';   
+import Clientes from './Clientes/clientes';    
 import ForgotPassword from './acceso/forgot/forgot';
 import ResetPassword from './acceso/reset/resetpassword';
 import ModalAlerta from './shared/modals/ModalAlerta';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+
 library.add(fas);
 import './App.css';
 
@@ -70,6 +73,9 @@ function App() {
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/catpro" element={<Catpro />} />
                 <Route path="/Compras" element={<Compras />} />
+                <Route path="/Clientes" element={<Clientes />} />   {/* ✅ */}
+                <Route path="/Servicios" element={<Servicios />} /> {/* ✅ */}
+
                 <Route
                   path="/roles"
                   element={
