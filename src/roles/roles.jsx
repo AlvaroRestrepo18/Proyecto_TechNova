@@ -38,12 +38,16 @@ const Roles = () => {
     setError(null);
     try {
       const roles = await getRoles();
+
+      // Filtrar por tab (activos / inactivos)
       const filteredRoles = roles.filter((r) =>
         activeTab === "activos" ? r.activo : !r.activo
       );
+
       setRolesData(filteredRoles);
       setCurrentPage(1);
     } catch (err) {
+      console.error("Error al cargar roles:", err);
       setError("Error al cargar roles.");
     } finally {
       setLoading(false);
@@ -96,7 +100,8 @@ const Roles = () => {
       setIsFormOpen(false);
       setCurrentRoleId(null);
     } catch (err) {
-      alert("Error al eliminar el rol.");
+      console.error("Error al eliminar el rol:", err);
+      window.mostrarAlerta("Error al eliminar el rol.");
     }
   };
 
@@ -105,35 +110,30 @@ const Roles = () => {
     setCurrentRoleId(null);
   };
 
+  // ✅ Cambio de estado (activar/desactivar rol)
   const toggleRolEstado = async (id, currentEstado) => {
-  try {
-    // ⚠️ Evitamos desactivar el rol administrador (id === 1)
-    if (id === 1 && currentEstado === true) {
-      window.mostrarAlerta("El rol Administrador no puede ser inactivado.");
-      return;
+    try {
+      // ⚠️ Bloquear desactivación del rol administrador
+      if (id === 1 && currentEstado === true) {
+        window.mostrarAlerta("El rol Administrador no puede ser inactivado.");
+        return;
+      }
+
+      await changeRoleStatus(id, !currentEstado);
+      await fetchRoles();
+    } catch (err) {
+      console.error("Error al cambiar estado del rol:", err);
+      window.mostrarAlerta("Error al cambiar estado del rol.");
     }
+  };
 
-    await changeRoleStatus(id, !currentEstado);
-    await fetchRoles();
-  } catch (err) {
-    window.mostrarAlerta("Error al cambiar estado del rol.");
-  }
-};
-
-  
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  
-
-
-  // if (loading) return <p>Cargando roles...</p>;
-  // if (error) return <p style={{ color: "red" }}>{error}</p>;
-
   return (
     <div className="container">
-      <h1>Cyber360 - Roles</h1>
+      <h1>Roles</h1>
       <div className="section-divider"></div>
 
       <div className="search-container">
@@ -173,14 +173,16 @@ const Roles = () => {
         </button>
       </div>
 
+      {/* Tabla de roles */}
       <RoleTable
         roles={paginatedRoles}
         onView={openViewForm}
         onEdit={openEditForm}
         onDelete={openDeleteModal}
-        onToggleEstado={toggleRolEstado}
+        onToggleEstado={toggleRolEstado} // <-- Aquí se pasa la función
       />
 
+      {/* Paginación */}
       {totalPages > 1 && (
         <div className="pagination-controls">
           <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
@@ -204,14 +206,16 @@ const Roles = () => {
         </div>
       )}
 
+      {/* Modal de formulario */}
       <RoleFormModal
         isOpen={isFormOpen}
         onClose={closeForm}
-        roleId={currentRoleId}       // <-- Pasar el id aquí
-        mode={formMode}              // create, edit, view
-        onSaved={fetchRoles}         // refrescar lista después de guardar
+        roleId={currentRoleId}
+        mode={formMode}
+        onSaved={fetchRoles}
       />
 
+      {/* Modal de confirmación de eliminación */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

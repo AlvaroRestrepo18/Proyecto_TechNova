@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import ProveedorTable from './components/ProveedorTable';
@@ -10,7 +11,6 @@ import './proveedores.css';
 const Proveedores = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("activos");
   const [modalProveedor, setModalProveedor] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [currentProveedorId, setCurrentProveedorId] = useState(null);
@@ -30,67 +30,32 @@ const Proveedores = () => {
     correo: '',
     telefono: '',
     direccion: '',
-    estado: 'Activo'
   });
 
-  // 🚫 Sin conexión al servicio → cargamos mock
+  const API_URL = "https://localhost:7228/api/Proveedores"; // ⚡ cambia a tu URL real
+
+  // 🔹 Cargar proveedores desde API
   useEffect(() => {
-    const dataMock = [
-      {
-        id: 1,
-        tipoPersona: "Natural",
-        tipoDocumento: "CC",
-        numeroDocumento: "123456789",
-        nombres: "Carlos",
-        apellidos: "Pérez",
-        razonSocial: "",
-        correo: "carlos@example.com",
-        telefono: "3001234567",
-        direccion: "Calle 123",
-        estado: "Activo",
-        tieneCompras: false
-      },
-      {
-        id: 2,
-        tipoPersona: "Jurídica",
-        tipoDocumento: "NIT",
-        numeroDocumento: "900123456-7",
-        nombres: "",
-        apellidos: "",
-        razonSocial: "Tech S.A.S",
-        correo: "contacto@tech.com",
-        telefono: "6041234567",
-        direccion: "Carrera 45",
-        estado: "Anulado",
-        tieneCompras: false
+    const fetchProveedores = async () => {
+      try {
+        const res = await axios.get(API_URL);
+        setProveedoresData(res.data);
+      } catch (error) {
+        console.error("❌ Error al obtener proveedores:", error);
       }
-    ];
-    setProveedoresData(dataMock);
+    };
+    fetchProveedores();
   }, []);
 
-  // 🔽 A partir de aquí tu lógica de filtros, CRUD y modales sigue igual
-  const filteredActivos = proveedoresData.filter(proveedor => {
-    const nombreCompleto = proveedor.tipoPersona === 'Natural' 
+  // 🔽 Filtro por búsqueda
+  const filteredProveedores = proveedoresData.filter(proveedor => {
+    const nombreCompleto = proveedor.tipoPersona === 'Natural'
       ? `${proveedor.nombres} ${proveedor.apellidos}`.toLowerCase()
-      : proveedor.razonSocial.toLowerCase();
-    return nombreCompleto.includes(searchTerm.toLowerCase()) && proveedor.estado === 'Activo';
+      : proveedor.razonSocial?.toLowerCase() || "";
+    return nombreCompleto.includes(searchTerm.toLowerCase());
   });
 
-  const filteredAnulados = proveedoresData.filter(proveedor => {
-    const nombreCompleto = proveedor.tipoPersona === 'Natural' 
-      ? `${proveedor.nombres} ${proveedor.apellidos}`.toLowerCase()
-      : proveedor.razonSocial.toLowerCase();
-    return nombreCompleto.includes(searchTerm.toLowerCase()) && proveedor.estado === 'Anulado';
-  });
-
-  const toggleEstado = (id) => {
-    setProveedoresData(proveedoresData.map(proveedor => 
-      proveedor.id === id 
-        ? { ...proveedor, estado: proveedor.estado === 'Activo' ? 'Anulado' : 'Activo' } 
-        : proveedor
-    ));
-  };
-
+  // 🔹 Eliminar
   const eliminarProveedor = (id) => {
     const proveedor = proveedoresData.find(p => p.id === id);
     if (proveedor.tieneCompras) {
@@ -102,7 +67,12 @@ const Proveedores = () => {
   };
 
   const confirmDelete = async () => {
-    setProveedoresData(proveedoresData.filter(p => p.id !== proveedorToDelete.id));
+    try {
+      await axios.delete(`${API_URL}/${proveedorToDelete.id}`);
+      setProveedoresData(proveedoresData.filter(p => p.id !== proveedorToDelete.id));
+    } catch (error) {
+      console.error("❌ Error al eliminar proveedor:", error);
+    }
     setShowConfirmDelete(false);
     setProveedorToDelete(null);
   };
@@ -112,6 +82,7 @@ const Proveedores = () => {
     setProveedorToDelete(null);
   };
 
+  // 🔹 Formularios
   const openForm = () => {
     setIsFormOpen(true);
     setCurrentProveedorId(null);
@@ -125,7 +96,6 @@ const Proveedores = () => {
       correo: '',
       telefono: '',
       direccion: '',
-      estado: 'Activo'
     });
     setErrors({});
   };
@@ -133,7 +103,7 @@ const Proveedores = () => {
   const openEditForm = (proveedor) => {
     setIsFormOpen(true);
     setCurrentProveedorId(proveedor.id);
-    setFormData({...proveedor});
+    setFormData({ ...proveedor });
     setErrors({});
   };
 
@@ -149,16 +119,17 @@ const Proveedores = () => {
 
   const closeForm = () => setIsFormOpen(false);
 
+  // 🔹 Handlers de formulario
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({...formData, [name]: value});
-    if (errors[name]) setErrors({...errors, [name]: null});
+    setFormData({ ...formData, [name]: value });
+    if (errors[name]) setErrors({ ...errors, [name]: null });
   };
 
   const handleTipoPersonaChange = (e) => {
     const value = e.target.value;
     setFormData({
-      ...formData, 
+      ...formData,
       tipoPersona: value,
       nombres: value === 'Jurídica' ? '' : formData.nombres,
       apellidos: value === 'Jurídica' ? '' : formData.apellidos,
@@ -168,7 +139,7 @@ const Proveedores = () => {
 
   const handleTipoDocumentoChange = (e) => {
     const value = e.target.value;
-    setFormData({...formData, tipoDocumento: value, numeroDocumento: ''});
+    setFormData({ ...formData, tipoDocumento: value, numeroDocumento: '' });
   };
 
   const validateForm = () => {
@@ -184,23 +155,34 @@ const Proveedores = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    if (currentProveedorId) {
-      setProveedoresData(proveedoresData.map(p => 
-        p.id === currentProveedorId ? { ...p, ...formData } : p
-      ));
-    } else {
-      const newProveedor = {
-        ...formData,
-        id: proveedoresData.length + 1,
-        tieneCompras: false
-      };
-      setProveedoresData([...proveedoresData, newProveedor]);
+    // 👇 Construir el campo "nombre" antes de enviar
+    const payload = {
+      ...formData,
+      nombre: formData.tipoPersona === "Natural"
+        ? `${formData.nombres} ${formData.apellidos}`.trim()
+        : formData.razonSocial
+    };
+
+    try {
+      if (currentProveedorId) {
+        // 🔄 Editar
+        const res = await axios.put(`${API_URL}/${currentProveedorId}`, payload);
+        setProveedoresData(proveedoresData.map(p =>
+          p.id === currentProveedorId ? res.data : p
+        ));
+      } else {
+        // ➕ Crear
+        const res = await axios.post(API_URL, payload);
+        setProveedoresData([...proveedoresData, res.data]);
+      }
+      closeForm();
+    } catch (error) {
+      console.error("❌ Error al guardar proveedor:", error);
     }
-    closeForm();
   };
 
   return (
@@ -208,51 +190,34 @@ const Proveedores = () => {
       <h1>Proveedores</h1>
       <div className="section-divider"></div>
 
-      {/* Pestañas */}
-      <div className="tabs">
-        <button className={`tab-button ${activeTab === "activos" ? "active-tab" : ""}`} onClick={() => setActiveTab("activos")}>Proveedores Activos</button>
-        <button className={`tab-button ${activeTab === "anulados" ? "active-tab" : ""}`} onClick={() => setActiveTab("anulados")}>Proveedores Anulados</button>
-      </div>
-
       {/* Buscador y botón crear */}
       <div className="search-container">
         <input
           type="text"
-          placeholder={activeTab === "activos" ? "Buscar proveedores activos..." : "Buscar proveedores anulados..."}
+          placeholder="Buscar proveedores..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
-        {activeTab === "activos" && (
-          <div className="create-header">
-            <button className="create-button" onClick={openForm}>
-              <FontAwesomeIcon icon={faPlus} /> Nuevo Proveedor
-            </button>
-          </div>
-        )}
+        <div className="create-header">
+          <button className="create-button" onClick={openForm}>
+            <FontAwesomeIcon icon={faPlus} /> Nuevo Proveedor
+          </button>
+        </div>
       </div>
 
       {/* Tabla */}
       <div className="table-container">
-        {activeTab === "activos" ? (
-          filteredActivos.length > 0 ? (
-            <ProveedorTable 
-              proveedores={filteredActivos} 
-              onView={openViewModal}
-              onEdit={openEditForm}
-              onDelete={eliminarProveedor}
-              onToggleEstado={toggleEstado}
-            />
-          ) : <div className="no-results">No hay proveedores activos</div>
-        ) : filteredAnulados.length > 0 ? (
-          <ProveedorTable 
-            proveedores={filteredAnulados} 
+        {filteredProveedores.length > 0 ? (
+          <ProveedorTable
+            proveedores={filteredProveedores}
             onView={openViewModal}
             onEdit={openEditForm}
             onDelete={eliminarProveedor}
-            onToggleEstado={toggleEstado}
           />
-        ) : <div className="no-results">No hay proveedores anulados</div>}
+        ) : (
+          <div className="no-results">No hay proveedores</div>
+        )}
       </div>
 
       {/* Modal formulario */}
@@ -271,22 +236,22 @@ const Proveedores = () => {
 
       {/* Modal visualización */}
       {isViewModalOpen && (
-        <ViewModal 
-          proveedor={modalProveedor} 
-          onClose={closeViewModal} 
+        <ViewModal
+          proveedor={modalProveedor}
+          onClose={closeViewModal}
         />
       )}
 
       {/* Modal eliminar */}
       {showDeleteAlert && (
-        <DeleteModal 
+        <DeleteModal
           type="alert"
           onClose={() => setShowDeleteAlert(false)}
         />
       )}
 
       {showConfirmDelete && proveedorToDelete && (
-        <DeleteModal 
+        <DeleteModal
           type="confirm"
           proveedor={proveedorToDelete}
           onConfirm={confirmDelete}

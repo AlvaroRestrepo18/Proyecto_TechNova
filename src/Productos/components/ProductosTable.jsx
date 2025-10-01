@@ -1,9 +1,9 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 
-const ProductosTable = ({ productos, onToggleEstado, onEdit, onDelete, onView }) => {
-  if (productos.length === 0) {
+const ProductosTable = ({ productos, onEdit, onDelete, onView }) => {
+  if (!productos || productos.length === 0) {
     return <div className="no-data">No hay productos registrados</div>;
   }
 
@@ -11,46 +11,47 @@ const ProductosTable = ({ productos, onToggleEstado, onEdit, onDelete, onView })
     <table className="productos-table">
       <thead>
         <tr>
-          <th>Código</th>
+          {/* ❌ Eliminado ID */}
           <th>Nombre</th>
           <th>Categoría</th>
+          <th>Cantidad</th>
           <th>Precio</th>
-          <th>Stock</th>
-          <th>Estado</th>
-          <th className='actions-column'>Acciones</th>
+          <th>Fecha Creación</th>
+          <th className="actions-column">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {productos.map((producto) => (
-          <tr key={producto.id}>
-            <td>{producto.codigo}</td>
+        {productos.map((producto, index) => (
+          <tr key={index}>
+            {/* ❌ Eliminado producto.id */}
             <td>{producto.nombre}</td>
-            <td>{producto.categoria}</td>
-            <td>${producto.precio.toFixed(2)}</td>
+            <td>{producto.categoria?.nombre || "Sin categoría"}</td>
+            <td>{producto.cantidad ?? 0}</td>
+            <td>${producto.precio?.toFixed(2) ?? "0.00"}</td>
             <td>
-              <span className={producto.stock <= producto.stockMinimo ? 'stock-low' : 'stock-ok'}>
-                {producto.stock} {producto.stock <= producto.stockMinimo && '⚠️'}
-              </span>
+              {producto.fechaCreacion
+                ? new Date(producto.fechaCreacion).toLocaleDateString()
+                : "N/A"}
             </td>
-            <td>
-              <button 
-                className={`status-toggle ${producto.estado === 'Activo' ? 'active' : 'inactive'}`}
-                onClick={() => onToggleEstado(producto.id)}
-              >
-                {producto.estado}
-              </button>
-            </td>
-            <td className='actions-column'>
+            <td className="actions-column">
               <div className="actions-container">
-                <button className="action-button view-button" title="Ver" onClick={() => onView(producto)}>
+                <button
+                  className="action-button view-button"
+                  title="Ver"
+                  onClick={() => onView(producto)}
+                >
                   <FontAwesomeIcon icon={faEye} />
                 </button>
-                <button className="action-button edit-button" title="Editar" onClick={() => onEdit(producto)}>
+                <button
+                  className="action-button edit-button"
+                  title="Editar"
+                  onClick={() => onEdit(producto)}
+                >
                   <FontAwesomeIcon icon={faEdit} />
                 </button>
-                <button 
-                  className="action-button delete-button" 
-                  title="Eliminar" 
+                <button
+                  className="action-button delete-button"
+                  title="Eliminar"
                   onClick={() => onDelete(producto)}
                 >
                   <FontAwesomeIcon icon={faTrash} />

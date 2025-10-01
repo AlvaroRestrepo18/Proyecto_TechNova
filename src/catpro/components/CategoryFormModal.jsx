@@ -5,25 +5,22 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     tipoCategoria: 'Producto',
-    nombreCategoria: '',
-    descripcion: '',
-    activo: true
+    nombre: '',
+    descripcion: ''
   });
 
   useEffect(() => {
     if (currentCategory) {
       setFormData({
         tipoCategoria: currentCategory.tipoCategoria || 'Producto',
-        nombreCategoria: currentCategory.nombreCategoria || '',
-        descripcion: currentCategory.descripcion || '',
-        activo: currentCategory.activo ?? true
+        nombre: currentCategory.nombre || '',
+        descripcion: currentCategory.descripcion || ''
       });
     } else {
       setFormData({
         tipoCategoria: 'Producto',
-        nombreCategoria: '',
-        descripcion: '',
-        activo: true
+        nombre: '',
+        descripcion: ''
       });
     }
   }, [currentCategory]);
@@ -36,13 +33,21 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Enviar todo el objeto completo
-    onSave({
+    // Validación simple
+    if (!formData.nombre || !formData.tipoCategoria) {
+      alert("Debe completar el nombre y el tipo de categoría");
+      return;
+    }
+
+    // ✅ Aseguramos mandar el ID si estamos en edición
+    const payload = {
+      id: currentCategory?.id || 0,
       tipoCategoria: formData.tipoCategoria,
-      nombreCategoria: formData.nombreCategoria,
-      descripcion: formData.descripcion,
-      activo: formData.activo
-    });
+      nombre: formData.nombre,
+      descripcion: formData.descripcion
+    };
+
+    onSave(payload);
   };
 
   return (
@@ -72,15 +77,11 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
               </div>
               <div className="detail-group">
                 <label>Nombre:</label>
-                <p>{currentCategory?.nombreCategoria}</p>
+                <p>{currentCategory?.nombre}</p>
               </div>
               <div className="detail-group">
                 <label>Descripción:</label>
                 <p>{currentCategory?.descripcion}</p>
-              </div>
-              <div className="detail-group">
-                <label>Estado:</label>
-                <p>{currentCategory?.activo ? 'Activo' : 'Inactivo'}</p>
               </div>
             </div>
           ) : (
@@ -91,7 +92,7 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
                   <button
                     type="button"
                     className={`tipo-option ${formData.tipoCategoria === 'Producto' ? 'selected' : ''}`}
-                    onClick={() => setFormData({...formData, tipoCategoria: 'Producto'})}
+                    onClick={() => setFormData({ ...formData, tipoCategoria: 'Producto' })}
                   >
                     <div className="tipo-circle"></div>
                     <span>Producto</span>
@@ -99,7 +100,7 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
                   <button
                     type="button"
                     className={`tipo-option ${formData.tipoCategoria === 'Servicio' ? 'selected' : ''}`}
-                    onClick={() => setFormData({...formData, tipoCategoria: 'Servicio'})}
+                    onClick={() => setFormData({ ...formData, tipoCategoria: 'Servicio' })}
                   >
                     <div className="tipo-circle"></div>
                     <span>Servicio</span>
@@ -111,8 +112,8 @@ const CategoryFormModal = ({ currentView, currentCategory, onClose, onSave }) =>
                 <label>Nombre de la Categoría: <span className="required">*</span></label>
                 <input
                   type="text"
-                  name="nombreCategoria"
-                  value={formData.nombreCategoria}
+                  name="nombre"
+                  value={formData.nombre}
                   onChange={handleChange}
                   placeholder="Nombre de la categoría"
                   required

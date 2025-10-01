@@ -1,10 +1,11 @@
 import axios from "axios";
 
-const API_BASE_URL = "";
+const API_BASE_URL = "https://localhost:7228/api/Proveedores";
 
-// Mapeo backend -> frontend proveedor
+// 🔹 Mapeo backend -> frontend proveedor
 const mapBackendToFrontend = (proveedor) => ({
   id: proveedor.id,
+  nombre: proveedor.nombre, // viene directo del backend
   tipoPersona: proveedor.tipoPersona,
   numeroDocumento: proveedor.numeroDocumento,
   tipoDocumento: proveedor.tipoDocumento,
@@ -14,22 +15,35 @@ const mapBackendToFrontend = (proveedor) => ({
   correo: proveedor.correo,
   direccion: proveedor.direccion,
   telefono: proveedor.telefono,
+  activo: proveedor.activo,
 });
 
-// Mapeo frontend -> backend proveedor
-const mapFrontendToBackend = (proveedor) => ({
-  tipoPersona: proveedor.tipoPersona,
-  numeroDocumento: proveedor.numeroDocumento,
-  tipoDocumento: proveedor.tipoDocumento,
-  nombres: proveedor.nombres,
-  apellidos: proveedor.apellidos,
-  razonSocial: proveedor.razonSocial,
-  correo: proveedor.correo,
-  direccion: proveedor.direccion,
-  telefono: proveedor.telefono,
-});
+// 🔹 Mapeo frontend -> backend proveedor
+const mapFrontendToBackend = (proveedor) => {
+  let nombreFinal = "";
 
-// Obtener todos los proveedores
+  if (proveedor.tipoPersona === "Natural") {
+    nombreFinal = `${proveedor.nombres || ""} ${proveedor.apellidos || ""}`.trim();
+  } else {
+    nombreFinal = proveedor.razonSocial || "";
+  }
+
+  return {
+    nombre: nombreFinal, // 👈 obligatorio para backend
+    tipoPersona: proveedor.tipoPersona,
+    numeroDocumento: proveedor.numeroDocumento,
+    tipoDocumento: proveedor.tipoDocumento,
+    nombres: proveedor.nombres,
+    apellidos: proveedor.apellidos,
+    razonSocial: proveedor.razonSocial,
+    correo: proveedor.correo,
+    direccion: proveedor.direccion,
+    telefono: proveedor.telefono,
+    activo: proveedor.activo ?? true, // por defecto true
+  };
+};
+
+// 🔹 Obtener todos los proveedores
 export const getProveedores = async () => {
   try {
     const response = await axios.get(API_BASE_URL);
@@ -40,7 +54,7 @@ export const getProveedores = async () => {
   }
 };
 
-// Obtener un proveedor por ID
+// 🔹 Obtener un proveedor por ID
 export const getProveedorById = async (id) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/${id}`);
@@ -51,10 +65,11 @@ export const getProveedorById = async (id) => {
   }
 };
 
-// Crear un nuevo proveedor
+// 🔹 Crear un nuevo proveedor
 export const createProveedor = async (proveedorData) => {
   try {
     const payload = mapFrontendToBackend(proveedorData);
+    console.log("Payload enviado al backend:", payload); // 🐞 depuración
     const response = await axios.post(API_BASE_URL, payload);
     return mapBackendToFrontend(response.data);
   } catch (error) {
@@ -67,11 +82,11 @@ export const createProveedor = async (proveedorData) => {
   }
 };
 
-// Actualizar un proveedor
+// 🔹 Actualizar un proveedor
 export const updateProveedor = async (id, proveedorData) => {
   try {
     const payload = mapFrontendToBackend(proveedorData);
-    console.log("Payload enviado al backend:", payload); // 🔍 depuración
+    console.log("Payload enviado al backend:", payload); // 🐞 depuración
     const response = await axios.put(`${API_BASE_URL}/${id}`, payload);
     return mapBackendToFrontend(response.data);
   } catch (error) {
@@ -84,7 +99,7 @@ export const updateProveedor = async (id, proveedorData) => {
   }
 };
 
-// Eliminar un proveedor
+// 🔹 Eliminar un proveedor
 export const deleteProveedor = async (id) => {
   try {
     await axios.delete(`${API_BASE_URL}/${id}`);

@@ -1,6 +1,6 @@
 :root {
   --primary: #4361ee;
-  --primary-dark: #3a0ca3;
+  --primary-dark: #003cff;
   --primary-light: #ebf4ff;
   --accent: #f72585;
   --success: #4cc9f0;
@@ -292,7 +292,7 @@ h1 {
   color: var(--text-dark);
 }
 
-.form-group input,
+
 .form-group select,
 .form-group textarea {
   box-sizing: border-box;
@@ -778,7 +778,7 @@ h1 {
 
 .form-row {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 

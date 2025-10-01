@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "";
-const API_CATEGORIA_URL = "";
+const API_BASE_URL = "https://localhost:7228/api/Productos";
 
 // Mapeo backend -> frontend producto
 const mapBackendToFrontend = (producto) => ({
@@ -11,23 +10,23 @@ const mapBackendToFrontend = (producto) => ({
   precio: producto.precio,
   fechaCreacion: producto.fechaCreacion,
   categoriaId: producto.categoriaId,
-  categoria: producto.categoria
+  categoria: producto.categoria,
 });
 
 // Mapeo frontend -> backend producto
+// ⚡️ NO mandamos id ni fechaCreacion porque los genera el backend
 const mapFrontendToBackend = (producto) => ({
   nombre: producto.nombre,
   cantidad: producto.cantidad,
   precio: producto.precio,
-  fechaCreacion: producto.fechaCreacion,
-  categoriaId: producto.categoriaId
+  categoriaId: producto.categoriaId,
 });
 
 // Obtener todos los productos
 export const getProductos = async () => {
   try {
     const response = await axios.get(API_BASE_URL);
-    return response.data.map(producto => mapBackendToFrontend(producto));
+    return response.data.map(mapBackendToFrontend);
   } catch (error) {
     console.error("Error al obtener productos:", error);
     throw error;
@@ -52,7 +51,7 @@ export const createProducto = async (productoData) => {
     const response = await axios.post(API_BASE_URL, payload);
     return mapBackendToFrontend(response.data);
   } catch (error) {
-    console.error("Error al crear producto:", error);
+    console.error("Error al crear producto:", error.response?.data || error);
     throw error;
   }
 };
@@ -64,7 +63,10 @@ export const updateProducto = async (id, productoData) => {
     const response = await axios.put(`${API_BASE_URL}/${id}`, payload);
     return mapBackendToFrontend(response.data);
   } catch (error) {
-    console.error(`Error al actualizar producto con id ${id}:`, error);
+    console.error(
+      `Error al actualizar producto con id ${id}:`,
+      error.response?.data || error
+    );
     throw error;
   }
 };
@@ -74,7 +76,10 @@ export const deleteProducto = async (id) => {
   try {
     await axios.delete(`${API_BASE_URL}/${id}`);
   } catch (error) {
-    console.error(`Error al eliminar producto con id ${id}:`, error);
+    console.error(
+      `Error al eliminar producto con id ${id}:`,
+      error.response?.data || error
+    );
     throw error;
   }
 };
@@ -83,9 +88,12 @@ export const deleteProducto = async (id) => {
 export const getProductosByCategoria = async (categoriaId) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/categoria/${categoriaId}`);
-    return response.data.map(producto => mapBackendToFrontend(producto));
+    return response.data.map(mapBackendToFrontend);
   } catch (error) {
-    console.error(`Error al obtener productos por categoría ${categoriaId}:`, error);
+    console.error(
+      `Error al obtener productos por categoría ${categoriaId}:`,
+      error.response?.data || error
+    );
     throw error;
   }
 };
@@ -94,11 +102,25 @@ export const getProductosByCategoria = async (categoriaId) => {
 export const getProductosStockBajo = async (stockMinimo = 10) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/stock-bajo`, {
-      params: { stockMinimo }
+      params: { stockMinimo },
     });
-    return response.data.map(producto => mapBackendToFrontend(producto));
+    return response.data.map(mapBackendToFrontend);
   } catch (error) {
-    console.error("Error al obtener productos con stock bajo:", error);
+    console.error(
+      "Error al obtener productos con stock bajo:",
+      error.response?.data || error
+    );
+    throw error;
+  }
+};
+
+// ✅ Obtener lista simple (solo id, nombre, precio) -> usado en ComprasFormModal
+export const getProductosSimple = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/lista-simple`);
+    return response.data; // ya viene optimizado desde el backend
+  } catch (error) {
+    console.error("Error al obtener lista simple de productos:", error);
     throw error;
   }
 };

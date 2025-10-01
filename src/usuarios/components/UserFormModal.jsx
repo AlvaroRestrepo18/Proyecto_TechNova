@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import "../../app.css";
-import { parseErrorResponse } from "../../utils/parseErrorResponse.js";
 
 const UserFormModal = ({
   isOpen,
@@ -17,7 +16,6 @@ const UserFormModal = ({
   const [roles, setRoles] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [apiError, setApiError] = useState("");
   const isViewMode = mode === "view";
 
   // 🔹 Cargar roles desde el backend
@@ -25,36 +23,31 @@ const UserFormModal = ({
     if (isOpen) {
       setLoadingRoles(true);
       axios
-        .get(
-          "https://cyber360-api.onrender.com/api/Roles/Dropdown?soloActivos=true"
-        )
+        .get("https://localhost:7228/api/Roles")
         .then((res) => setRoles(res.data))
         .catch((err) => console.error("Error al cargar roles:", err))
         .finally(() => setLoadingRoles(false));
     }
   }, [isOpen]);
 
-  // 🔹 Reset errores y API error al abrir
+  // 🔹 Reset errores al abrir
   useEffect(() => {
     if (isOpen) {
       setErrors({});
-      setApiError("");
     }
   }, [isOpen]);
 
-  // 🔹 Asignar rolId automáticamente en modo edit cuando roles estén cargados
+  // 🔹 Sincronizar datos del usuario al abrir modal
   useEffect(() => {
-    if (roles.length > 0 && mode === "edit" && isOpen) {
-      if (!formData.rolId && formData.rol) {
-        const matchedRole = roles.find(
-          (r) => r.nombreRol.toLowerCase() === formData.rol.toLowerCase()
-        );
-        if (matchedRole) {
-          setFormData((prev) => ({ ...prev, rolId: matchedRole.idRol }));
-        }
-      }
+    if (isOpen && formData) {
+      setFormData((prev) => ({
+        ...prev,
+        tipoDocumento:
+          prev?.tipoDocumento || prev?.tipoDoc || "", // normaliza tipo doc
+        rolId: prev?.rolId || prev?.fkRol || "", // normaliza rol
+      }));
     }
-  }, [roles, formData.rol, mode, isOpen, setFormData]);
+  }, [isOpen]);
 
   // 🔹 Validaciones
   const validate = () => {
@@ -80,53 +73,55 @@ const UserFormModal = ({
 
   // 🔹 Funciones API
   const createUsuario = async (payload) =>
-    axios.post("https://cyber360-api.onrender.com/usuarios", payload);
+    axios.post("https://localhost:7228/api/Usuarios", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
 
   const updateUsuario = async (id, payload) =>
-    axios.put(`https://cyber360-api.onrender.com/usuarios/${id}`, payload);
+    axios.put(`https://localhost:7228/api/Usuarios/${id}`, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
 
-  // 🔹 Submit
+  // 🔹 Submit corregido
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setLoadingSubmit(true);
-    setApiError("");
 
     const payload = {
+      IdUsuario: formData.id || formData.idUsuario || 0,
+      FkRol: formData.rolId,
+      Nombre: formData.nombre,
+      Email: formData.email,
+      Contrasena: formData.contrasena || "123456",
+      Estado: formData.estado !== undefined ? formData.estado : true,
       TipoDoc: formData.tipoDocumento,
       Documento: formData.documento,
-      Nombre: formData.nombre,
-      Celular: formData.telefono,
-      Email: formData.email,
       Direccion: formData.direccion,
-      FkRol: formData.rolId,
-      Contrasena: formData.contrasena || "123456",
+      Celular: formData.telefono,
     };
 
     try {
       if (mode === "edit") {
-        await updateUsuario(formData.id, payload);
+        const userId = formData.id || formData.idUsuario;
+        if (!userId) throw new Error("No se encontró el ID del usuario para editar");
+
+        await updateUsuario(userId, payload);
         window.mostrarAlerta("✅ Usuario actualizado con éxito");
       } else {
         await createUsuario(payload);
         window.mostrarAlerta("✅ Usuario creado con éxito");
       }
 
-      if (onSaved) {
-        await onSaved();
-      }
+      if (onSaved) await onSaved();
       onClose();
     } catch (err) {
-      const mensaje = parseErrorResponse(err);
-      window.mostrarAlerta(mensaje);
-
-      if (mensaje.toLowerCase().includes("email")) {
-        setErrors((prev) => ({ ...prev, email: mensaje }));
-      }
-      if (mensaje.toLowerCase().includes("documento")) {
-        setErrors((prev) => ({ ...prev, documento: mensaje }));
-      }
+      console.error("Error en submit:", err.response?.data || err.message);
+      alert(
+        "❌ Error del servidor:\n" +
+          JSON.stringify(err.response?.data, null, 2)
+      );
     } finally {
       setLoadingSubmit(false);
     }
@@ -139,7 +134,11 @@ const UserFormModal = ({
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>
-            {mode === "create" ? "Crear Usuario" : mode === "edit" ? "Editar Usuario" : "Detalles del Usuario"}
+            {mode === "create"
+              ? "Crear Usuario"
+              : mode === "edit"
+              ? "Editar Usuario"
+              : "Detalles del Usuario"}
           </h2>
           <button className="close-button" onClick={onClose}>
             <FontAwesomeIcon icon={faTimes} />
@@ -150,49 +149,63 @@ const UserFormModal = ({
           {/* Tipo Documento + Documento */}
           <div className="form-row">
             <div className="form-group inline-group">
-              <label>Tipo de Documento: <span className="required-asterisk">*</span></label>
+              <label>
+                Tipo de Documento: <span className="required-asterisk">*</span>
+              </label>
               <select
                 name="tipoDocumento"
-                value={formData.tipoDocumento}
+                value={(formData.tipoDocumento || "").toUpperCase()}
                 onChange={(e) =>
                   setFormData({ ...formData, tipoDocumento: e.target.value })
                 }
-                disabled={isViewMode || loadingRoles}
+                disabled={isViewMode}
               >
-                <option value="">{loadingRoles ? "Cargando..." : "Seleccione..."}</option>
+                <option value="">Seleccione...</option>
                 <option value="CC">C.C.</option>
                 <option value="TI">T.I.</option>
                 <option value="CE">C.E.</option>
                 <option value="RUC">R.U.C.</option>
                 <option value="DNI">D.N.I.</option>
-                <option value="Pasaporte">Pasaporte</option>
+                <option value="PASAPORTE">Pasaporte</option>
               </select>
-              {errors.tipoDocumento && <small className="error">{errors.tipoDocumento}</small>}
+              {errors.tipoDocumento && (
+                <small className="error">{errors.tipoDocumento}</small>
+              )}
             </div>
 
             <div className="form-group inline-group">
-              <label>Número de Documento: <span className="required-asterisk">*</span></label>
+              <label>
+                Número de Documento: <span className="required-asterisk">*</span>
+              </label>
               <input
                 type="text"
                 name="documento"
-                value={formData.documento}
-                onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                value={formData.documento || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, documento: e.target.value })
+                }
                 placeholder="12345678"
                 disabled={isViewMode}
               />
-              {errors.documento && <small className="error">{errors.documento}</small>}
+              {errors.documento && (
+                <small className="error">{errors.documento}</small>
+              )}
             </div>
           </div>
 
           {/* Nombre + Teléfono */}
           <div className="form-row">
             <div className="form-group inline-group">
-              <label>Nombre Completo: <span className="required-asterisk">*</span></label>
+              <label>
+                Nombre Completo: <span className="required-asterisk">*</span>
+              </label>
               <input
                 type="text"
                 name="nombre"
-                value={formData.nombre}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                value={formData.nombre || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, nombre: e.target.value })
+                }
                 placeholder="Nombre del usuario"
                 disabled={isViewMode}
               />
@@ -200,28 +213,38 @@ const UserFormModal = ({
             </div>
 
             <div className="form-group inline-group">
-              <label>Teléfono: <span className="required-asterisk">*</span></label>
+              <label>
+                Teléfono: <span className="required-asterisk">*</span>
+              </label>
               <input
                 type="tel"
                 name="telefono"
-                value={formData.telefono}
-                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                value={formData.telefono || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, telefono: e.target.value })
+                }
                 placeholder="+1234567890"
                 disabled={isViewMode}
               />
-              {errors.telefono && <small className="error">{errors.telefono}</small>}
+              {errors.telefono && (
+                <small className="error">{errors.telefono}</small>
+              )}
             </div>
           </div>
 
           {/* Email + Dirección */}
           <div className="form-row">
             <div className="form-group inline-group">
-              <label>Email: <span className="required-asterisk">*</span></label>
+              <label>
+                Email: <span className="required-asterisk">*</span>
+              </label>
               <input
                 type="email"
                 name="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={formData.email || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="usuario@example.com"
                 disabled={isViewMode}
               />
@@ -229,16 +252,22 @@ const UserFormModal = ({
             </div>
 
             <div className="form-group inline-group">
-              <label>Dirección: <span className="required-asterisk">*</span></label>
+              <label>
+                Dirección: <span className="required-asterisk">*</span>
+              </label>
               <input
                 type="text"
                 name="direccion"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                value={formData.direccion || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, direccion: e.target.value })
+                }
                 placeholder="Dirección completa"
                 disabled={isViewMode}
               />
-              {errors.direccion && <small className="error">{errors.direccion}</small>}
+              {errors.direccion && (
+                <small className="error">{errors.direccion}</small>
+              )}
             </div>
           </div>
 
@@ -246,69 +275,89 @@ const UserFormModal = ({
           {mode === "create" && (
             <div className="form-row">
               <div className="form-group inline-group">
-                <label>Contraseña: <span className="required-asterisk">*</span></label>
+                <label>
+                  Contraseña: <span className="required-asterisk">*</span>
+                </label>
                 <input
                   type="password"
                   name="contrasena"
-                  value={formData.contrasena}
-                  onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })}
+                  value={formData.contrasena || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contrasena: e.target.value })
+                  }
                   placeholder="********"
                   disabled={loadingSubmit}
                 />
-                {errors.contrasena && <small className="error">{errors.contrasena}</small>}
+                {errors.contrasena && (
+                  <small className="error">{errors.contrasena}</small>
+                )}
               </div>
             </div>
           )}
 
           {/* Roles */}
-<div className="form-row">
-  <div className="form-group inline-group">
-    <label>
-      Rol: <span className="required-asterisk">*</span>
-    </label>
-
-    {isViewMode ? (
-      <input
-        type="text"
-        value={
-          roles.find((r) => r.idRol === formData.rolId)?.nombreRol ||
-          formData.rol
-        }
-        readOnly
-        disabled
-      />
-    ) : (
-      <select
-        name="rolId"
-        value={formData.rolId || ""}
-        onChange={(e) =>
-          setFormData({ ...formData, rolId: parseInt(e.target.value) })
-        }
-        disabled={loadingRoles}
-      >
-        <option value="">
-          {loadingRoles ? "Cargando roles..." : "Seleccione..."}
-        </option>
-        {roles.map((rol) => (
-          <option key={rol.idRol} value={rol.idRol}>
-            {rol.nombreRol}
-          </option>
-        ))}
-      </select>
-    )}
-
-    {errors.rol && <small className="error">{errors.rol}</small>}
-  </div>
-</div>
+          <div className="form-row">
+            <div className="form-group inline-group">
+              <label>
+                Rol: <span className="required-asterisk">*</span>
+              </label>
+              {isViewMode ? (
+                <input
+                  type="text"
+                  value={
+                    roles.find((r) => r.idRol === formData.rolId)?.nombreRol ||
+                    formData.rol ||
+                    ""
+                  }
+                  readOnly
+                  disabled
+                />
+              ) : (
+                <select
+                  name="rolId"
+                  value={formData.rolId || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rolId: parseInt(e.target.value) })
+                  }
+                  disabled={loadingRoles}
+                >
+                  <option value="">
+                    {loadingRoles ? "Cargando roles..." : "Seleccione..."}
+                  </option>
+                  {roles.map((rol) => (
+                    <option key={rol.idRol} value={rol.idRol}>
+                      {rol.nombreRol}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.rol && <small className="error">{errors.rol}</small>}
+            </div>
+          </div>
 
           {/* Botones */}
           <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={onClose} disabled={loadingSubmit}>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={onClose}
+              disabled={loadingSubmit}
+            >
               {isViewMode ? "Cerrar" : "Cancelar"}
             </button>
             {!isViewMode && (
-              <button type="submit" className="submit-button" disabled={loadingSubmit}>
-                {loadingSubmit ? (mode === "create" ? "Creando..." : "Guardando...") : (mode === "create" ? "Crear" : "Guardar")}
+              <button
+                type="submit"
+                className="submit-button"
+                disabled={loadingSubmit}
+              >
+                {loadingSubmit
+                  ? mode === "create"
+                    ? "Creando..."
+                    : "Guardando..."
+                  : mode === "create"
+                  ? "Crear"
+                  : "Guardar"}
               </button>
             )}
           </div>

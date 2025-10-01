@@ -1,3 +1,4 @@
+// src/usuarios/usuarios.jsx
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
@@ -7,8 +8,13 @@ import UserTable from "./components/usertable.jsx";
 import "../app.css";
 import "./usuarios.css";
 
-// ❌ Quitamos servicios reales
-// import { getUsuarios, createUsuario, updateUsuario, deleteUsuario, toggleUsuarioEstado } from "./services/usuarios.js";
+import {
+  getUsuarios,
+  createUsuario,
+  updateUsuario,
+  deleteUsuario,
+  toggleUsuarioEstado,
+} from "./services/usuarios.js";
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,50 +31,81 @@ const Users = () => {
     nombre: "",
     email: "",
     telefono: "",
-    tipoDocumento: "DNI",
+    tipoDocumento: "CC",
     documento: "",
     direccion: "",
-    rol: "usuario",
+    idRol: null, // ✅ ahora usamos idRol (igual al backend)
+    contrasena: "",
+    estado: true,
   });
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Simulación con datos de prueba
   useEffect(() => {
-    const fakeUsers = [
-      {
-        id: 1,
-        name: "Juan Pérez",
-        email: "juan@example.com",
-        telefono: "3001234567",
-        tipoDocumento: "DNI",
-        documento: "12345678",
-        direccion: "Calle 123",
-        role: "Admin",
-        rolId: 1,
-        estado: "activo",
-      },
-      {
-        id: 2,
-        name: "Ana López",
-        email: "ana@example.com",
-        telefono: "3017654321",
-        tipoDocumento: "DNI",
-        documento: "87654321",
-        direccion: "Carrera 45",
-        role: "Usuario",
-        rolId: 2,
-        estado: "inactivo",
-      },
-    ];
-    setUserData(fakeUsers);
+    fetchUsuarios();
   }, []);
 
-  // 🔹 Filtrar y paginar
+  const fetchUsuarios = async () => {
+    try {
+      setLoading(true);
+      const data = await getUsuarios();
+      setUserData(data);
+    } catch (error) {
+      console.error("Error cargando usuarios:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        estado: formData.estado ? "activo" : "inactivo", // 👈 ajusta según tu backend
+      };
+
+      if (formMode === "create") {
+        await createUsuario(payload);
+      } else {
+        await updateUsuario(currentUserId, payload);
+      }
+
+      fetchUsuarios();
+      closeForm();
+    } catch (error) {
+      console.error("Error guardando usuario:", error);
+      alert("Error al guardar usuario. Revisa los datos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteUsuario(userToDelete.id);
+      fetchUsuarios();
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error("Error eliminando usuario:", error);
+    }
+  };
+
+  const handleToggleEstado = async (id, estado) => {
+    try {
+      await toggleUsuarioEstado(id, estado);
+      fetchUsuarios();
+    } catch (error) {
+      console.error("Error cambiando estado:", error);
+    }
+  };
+
   const filteredUsers = userData.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.documento.includes(searchTerm)
+      u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.documento?.includes(searchTerm)
   );
 
   const filteredByEstado = filteredUsers.filter(
@@ -81,7 +118,6 @@ const Users = () => {
     currentPage * itemsPerPage
   );
 
-  // 🔹 Abrir modales
   const openCreateForm = () => {
     setFormMode("create");
     setIsFormOpen(true);
@@ -89,11 +125,12 @@ const Users = () => {
       nombre: "",
       email: "",
       telefono: "",
-      tipoDocumento: "",
+      tipoDocumento: "CC",
       documento: "",
       direccion: "",
-      rol: "usuario",
-      rolId: null,
+      idRol: null,
+      contrasena: "",
+      estado: true,
     });
   };
 
@@ -106,21 +143,17 @@ const Users = () => {
     setIsFormOpen(true);
 
     setFormData({
-      id: u.id,
-      nombre: u.name,
+      id: userId,
+      nombre: u.nombre,
       email: u.email,
       telefono: u.telefono || "",
-      tipoDocumento: u.tipoDocumento,
+      tipoDocumento: u.tipoDocumento || "CC",
       documento: u.documento,
       direccion: u.direccion,
-      rol: u.role?.toLowerCase() || "",
-      rolId: u.rolId || null,
+      idRol: u.idRol, // ✅ siempre mandamos idRol
+      contrasena: "",
+      estado: u.estado === "activo",
     });
-  };
-
-  const closeForm = () => {
-    setIsFormOpen(false);
-    setCurrentUserId(null);
   };
 
   const openDeleteModal = (userId) => {
@@ -131,75 +164,9 @@ const Users = () => {
     }
   };
 
-  const confirmDelete = async () => {
-    if (userToDelete) {
-      setUserData(userData.filter((u) => u.id !== userToDelete.id));
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-    }
-  };
-
-  const openDetailsModal = (userId) => {
-    const u = userData.find((u) => u.id === userId);
-    if (u) {
-      setFormMode("view");
-      setIsFormOpen(true);
-      setFormData({
-        nombre: u.name,
-        email: u.email,
-        telefono: u.telefono || "",
-        tipoDocumento: u.tipoDocumento,
-        documento: u.documento,
-        direccion: u.direccion,
-        rol: u.role?.toLowerCase() || "",
-        rolId: u.rolId || null,
-      });
-    }
-  };
-
-  // Cambiar estado (activar/inactivar) en mock
-  const toggleUserEstado = (id, estadoActual) => {
-    setUserData(
-      userData.map((u) =>
-        u.id === id
-          ? {
-              ...u,
-              estado: estadoActual === "activo" ? "inactivo" : "activo",
-            }
-          : u
-      )
-    );
-  };
-
-  // 🔹 Crear o Editar usuario en mock
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (formMode === "create") {
-        const newUser = {
-          ...formData,
-          id: Date.now(),
-          estado: "activo",
-        };
-        setUserData([...userData, newUser]);
-      } else {
-        setUserData(
-          userData.map((u) =>
-            u.id === currentUserId ? { ...u, ...formData } : u
-          )
-        );
-      }
-      closeForm();
-    } catch (error) {
-      console.error("Error guardando usuario:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setCurrentUserId(null);
   };
 
   return (
@@ -250,19 +217,19 @@ const Users = () => {
 
       <UserTable
         users={paginatedUsers}
-        onView={openDetailsModal}
+        onView={() => {}}
         onEdit={openEditForm}
         onDelete={openDeleteModal}
         onToggleEstado={(id) => {
-          const u = userData.find((user) => user.id === id);
-          toggleUserEstado(id, u.estado);
+          const u = userData.find((x) => x.id === id);
+          handleToggleEstado(id, u.estado);
         }}
       />
 
       {totalPages > 1 && (
         <div className="pagination-controls">
           <button
-            onClick={() => handlePageChange(currentPage - 1)}
+            onClick={() => setCurrentPage(currentPage - 1)}
             disabled={currentPage === 1}
           >
             &lt;
@@ -271,13 +238,13 @@ const Users = () => {
             <button
               key={i + 1}
               className={currentPage === i + 1 ? "active-page" : ""}
-              onClick={() => handlePageChange(i + 1)}
+              onClick={() => setCurrentPage(i + 1)}
             >
               {i + 1}
             </button>
           ))}
           <button
-            onClick={() => handlePageChange(currentPage + 1)}
+            onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
             &gt;
@@ -292,7 +259,6 @@ const Users = () => {
         setFormData={setFormData}
         mode={formMode}
         loading={loading}
-        onSaved={() => {}} // ya no necesita llamar API
         onSubmit={handleSubmit}
       />
 
@@ -300,7 +266,7 @@ const Users = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        itemName={userToDelete?.name || ""}
+        itemName={userToDelete?.nombre || ""}
       />
     </div>
   );

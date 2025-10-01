@@ -2,9 +2,22 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../roles.css";
-import { FiSettings, FiKey, FiUsers, FiShoppingCart, FiBox, FiTruck, FiTag, FiTool, FiClock, FiServer, FiDollarSign, FiShoppingBag, FiUser, FiPieChart } from "react-icons/fi";
+import {
+  FiSettings,
+  FiKey,
+  FiUsers,
+  FiShoppingCart,
+  FiBox,
+  FiTruck,
+  FiTag,
+  FiTool,
+  FiDollarSign,
+  FiUser,
+} from "react-icons/fi";
 
-// Tu estructura de módulos
+// ====================
+// Estructura de módulos
+// ====================
 const menuSections = [
   {
     title: "Configuración",
@@ -21,36 +34,27 @@ const menuSections = [
       { name: "Compras", path: "/compras", icon: <FiShoppingCart /> },
       { name: "Productos", path: "/productos", icon: <FiBox /> },
       { name: "Proveedores", path: "/proveedores", icon: <FiTruck /> },
-      { name: "Categoría de productos", path: "/catpro", icon: <FiTag /> },
+      { name: "Categorías", path: "/catpro", icon: <FiTag /> },
     ],
   },
   {
     title: "Servicios",
     icon: <FiTool />,
-    items: [
-      { name: "Servicios", path: "/servicios", icon: <FiTool /> },
-      { name: "Categoría de servicios", path: "/catser", icon: <FiTag /> },
-      { name: "Tiempos", path: "/tiempos", icon: <FiClock /> },
-      { name: "Equipos", path: "/equipos", icon: <FiServer /> },
-    ],
+    items: [{ name: "Servicios", path: "/servicios", icon: <FiTool /> }],
   },
   {
     title: "Ventas",
     icon: <FiDollarSign />,
     items: [
       { name: "Ventas", path: "/ventas", icon: <FiDollarSign /> },
-      { name: "Pedidos", path: "/gestionReparaciones", icon: <FiShoppingBag /> },
       { name: "Clientes", path: "/clientesFidelizacion", icon: <FiUser /> },
     ],
   },
-  {
-    title: "Dashboard",
-    icon: <FiPieChart />,
-    items: [{ name: "Dashboard", path: "/dashboard", icon: <FiPieChart /> }],
-  },
 ];
 
-// Helpers para normalizar strings y hacer matching
+// ====================
+// Helpers
+// ====================
 const normalizeString = (str) =>
   str
     .toLowerCase()
@@ -68,44 +72,52 @@ const buildModuleMap = (sections) => {
   });
   return map;
 };
-
 const moduleMap = buildModuleMap(menuSections);
 
+// ====================
+// Component
+// ====================
 const ModulePermissions = ({
-  selectedPermissions = [],
+  selectedPermissions = [], // puede ser array de IDs o de objetos
   onPermissionToggle = null,
   isDisabled = false,
-  apiUrl = "https://cyber360-api.onrender.com/api/permisos",
+  apiUrl = "https://localhost:7228/api/Permisoes",
 }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Obtener id y nombre del permiso
+  // Helpers para IDs y nombres
   const getPermisoId = (permiso) =>
-    permiso?.id ?? permiso?.Id ?? permiso?.id_permiso ?? null;
+    permiso?.id ??
+    permiso?.Id ??
+    permiso?.idPermiso ??
+    permiso?.IdPermiso ??
+    null;
 
   const getPermisoName = (permiso) =>
-    permiso?.nombre ?? permiso?.Nombre ?? permiso?.nombre_permiso ?? "(sin nombre)";
+    permiso?.nombre ??
+    permiso?.Nombre ??
+    permiso?.nombrePermiso ??
+    permiso?.NombrePermiso ??
+    "(sin nombre)";
 
-  // Capitalizar nombres para mostrar (separar espacios y capitalizar)
-  const formatModuleName = (str) => {
-    if (!str) return "";
-    return str
-      .replace(/_/g, " ")
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
+  const formatModuleName = (str) =>
+    str
+      ? str
+          .replace(/_/g, " ")
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : "";
 
-  // Encontrar módulo del permiso
   const getModuleNameFromPermission = (permName) => {
-    if (!permName) return "Otros";
+    if (!permName) return null;
     const norm = normalizeString(permName);
-    return moduleMap.get(norm) || "Otros";
+    return moduleMap.get(norm) || null;
   };
 
-  // Cargar permisos de API
+  // Fetch permisos del backend
   useEffect(() => {
     const fetchPermissions = async () => {
       setLoading(true);
@@ -129,13 +141,19 @@ const ModulePermissions = ({
     fetchPermissions();
   }, [apiUrl]);
 
-  // Determinar si un permiso está seleccionado
+  // 🔹 Verificar si un permiso está seleccionado
   const isSelected = (id) => {
     const idStr = String(id);
-    return selectedPermissions.some((s) => String(s) === idStr);
+    return selectedPermissions.some(
+      (s) =>
+        String(s) === idStr || // array de IDs
+        String(
+          s?.idPermiso ?? s?.IdPermiso ?? s?.id ?? s?.Id ?? null
+        ) === idStr // array de objetos
+    );
   };
 
-  // Manejar toggle de permiso
+  // Toggle
   const handleToggle = (id, name) => {
     if (typeof onPermissionToggle === "function") {
       try {
@@ -150,11 +168,13 @@ const ModulePermissions = ({
   const groupedPermissions = permissions.reduce((acc, permiso) => {
     const pname = getPermisoName(permiso);
     const module = getModuleNameFromPermission(pname);
+    if (!module) return acc;
     if (!acc[module]) acc[module] = [];
     acc[module].push(permiso);
     return acc;
   }, {});
 
+  // Render
   if (loading) {
     return (
       <div className="modules-container">
@@ -186,7 +206,7 @@ const ModulePermissions = ({
               {permisos.map((permiso, index) => {
                 const pid = getPermisoId(permiso) ?? `permiso-${index}`;
                 const pname = getPermisoName(permiso);
-                const key = `${pid}-${String(pname).replace(/\s+/g, "_")}`;
+                const key = `${pid}-${normalizeString(pname)}`;
                 return (
                   <label
                     key={key}
@@ -195,7 +215,7 @@ const ModulePermissions = ({
                   >
                     <input
                       type="checkbox"
-                      checked={isSelected(pid)} 
+                      checked={isSelected(pid)} // 🔹 Aquí se marca si el rol ya tiene ese permiso
                       onChange={() => handleToggle(pid, pname)}
                       disabled={isDisabled}
                     />
@@ -207,35 +227,6 @@ const ModulePermissions = ({
           </div>
         );
       })}
-
-      {/* Mostrar permisos que no coinciden en "Otros" */}
-      {groupedPermissions["Otros"] && groupedPermissions["Otros"].length > 0 && (
-        <div className="module-group">
-          <h4>Otros</h4>
-          <div className="modules-grid">
-            {groupedPermissions["Otros"].map((permiso, index) => {
-              const pid = getPermisoId(permiso) ?? `permiso-otros-${index}`;
-              const pname = getPermisoName(permiso);
-              const key = `${pid}-${String(pname).replace(/\s+/g, "_")}`;
-              return (
-                <label
-                  key={key}
-                  className="module-checkbox"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected(pid)}
-                    onChange={() => handleToggle(pid, pname)}
-                    disabled={isDisabled}
-                  />
-                  {formatModuleName(pname)}
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

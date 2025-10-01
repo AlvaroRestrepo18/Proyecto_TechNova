@@ -1,137 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faEdit, faTrash, faToggleOn, faToggleOff, faTimes, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faTimes, faEye } from '@fortawesome/free-solid-svg-icons';
 import './productos.css';
+import axios from 'axios';
+
+const API_PRODUCTOS_URL = "https://localhost:7228/api/Productos";
+const API_CATEGORIA_URL = "https://localhost:7228/api/Categorias";
 
 const Productos = () => {
-  // Estados principales
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("activos");
   const [modalProducto, setModalProducto] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-  
-  // Datos de ejemplo de productos
-  const [productosData, setProductosData] = useState([
-    { 
-      id: 1, 
-      codigo: 'PROD-001',
-      nombre: "Laptop Gamer", 
-      categoria: "Tecnología", 
-      precio: 5000, 
-      stock: 10, 
-      stockMinimo: 5,
-      descripcion: 'Laptop para gaming de alto rendimiento',
-      estado: "Activo" 
-    },
-    { 
-      id: 2, 
-      codigo: 'PROD-002',
-      nombre: "Escritorio", 
-      categoria: "Muebles", 
-      precio: 1200, 
-      stock: 5, 
-      stockMinimo: 2,
-      descripcion: 'Escritorio de oficina ergonómico',
-      estado: "Anulado" 
-    },
-    { 
-      id: 3, 
-      codigo: 'PROD-003',
-      nombre: "Monitor 24 pulgadas", 
-      categoria: "Tecnología", 
-      precio: 800, 
-      stock: 15, 
-      stockMinimo: 3,
-      descripcion: 'Monitor Full HD para trabajo y entretenimiento',
-      estado: "Activo" 
-    }
-  ]);
+  const [productosData, setProductosData] = useState([]);
+  const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
 
-  // Categorías disponibles
-  const categoriasDisponibles = [
-    'Tecnología',
-    'Muebles',
-    'Electrodomésticos',
-    'Oficina',
-    'Hogar',
-    'Deportes',
-    'Ropa',
-    'Alimentos'
-  ];
-
-  // Estado del formulario
   const [formData, setFormData] = useState({
-    codigo: '',
+    id: null,
     nombre: '',
-    categoria: '',
+    categoriaId: '',
+    cantidad: '',
     precio: '',
-    stock: '',
-    stockMinimo: '1',
-    descripcion: '',
-    estado: 'Activo'
+    fechaCreacion: new Date().toISOString().split("T")[0]
   });
 
-  // Filtros de productos
-  const filteredActivos = productosData.filter(producto => 
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    producto.estado === 'Activo'
-  );
+  // Cargar categorías y productos al montar
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await axios.get(API_CATEGORIA_URL);
+        setCategoriasDisponibles(response.data);
+      } catch (error) {
+        console.error("Error al obtener categorías:", error);
+      }
+    };
 
-  const filteredAnulados = productosData.filter(producto => 
-    producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    producto.estado === 'Anulado'
+    const fetchProductos = async () => {
+      try {
+        const response = await axios.get(API_PRODUCTOS_URL);
+        setProductosData(response.data);
+      } catch (error) {
+        console.error("Error al obtener productos:", error);
+      }
+    };
+
+    fetchCategorias();
+    fetchProductos();
+  }, []);
+
+  // Filtro de búsqueda
+  const filteredProductos = productosData.filter(producto =>
+    producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Validar formulario
   const validateForm = () => {
     const errors = {};
-    
-    if (!formData.codigo.trim()) errors.codigo = 'El código es requerido';
     if (!formData.nombre.trim()) errors.nombre = 'El nombre es requerido';
-    if (!formData.categoria) errors.categoria = 'Seleccione una categoría';
+    if (!formData.categoriaId) errors.categoriaId = 'Seleccione una categoría';
     if (!formData.precio || formData.precio <= 0) errors.precio = 'Precio válido requerido';
-    if (!formData.stock || formData.stock < 0) errors.stock = 'Stock válido requerido';
-    if (!formData.stockMinimo || formData.stockMinimo < 0) errors.stockMinimo = 'Stock mínimo válido requerido';
-    
+    if (formData.cantidad === '' || formData.cantidad < 0) errors.cantidad = 'Cantidad válida requerida';
+    if (!formData.fechaCreacion) errors.fechaCreacion = 'La fecha es requerida';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Handlers
-  const toggleEstado = (id) => {
-    setProductosData(productosData.map(producto => 
-      producto.id === id 
-        ? { ...producto, estado: producto.estado === 'Activo' ? 'Anulado' : 'Activo' }
-        : producto
-    ));
-  };
-
-  const eliminarProducto = (id) => {
+  const eliminarProducto = async (id) => {
     if (window.confirm("¿Estás seguro de eliminar este producto?")) {
-      setProductosData(productosData.filter(producto => producto.id !== id));
+      try {
+        await axios.delete(`${API_PRODUCTOS_URL}/${id}`);
+        setProductosData(productosData.filter(producto => producto.id !== id));
+      } catch (error) {
+        console.error("Error al eliminar producto:", error);
+      }
     }
   };
 
   const openForm = () => {
     setIsFormOpen(true);
     setFormData({
-      codigo: `PROD-${Date.now().toString().slice(-3)}`,
+      id: null,
       nombre: '',
-      categoria: '',
+      categoriaId: '',
+      cantidad: '',
       precio: '',
-      stock: '',
-      stockMinimo: '1',
-      descripcion: '',
-      estado: 'Activo'
+      fechaCreacion: new Date().toISOString().split("T")[0]
     });
     setFormErrors({});
   };
 
   const closeForm = () => setIsFormOpen(false);
 
-  // Modal de visualización
   const openViewModal = (producto) => {
     setModalProducto(producto);
     setIsViewModalOpen(true);
@@ -144,50 +104,56 @@ const Productos = () => {
 
   const openEditForm = (producto) => {
     setIsFormOpen(true);
-    setFormData({ ...producto });
+    setFormData({
+      ...producto,
+      fechaCreacion: producto.fechaCreacion
+        ? new Date(producto.fechaCreacion).toISOString().split("T")[0]
+        : new Date().toISOString().split("T")[0]
+    });
     setFormErrors({});
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({...formData, [name]: value});
+    setFormData({ ...formData, [name]: value });
   };
 
-  // Submit del formulario
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-    
-    const nuevoProducto = {
-      id: formData.id || Math.max(...productosData.map(p => p.id), 0) + 1,
-      codigo: formData.codigo,
+
+    const productoPayload = {
       nombre: formData.nombre,
-      categoria: formData.categoria,
+      categoriaId: parseInt(formData.categoriaId),
+      cantidad: parseInt(formData.cantidad),
       precio: parseFloat(formData.precio),
-      stock: parseInt(formData.stock),
-      stockMinimo: parseInt(formData.stockMinimo),
-      descripcion: formData.descripcion,
-      estado: 'Activo'
+      fechaCreacion: new Date(formData.fechaCreacion).toISOString()
     };
-    
-    if (formData.id) {
-      // Editar producto existente
-      setProductosData(productosData.map(p => 
-        p.id === formData.id ? nuevoProducto : p
-      ));
-    } else {
-      // Nuevo producto
-      setProductosData([...productosData, nuevoProducto]);
+
+    try {
+      if (formData.id) {
+        // UPDATE
+        const response = await axios.put(`${API_PRODUCTOS_URL}/${formData.id}`, {
+          ...productoPayload,
+          id: formData.id
+        });
+        setProductosData(productosData.map(p =>
+          p.id === formData.id ? response.data : p
+        ));
+      } else {
+        // CREATE
+        const response = await axios.post(API_PRODUCTOS_URL, productoPayload);
+        setProductosData([...productosData, response.data]);
+      }
+      closeForm();
+    } catch (error) {
+      console.error("Error al guardar producto:", error.response?.data || error);
     }
-    
-    closeForm();
   };
 
-  // Componente para el modal de visualización
+  // Modal de visualización
   const ViewModal = ({ producto, onClose }) => {
     if (!producto) return null;
-
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content details-modal" onClick={e => e.stopPropagation()}>
@@ -197,61 +163,15 @@ const Productos = () => {
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </div>
-
           <div className="user-details-container">
-            <div className="user-details-row">
-              <span className="detail-label">Código:</span>
-              <span className="detail-value">{producto.codigo}</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Nombre:</span>
-              <span className="detail-value">{producto.nombre}</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Categoría:</span>
-              <span className="detail-value">{producto.categoria}</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Precio:</span>
-              <span className="detail-value">${producto.precio.toFixed(2)}</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Stock Actual:</span>
-              <span className="detail-value">{producto.stock} unidades</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Stock Mínimo:</span>
-              <span className="detail-value">{producto.stockMinimo} unidades</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Estado:</span>
-              <span className={`detail-value ${producto.estado === 'Activo' ? 'status-active' : 'status-inactive'}`}>
-                {producto.estado}
-              </span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Descripción:</span>
-              <span className="detail-value">{producto.descripcion || 'Sin descripción'}</span>
-            </div>
-            
-            <div className="user-details-row">
-              <span className="detail-label">Alerta Stock:</span>
-              <span className="detail-value">
-                {producto.stock <= producto.stockMinimo ? (
-                  <span style={{color: '#e74c3c', fontWeight: 'bold'}}>⚠️ Stock bajo</span>
-                ) : (
-                  <span style={{color: '#27ae60'}}>✅ Stock suficiente</span>
-                )}
-              </span>
-            </div>
-            
+            <p><b>ID:</b> {producto.id}</p>
+            <p><b>Nombre:</b> {producto.nombre}</p>
+            <p><b>Categoría:</b> {
+              categoriasDisponibles.find(cat => cat.id === producto.categoriaId)?.nombre || "Sin categoría"
+            }</p>
+            <p><b>Precio:</b> ${producto.precio?.toFixed(2)}</p>
+            <p><b>Cantidad:</b> {producto.cantidad}</p>
+            <p><b>Fecha de Creación:</b> {producto.fechaCreacion ? new Date(producto.fechaCreacion).toLocaleDateString() : "N/A"}</p>
             <div className="form-actions">
               <button type="button" className="close-details-button" onClick={onClose}>
                 Cerrar
@@ -263,52 +183,39 @@ const Productos = () => {
     );
   };
 
-  // Componente para la tabla de productos
+  // Tabla de productos
   const TablaProductos = ({ productos }) => (
     <table className="table">
       <thead>
         <tr>
-          <th>Código</th>
+          <th>ID</th>
           <th>Nombre</th>
           <th>Categoría</th>
           <th>Precio</th>
-          <th>Stock</th>
-          <th>Estado</th>
-          <th className='Action'>Acciones</th>
+          <th>Cantidad</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {productos.map((producto, index) => (
+        {productos.map((producto) => (
           <tr key={producto.id}>
-            <td>{producto.codigo}</td>
+            <td>{producto.id}</td>
             <td>{producto.nombre}</td>
-            <td>{producto.categoria}</td>
-            <td>${producto.precio.toFixed(2)}</td>
+            <td>{categoriasDisponibles.find(cat => cat.id === producto.categoriaId)?.nombre || "Sin categoría"}</td>
+            <td>${producto.precio?.toFixed(2)}</td>
+            <td>{producto.cantidad}</td>
             <td>
-              <span className={producto.stock <= producto.stockMinimo ? 'status-inactive' : 'status-active'}>
-                {producto.stock} {producto.stock <= producto.stockMinimo && '⚠️'}
-              </span>
-            </td>
-            <td>
-              <button 
-                className={`status-toggle ${producto.estado === 'Activo' ? 'active' : 'inactive'}`}
-                onClick={() => toggleEstado(producto.id)}
-              >
-                {producto.estado}
-              </button>
-            </td>
-            <td className='Action'>
               <button className="icon-button" title="Ver" onClick={() => openViewModal(producto)}>
                 <FontAwesomeIcon icon={faEye} />
               </button>
               <button className="icon-button" title="Editar" onClick={() => openEditForm(producto)}>
                 <FontAwesomeIcon icon={faEdit} />
               </button>
-              <button 
-                className="icon-button" 
-                title="Eliminar" 
+              <button
+                className="icon-button"
+                title="Eliminar"
                 onClick={() => eliminarProducto(producto.id)}
-                style={{color: '#e74c3c'}}
+                style={{ color: '#e74c3c' }}
               >
                 <FontAwesomeIcon icon={faTrash} />
               </button>
@@ -322,55 +229,25 @@ const Productos = () => {
   return (
     <div>
       <h1>Productos</h1>
-      
-      <div className="section-divider"></div>
-      
-      {/* Pestañas */}
-      <div className="tabs">
-        <button
-          className={`tab-button ${activeTab === "activos" ? "active-tab" : ""}`}
-          onClick={() => setActiveTab("activos")}
-        >
-          Productos Activos ({filteredActivos.length})
-        </button>
-        <button
-          className={`tab-button ${activeTab === "anulados" ? "active-tab" : ""}`}
-          onClick={() => setActiveTab("anulados")}
-        >
-          Productos Anulados ({filteredAnulados.length})
-        </button>
-      </div>
 
       <div className="search-container">
         <input
           type="text"
-          placeholder={activeTab === "activos" ? "Buscar productos activos" : "Buscar productos anulados"}
+          placeholder="Buscar producto..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
-        {activeTab === "activos" && (
-          <div className="create-header">
-            <button className="create-button" onClick={openForm}>
-              <FontAwesomeIcon icon={faPlus} /> Nuevo Producto
-            </button>
-          </div>
-        )}
-      </div>
-      
-      <div className="table-container">
-        {activeTab === "activos" ? (
-          <TablaProductos productos={filteredActivos} />
-        ) : (
-          <TablaProductos productos={filteredAnulados} />
-        )}
-        
-        {(activeTab === "activos" ? filteredActivos : filteredAnulados).length === 0 && (
-          <div className="no-results">No hay productos {activeTab}</div>
-        )}
+        <button className="create-button" onClick={openForm}>
+          <FontAwesomeIcon icon={faPlus} /> Nuevo
+        </button>
       </div>
 
-      {/* Modal de formulario */}
+      <div className="table-container">
+        <TablaProductos productos={filteredProductos} />
+      </div>
+
+      {/* Modal Formulario */}
       {isFormOpen && (
         <div className="modal-overlay" onClick={closeForm}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -382,138 +259,51 @@ const Productos = () => {
             </div>
 
             <form className="form-body" onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Código <span className="required-asterisk">*</span></label>
-                    <input
-                      type="text"
-                      name="codigo"
-                      value={formData.codigo}
-                      onChange={handleChange}
-                      className={formErrors.codigo ? 'input-error' : ''}
-                      required
-                    />
-                    {formErrors.codigo && <span className="error">{formErrors.codigo}</span>}
-                  </div>
-                </div>
-
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Nombre <span className="required-asterisk">*</span></label>
-                    <input
-                      type="text"
-                      name="nombre"
-                      value={formData.nombre}
-                      onChange={handleChange}
-                      className={formErrors.nombre ? 'input-error' : ''}
-                      required
-                    />
-                    {formErrors.nombre && <span className="error">{formErrors.nombre}</span>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Categoría <span className="required-asterisk">*</span></label>
-                    <select
-                      name="categoria"
-                      value={formData.categoria}
-                      onChange={handleChange}
-                      className={formErrors.categoria ? 'input-error' : ''}
-                      required
-                    >
-                      <option value="">Seleccione una categoría...</option>
-                      {categoriasDisponibles.map((categoria, index) => (
-                        <option key={index} value={categoria}>
-                          {categoria}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.categoria && <span className="error">{formErrors.categoria}</span>}
-                  </div>
-                </div>
-
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Precio <span className="required-asterisk">*</span></label>
-                    <input
-                      type="number"
-                      name="precio"
-                      value={formData.precio}
-                      onChange={handleChange}
-                      className={formErrors.precio ? 'input-error' : ''}
-                      min="0"
-                      step="0.01"
-                      required
-                    />
-                    {formErrors.precio && <span className="error">{formErrors.precio}</span>}
-                  </div>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Stock Actual <span className="required-asterisk">*</span></label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={formData.stock}
-                      onChange={handleChange}
-                      className={formErrors.stock ? 'input-error' : ''}
-                      min="0"
-                      required
-                    />
-                    {formErrors.stock && <span className="error">{formErrors.stock}</span>}
-                  </div>
-                </div>
-
-                <div className="inline-group">
-                  <div className="form-group">
-                    <label>Stock Mínimo <span className="required-asterisk">*</span></label>
-                    <input
-                      type="number"
-                      name="stockMinimo"
-                      value={formData.stockMinimo}
-                      onChange={handleChange}
-                      className={formErrors.stockMinimo ? 'input-error' : ''}
-                      min="0"
-                      required
-                    />
-                    {formErrors.stockMinimo && <span className="error">{formErrors.stockMinimo}</span>}
-                  </div>
-                </div>
+              <div className="form-group">
+                <label>Nombre</label>
+                <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
+                {formErrors.nombre && <span className="error">{formErrors.nombre}</span>}
               </div>
 
               <div className="form-group">
-                <label>Descripción</label>
-                <textarea
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  rows="3"
-                  placeholder="Descripción del producto..."
-                  style={{width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', resize: 'vertical'}}
-                />
+                <label>Categoría</label>
+                <select name="categoriaId" value={formData.categoriaId} onChange={handleChange} required>
+                  <option value="">Seleccione...</option>
+                  {categoriasDisponibles.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                  ))}
+                </select>
+                {formErrors.categoriaId && <span className="error">{formErrors.categoriaId}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Precio</label>
+                <input type="number" name="precio" value={formData.precio} onChange={handleChange} min="0" step="0.01" required />
+                {formErrors.precio && <span className="error">{formErrors.precio}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Cantidad</label>
+                <input type="number" name="cantidad" value={formData.cantidad} onChange={handleChange} min="0" required />
+                {formErrors.cantidad && <span className="error">{formErrors.cantidad}</span>}
+              </div>
+
+              <div className="form-group">
+                <label>Fecha de Creación</label>
+                <input type="date" name="fechaCreacion" value={formData.fechaCreacion} onChange={handleChange} required />
+                {formErrors.fechaCreacion && <span className="error">{formErrors.fechaCreacion}</span>}
               </div>
 
               <div className="form-actions">
-                <button type="button" className="cancel-button" onClick={closeForm}>
-                  Cancelar
-                </button>
-                <button type="submit" className="submit-button">
-                  {formData.id ? "Actualizar" : "Crear"} Producto
-                </button>
+                <button type="button" onClick={closeForm}>Cancelar</button>
+                <button type="submit">{formData.id ? "Actualizar" : "Crear"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal de visualización */}
+      {/* Modal Visualización */}
       {isViewModalOpen && (
         <ViewModal producto={modalProducto} onClose={closeViewModal} />
       )}

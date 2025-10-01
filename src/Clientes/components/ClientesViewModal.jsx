@@ -33,20 +33,8 @@ const ClientesViewModal = ({ cliente, onClose }) => {
             <span className="detail-value">{cliente.documento}</span>
           </div>
           <div className="user-details-row">
-            <span className="detail-label">Fecha Nacimiento:</span>
-            <span className="detail-value">{cliente.fechaNac}</span>
-          </div>
-          <div className="user-details-row">
-            <span className="detail-label">Celular:</span>
-            <span className="detail-value">{cliente.celular || '-'}</span>
-          </div>
-          <div className="user-details-row">
             <span className="detail-label">Correo:</span>
             <span className="detail-value">{cliente.correo || '-'}</span>
-          </div>
-          <div className="user-details-row">
-            <span className="detail-label">Dirección:</span>
-            <span className="detail-value">{cliente.direccion || '-'}</span>
           </div>
           <div className="user-details-row">
             <span className="detail-label">Estado:</span>

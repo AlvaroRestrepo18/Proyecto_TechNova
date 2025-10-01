@@ -11,44 +11,46 @@ const ClientesTable = ({ clientes, onToggleStatus, onEdit, onDelete, onView }) =
           <th>Apellido</th>
           <th>Tipo Doc</th>
           <th>Documento</th>
-          <th>Celular</th>
           <th>Estado</th>
-          <th className='Action'>Acciones</th>
+          <th className="action-column">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {clientes.map(cliente => (
+        {clientes.map((cliente) => (
           <tr key={cliente.id}>
             <td>{cliente.nombre}</td>
             <td>{cliente.apellido}</td>
             <td>{cliente.tipoDoc}</td>
             <td>{cliente.documento}</td>
-            <td>{cliente.celular || '-'}</td>
             <td>
-              <button 
+              <button
                 className={`status-toggle ${cliente.activo ? 'active' : 'inactive'}`}
                 onClick={() => onToggleStatus(cliente.id)}
+                title={cliente.activo ? 'Desactivar cliente' : 'Activar cliente'}
               >
                 <FontAwesomeIcon icon={faPowerOff} />
                 {cliente.activo ? ' Activo' : ' Inactivo'}
               </button>
             </td>
-            <td>
-              <button 
-                className="icon-button" 
+            <td className="actions">
+              <button
+                className="icon-button view"
                 onClick={() => onView(cliente)}
+                title="Ver cliente"
               >
                 <FontAwesomeIcon icon={faEye} />
               </button>
-              <button 
-                className="icon-button" 
+              <button
+                className="icon-button edit"
                 onClick={() => onEdit(cliente)}
+                title="Editar cliente"
               >
                 <FontAwesomeIcon icon={faPen} />
               </button>
-              <button 
-                className="icon-button" 
+              <button
+                className="icon-button delete"
                 onClick={() => onDelete(cliente)}
+                title="Eliminar cliente"
               >
                 <FontAwesomeIcon icon={faTrash} />
               </button>

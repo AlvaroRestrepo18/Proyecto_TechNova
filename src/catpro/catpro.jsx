@@ -5,12 +5,12 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import CategoryTable from './components/CategoryTable';
 import CategoryFormModal from './components/CategoryFormModal';
 import DeleteModal from './components/DeleteModal';
-// ⚠️ Placeholders para los services (para que compile sin romper nada)
-const getCategorias = async () => [];
-const createCategoria = async () => {};
-const updateCategoria = async () => {};
-const changeCategoriaStatus = async () => {};
-const deleteCategoria = async () => {};
+import { 
+  getCategorias, 
+  createCategoria, 
+  updateCategoria, 
+  deleteCategoria 
+} from "./services/Categorias.js";
 import './catpro.css';
 
 const Categorias = () => {
@@ -20,16 +20,16 @@ const Categorias = () => {
   const [currentCategory, setCurrentCategory] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [activeTab, setActiveTab] = useState('activas'); 
   const [categoriasData, setCategoriasData] = useState([]);
 
-  // 🚀 Cargar categorías (placeholder)
+  // 🚀 Cargar categorías desde la API
   const fetchCategorias = async () => {
     try {
       const data = await getCategorias();
       setCategoriasData(data);
     } catch (error) {
       console.error("Error cargando categorías:", error);
+      alert('Error al cargar categorías');
     }
   };
 
@@ -37,35 +37,42 @@ const Categorias = () => {
     fetchCategorias();
   }, []);
 
-  // 🔄 Cambiar estado activo/inactivo
-  const toggleCategoriaEstado = async (id, nuevoEstado) => {
-    try {
-      await changeCategoriaStatus(id, nuevoEstado);
-      await fetchCategorias();
-    } catch (error) {
-      console.error("Error cambiando estado:", error);
-    }
+  const emptyCategory = {
+    id: 0,
+    nombre: "",
+    tipoCategoria: "",
+    descripcion: "",
+    activo: true,
   };
-
-  const categoriasActivas = categoriasData.filter(cat => cat.activo);
-  const categoriasInactivas = categoriasData.filter(cat => !cat.activo);
 
   const openCreateForm = () => {
     setIsFormOpen(true);
     setCurrentView('create');
-    setCurrentCategory(null);
+    setCurrentCategory({ ...emptyCategory }); // 👈 siempre con valores definidos
   };
 
   const openEditForm = (cat) => {
     setIsFormOpen(true);
     setCurrentView('edit');
-    setCurrentCategory(cat);
+    setCurrentCategory({
+      id: cat.id ?? 0,
+      nombre: cat.nombre ?? "",
+      tipoCategoria: cat.tipoCategoria ?? "",
+      descripcion: cat.descripcion ?? "",
+      activo: cat.activo ?? true,
+    });
   };
 
   const openView = (cat) => {
     setIsFormOpen(true);
     setCurrentView('view');
-    setCurrentCategory(cat);
+    setCurrentCategory({
+      id: cat.id ?? 0,
+      nombre: cat.nombre ?? "",
+      tipoCategoria: cat.tipoCategoria ?? "",
+      descripcion: cat.descripcion ?? "",
+      activo: cat.activo ?? true,
+    });
   };
 
   const closeForm = () => {
@@ -82,9 +89,11 @@ const Categorias = () => {
   const deleteCategory = async () => {
     try {
       await deleteCategoria(categoryToDelete);
-      await fetchCategorias();
+      await fetchCategorias(); // refrescar tabla
+      console.log('Categoría eliminada correctamente');
     } catch (error) {
       console.error("Error eliminando categoría:", error);
+      alert('Error al eliminar la categoría');
     } finally {
       setShowDeleteModal(false);
       setCategoryToDelete(null);
@@ -99,14 +108,25 @@ const Categorias = () => {
   // 📝 Guardar categoría
   const handleSaveCategory = async (formData) => {
     try {
+      if (!formData.nombre || !formData.tipoCategoria) {   // validación
+        alert("Debe completar el nombre y tipo de categoría");
+        return;
+      }
+
       if (currentView === 'create') {
-        await createCategoria({ ...formData, activo: true });
+        await createCategoria(formData);
+        console.log('Categoría creada correctamente');
       } else if (currentView === 'edit') {
         await updateCategoria(currentCategory.id, formData);
+        console.log('Categoría actualizada correctamente');
       }
+
+      // 🔁 Refrescar la tabla después de crear o editar
       await fetchCategorias();
+
     } catch (error) {
-      console.error(`Error guardando categoría:`, error);
+      console.error(`Error guardando categoría (id: ${currentCategory?.id}):`, error);
+      alert('Ocurrió un error al guardar la categoría');
     }
     closeForm();
   };
@@ -115,25 +135,10 @@ const Categorias = () => {
     <div className="equipment-container">
       <h1>Categorías</h1>
       
-      <div className="tabs-container">
-        <button 
-          className={`tab-button ${activeTab === 'activas' ? 'active' : ''}`}
-          onClick={() => setActiveTab('activas')}
-        >
-          Categorías Activas ({categoriasActivas.length})
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'inactivas' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inactivas')}
-        >
-          Categorías Inactivas ({categoriasInactivas.length})
-        </button>
-      </div>
-      
       <div className="search-container">
         <input
           type="text"
-          placeholder={`Buscar categoría ${activeTab === 'activas' ? 'activas' : 'inactivas'}...`}
+          placeholder="Buscar categoría..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
@@ -144,12 +149,11 @@ const Categorias = () => {
       </div>
       
       <CategoryTable
-        categorias={activeTab === 'activas' ? categoriasActivas : categoriasInactivas}
+        categorias={categoriasData}
         searchTerm={searchTerm}
         onEdit={openEditForm}
         onView={openView}
         onDelete={confirmDelete}
-        onToggleStatus={toggleCategoriaEstado}
       />
 
       {isFormOpen && (

@@ -1,34 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import "../clientes.css"; // ✅ usa tu CSS global de clientes
 
-const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
+const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    nombre: cliente?.nombre || '',
-    apellido: cliente?.apellido || '',
-    tipoDoc: cliente?.tipoDoc || 'CC',
-    documento: cliente?.documento?.toString() || '',
-    fechaNac: cliente?.fechaNac || '',
-    celular: cliente?.celular?.toString() || '',
-    correo: cliente?.correo || '',
-    direccion: cliente?.direccion || '',
-    activo: cliente?.activo ?? true
+    nombre: '',
+    apellido: '',
+    tipoDoc: 'CC',
+    documento: '',
+    fechaNac: '',
+    correo: ''
   });
 
   const [formErrors, setFormErrors] = useState({});
 
-  // Funciones de validación
+  // ✅ Cargar datos si es edición
+  useEffect(() => {
+    if (cliente) {
+      setFormData({
+        nombre: cliente.nombre || '',
+        apellido: cliente.apellido || '',
+        tipoDoc: cliente.tipoDoc || 'CC',
+        documento: cliente.documento?.toString() || '',
+        fechaNac: cliente.fechaNac || '',
+        correo: cliente.correo || ''
+      });
+    }
+  }, [cliente]);
+
   const validateEmail = (email) => {
-    if (!email) return true; // Opcional
+    if (!email) return true;
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
-  };
-
-  const validateFechaNac = (fecha) => {
-    if (!fecha) return false;
-    const today = new Date();
-    const birthDate = new Date(fecha);
-    return birthDate < today;
   };
 
   const validateForm = () => {
@@ -39,12 +43,10 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
       errors.nombre = 'Nombre es requerido';
       isValid = false;
     }
-
     if (!formData.apellido.trim()) {
       errors.apellido = 'Apellido es requerido';
       isValid = false;
     }
-
     if (!formData.documento) {
       errors.documento = 'Documento es requerido';
       isValid = false;
@@ -52,15 +54,6 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
       errors.documento = 'Documento debe ser numérico';
       isValid = false;
     }
-
-    if (!formData.fechaNac) {
-      errors.fechaNac = 'Fecha de nacimiento es requerida';
-      isValid = false;
-    } else if (!validateFechaNac(formData.fechaNac)) {
-      errors.fechaNac = 'Fecha inválida';
-      isValid = false;
-    }
-
     if (formData.correo && !validateEmail(formData.correo)) {
       errors.correo = 'Correo electrónico inválido';
       isValid = false;
@@ -88,19 +81,17 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
     if (!validateForm()) return;
 
     const nuevoCliente = {
-      id: cliente?.id || Date.now().toString(),
+      id: cliente?.id || 0, // si existe → edición
       nombre: formData.nombre,
       apellido: formData.apellido,
       tipoDoc: formData.tipoDoc,
       documento: parseInt(formData.documento),
       fechaNac: formData.fechaNac,
-      celular: formData.celular ? parseInt(formData.celular) : null,
       correo: formData.correo || '',
-      direccion: formData.direccion || '',
-      activo: formData.activo
+      activo: cliente?.activo ?? true // ✅ si edita, mantiene su estado actual
     };
 
-    onSubmit(nuevoCliente);
+    onSave(nuevoCliente); // ✅ ahora usa onSave (igual que en el padre)
   };
 
   return (
@@ -148,9 +139,11 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
                 value={formData.tipoDoc}
                 onChange={handleChange}
               >
-                <option value="CC">Cédula</option>
-                <option value="CE">Cédula Extranjería</option>
-                <option value="TI">Tarjeta Identidad</option>
+                <option value="CC">Cédula de Ciudadanía</option>
+                <option value="CE">Cédula de Extranjería</option>
+                <option value="TI">Tarjeta de Identidad</option>
+                <option value="NIT">NIT</option>
+                <option value="PAS">Pasaporte</option>
               </select>
             </div>
 
@@ -161,34 +154,10 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
                 name="documento"
                 value={formData.documento}
                 onChange={handleChange}
-                disabled={isEditMode}
+                disabled={isEditMode} // solo se edita al crear
                 className={formErrors.documento ? 'error-input' : ''}
               />
               {formErrors.documento && <span className="error-message">{formErrors.documento}</span>}
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Fecha Nacimiento <span className="required">*</span></label>
-              <input
-                type="date"
-                name="fechaNac"
-                value={formData.fechaNac}
-                onChange={handleChange}
-                className={formErrors.fechaNac ? 'error-input' : ''}
-              />
-              {formErrors.fechaNac && <span className="error-message">{formErrors.fechaNac}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Celular</label>
-              <input
-                type="text"
-                name="celular"
-                value={formData.celular}
-                onChange={handleChange}
-              />
             </div>
           </div>
 
@@ -204,28 +173,6 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSubmit }) => {
               />
               {formErrors.correo && <span className="error-message">{formErrors.correo}</span>}
             </div>
-
-            <div className="form-group">
-              <label>Estado</label>
-              <select
-                name="activo"
-                value={formData.activo}
-                onChange={handleChange}
-              >
-                <option value={true}>Activo</option>
-                <option value={false}>Inactivo</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Dirección</label>
-            <textarea
-              name="direccion"
-              value={formData.direccion}
-              onChange={handleChange}
-              rows={3}
-            />
           </div>
         </div>
 

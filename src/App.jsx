@@ -60,30 +60,18 @@ function App() {
               <ModalAlerta />
               {/* Aquí se definen las rutas principales de la aplicación */}
               <Routes>
-                <Route
-                  path="/usuarios"
-                  element={
-                    <PrivateRoute>
-                      <Users />
-                    </PrivateRoute>
-                  }
-                />
+                {/* ✅ Quitamos el PrivateRoute en Usuarios y Roles */}
+                <Route path="/usuarios" element={<Users />} />
+                <Route path="/roles" element={<Roles />} />
+
                 <Route path="/Productos" element={<Productos />} />
                 <Route path="/Proveedores" element={<Proveedores />} />
                 <Route path="/ventas" element={<Ventas />} />
                 <Route path="/catpro" element={<Catpro />} />
                 <Route path="/Compras" element={<Compras />} />
-                <Route path="/Clientes" element={<Clientes />} />   {/* ✅ */}
-                <Route path="/Servicios" element={<Servicios />} /> {/* ✅ */}
+                <Route path="/Clientes" element={<Clientes />} />
+                <Route path="/Servicios" element={<Servicios />} />
 
-                <Route
-                  path="/roles"
-                  element={
-                    <PrivateRoute>
-                      <Roles />
-                    </PrivateRoute>
-                  }
-                />
                 {/* Página raíz ahora apunta a Usuarios */}
                 <Route path="/" element={<Users />} />
               </Routes>

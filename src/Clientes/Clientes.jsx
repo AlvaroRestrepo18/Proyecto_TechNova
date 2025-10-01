@@ -1,159 +1,176 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import './clientes.css';
-
-// Componentes
-import ClientesTable from './components/ClientesTable';
-import ClientesFormModal from './components/ClientesFormModal';
-import ClientesViewModal from './components/ClientesViewModal';
-import DeleteModal from './components/DeleteModal';
+import React, { useEffect, useState } from "react";
+import ClientesTable from "./components/ClientesTable";
+import ClientesFormModal from "./components/ClientesFormModal";
+import ClientesViewModal from "./components/ClientesViewModal";
+import DeleteModal from "./components/DeleteModal";
+import {
+  getClientes,
+  createCliente,
+  updateCliente,
+  deleteCliente,
+} from "./service/Clientes";
+import "../App.css"; // 🔹 estilos globales
 
 const Clientes = () => {
-  // Estados principales
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [clientes, setClientes] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [showView, setShowView] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState(null);
-  const [formErrors, setFormErrors] = useState({});
-  const [currentId, setCurrentId] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
+  const [activeTab, setActiveTab] = useState("activos");
 
-  // Datos iniciales
-  const [clientesData, setClientesData] = useState([
-    { 
-      id: '1', 
-      nombre: 'Juan', 
-      apellido: 'Pérez', 
-      tipoDoc: 'CC', 
-      documento: 123456789, 
-      fechaNac: '1990-05-15',
-      celular: 3001234567, 
-      correo: 'juan@example.com', 
-      direccion: 'Calle 123', 
-      activo: true 
-    },
-    { 
-      id: '2', 
-      nombre: 'María', 
-      apellido: 'Gómez', 
-      tipoDoc: 'CE', 
-      documento: 987654321, 
-      fechaNac: '1985-10-20',
-      celular: 3109876543, 
-      correo: 'maria@example.com', 
-      direccion: 'Carrera 45', 
-      activo: true 
-    },
-  ]);
-
-  // Handlers
-  const openForm = () => {
-    setIsFormOpen(true);
-    setIsEditMode(false);
-    setSelectedCliente(null);
-  };
-
-  const closeForm = () => setIsFormOpen(false);
-
-  const openViewModal = (cliente) => {
-    setSelectedCliente(cliente);
-    setShowDetails(true);
-  };
-
-  const closeViewModal = () => {
-    setShowDetails(false);
-    setSelectedCliente(null);
-  };
-
-  const openEditForm = (cliente) => {
-    setSelectedCliente(cliente);
-    setIsFormOpen(true);
-    setIsEditMode(true);
-    setCurrentId(cliente.id);
-  };
-
-  const openDeleteModal = (cliente) => {
-    setDeleteId(cliente.id);
-    setShowConfirmation(true);
-  };
-
-  const closeDeleteModal = () => {
-    setShowConfirmation(false);
-    setDeleteId(null);
-  };
-
-  const toggleClienteStatus = (id) => {
-    setClientesData(clientesData.map(cliente => 
-      cliente.id === id ? { ...cliente, activo: !cliente.activo } : cliente
-    ));
-  };
-
-  const confirmDelete = () => {
-    setClientesData(clientesData.filter(cliente => cliente.id !== deleteId));
-    closeDeleteModal();
-  };
-
-  const handleCreateCliente = (nuevoCliente) => {
-    if (isEditMode) {
-      setClientesData(clientesData.map(cliente => 
-        cliente.id === currentId ? nuevoCliente : cliente
-      ));
-    } else {
-      setClientesData([...clientesData, nuevoCliente]);
+  // 🔹 Cargar clientes desde el backend
+  const fetchClientes = async () => {
+    try {
+      const data = await getClientes();
+      setClientes(data);
+    } catch (error) {
+      console.error("❌ Error al obtener clientes:", error);
     }
-    closeForm();
+  };
+
+  useEffect(() => {
+    fetchClientes();
+  }, []);
+
+  // 🔹 Abrir modal para agregar
+  const handleAdd = () => {
+    setSelectedCliente(null);
+    setShowForm(true);
+  };
+
+  // 🔹 Abrir modal para editar
+  const handleEdit = (cliente) => {
+    setSelectedCliente(cliente);
+    setShowForm(true);
+  };
+
+  // 🔹 Guardar cliente (crear o actualizar)
+  const handleSave = async (cliente) => {
+    try {
+      if (cliente.id) {
+        await updateCliente(cliente.id, cliente);
+      } else {
+        await createCliente(cliente);
+      }
+      await fetchClientes();
+      setShowForm(false);
+    } catch (error) {
+      console.error("❌ Error al guardar cliente:", error);
+    }
+  };
+
+  // 🔹 Abrir modal para confirmar eliminación
+  const handleDelete = (cliente) => {
+    setSelectedCliente(cliente);
+    setShowDelete(true);
+  };
+
+  // 🔹 Confirmar eliminación
+  const confirmDelete = async () => {
+    try {
+      if (!selectedCliente) return;
+      await deleteCliente(selectedCliente.id);
+      await fetchClientes();
+      setShowDelete(false);
+    } catch (error) {
+      console.error("❌ Error al eliminar cliente:", error);
+    }
+  };
+
+  // 🔹 Abrir modal de vista
+  const handleView = (cliente) => {
+    setSelectedCliente(cliente);
+    setShowView(true);
+  };
+
+  // 🔹 Cambiar estado activo/inactivo
+  const handleToggleStatus = async (id) => {
+    try {
+      const cliente = clientes.find((c) => c.id === id);
+      if (!cliente) return;
+
+      await updateCliente(cliente.id, {
+        ...cliente,
+        activo: !cliente.activo, // ✅ alterna estado
+      });
+
+      await fetchClientes();
+    } catch (error) {
+      console.error("❌ Error al cambiar estado:", error);
+    }
   };
 
   return (
-    <div className="clientes-container">
-      <h1>Gestión de Clientes</h1>
-      
-      <div className="section-divider"></div>
-      
-      <div className="create-header">
-        <button className="create-button" onClick={openForm}>
-          <FontAwesomeIcon icon={faPlus} /> Nuevo Cliente
+    <div className="container">
+      <h2 className="title">Gestión de Clientes</h2>
+
+      {/* 🔹 Botón agregar */}
+      <button className="btn-primary" onClick={handleAdd}>
+        ➕ Agregar Cliente
+      </button>
+
+      {/* 🔹 Tabs */}
+      <div className="tabs">
+        <button
+          className={activeTab === "activos" ? "tab active" : "tab"}
+          onClick={() => setActiveTab("activos")}
+        >
+          Clientes Activos
+        </button>
+        <button
+          className={activeTab === "inactivos" ? "tab active" : "tab"}
+          onClick={() => setActiveTab("inactivos")}
+        >
+          Clientes Inactivos
         </button>
       </div>
-      
-      <div className="table-container">
-        <ClientesTable 
-          clientes={clientesData}
-          onToggleStatus={toggleClienteStatus}
-          onEdit={openEditForm}
-          onDelete={openDeleteModal}
-          onView={openViewModal}
-        />
-      </div>
 
-      {/* Modal de Formulario */}
-      {isFormOpen && (
+      {/* 🔹 Contenido de tabs */}
+      {activeTab === "activos" && (
+        <ClientesTable
+          clientes={clientes.filter((c) => c.activo)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onView={handleView}
+          onToggleStatus={handleToggleStatus}
+        />
+      )}
+
+      {activeTab === "inactivos" && (
+        <ClientesTable
+          clientes={clientes.filter((c) => !c.activo)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onView={handleView}
+          onToggleStatus={handleToggleStatus}
+        />
+      )}
+
+      {/* 🔹 Modales */}
+      {showForm && (
         <ClientesFormModal
+          show={showForm}
+          onClose={() => setShowForm(false)}
+          onSave={handleSave}
           cliente={selectedCliente}
-          isEditMode={isEditMode}
-          onClose={closeForm}
-          onSubmit={handleCreateCliente}
+          isEditMode={!!selectedCliente} // ✅ diferencia entre crear y editar
         />
       )}
 
-      {/* Modal de Detalles */}
-      {showDetails && (
-        <ClientesViewModal 
+      {showView && (
+        <ClientesViewModal
+          show={showView}
+          onClose={() => setShowView(false)}
           cliente={selectedCliente}
-          onClose={closeViewModal}
         />
       )}
 
-      {/* Modal de Confirmación */}
-      {showConfirmation && (
+      {showDelete && (
         <DeleteModal
-          isOpen={showConfirmation}
-          onClose={closeDeleteModal}
+          show={showDelete}
+          onClose={() => setShowDelete(false)}
           onConfirm={confirmDelete}
-          itemName={clientesData.find(c => c.id === deleteId)?.nombre}
-          itemType="cliente"
         />
       )}
     </div>

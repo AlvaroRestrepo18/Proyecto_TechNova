@@ -1,122 +1,164 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import React, { useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
-const ProveedorFormModal = ({ 
-  formData, 
-  errors, 
-  currentProveedorId, 
-  onClose, 
-  onChange, 
-  onTipoPersonaChange, 
-  onTipoDocumentoChange, 
-  onSubmit 
+const placeholders = {
+  CC: "1234567890",
+  NIT: "123456789-1",
+  CE: "ABC123456",
+  PAS: "AB123456",
+};
+
+const ProveedorFormModal = ({
+  formData,
+  errors,
+  currentProveedorId,
+  onClose,
+  onChange,
+  onTipoPersonaChange,
+  onTipoDocumentoChange,
+  onSubmit,
 }) => {
+  // 🔹 Cerrar modal con tecla ESC
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  // 🔹 Generar el campo nombre oculto
+  const nombreGenerado =
+    formData.tipoPersona === "Natural"
+      ? `${formData.nombres} ${formData.apellidos}`.trim()
+      : formData.razonSocial;
+
+  // 🔹 Helper para inputs con error
+  const getInputClass = (field) => (errors[field] ? "input-error" : "");
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} tabIndex={-1}>
+      <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
         <div className="modal-header">
-          <h2>{currentProveedorId ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
-          <button className="close-button" onClick={onClose}>
+          <h2>{currentProveedorId ? "Editar Proveedor" : "Nuevo Proveedor"}</h2>
+          <button
+            className="close-button"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
         <form className="form-body" onSubmit={onSubmit}>
-          {/* Tipo Persona y Tipo Documento */}
+          {/* Tipo Persona y Documento */}
           <div className="form-row">
             <div className="inline-group">
               <div className="form-group">
-                <label>Tipo Persona <span className="required-asterisk">*</span></label>
+                <label>Tipo Persona *</label>
                 <select
                   name="tipoPersona"
                   value={formData.tipoPersona}
                   onChange={onTipoPersonaChange}
-                  className={errors.tipoPersona ? 'input-error' : ''}
+                  className={getInputClass("tipoPersona")}
                   disabled={!!currentProveedorId}
                   required
                 >
+                  <option value="">Seleccione...</option>
                   <option value="Natural">Persona Natural</option>
                   <option value="Jurídica">Persona Jurídica</option>
                 </select>
-                {errors.tipoPersona && <span className="error">{errors.tipoPersona}</span>}
+                {errors.tipoPersona && (
+                  <span className="error">{errors.tipoPersona}</span>
+                )}
               </div>
             </div>
 
             <div className="inline-group">
               <div className="form-group">
-                <label>Tipo Documento <span className="required-asterisk">*</span></label>
+                <label>Tipo Documento *</label>
                 <select
                   name="tipoDocumento"
                   value={formData.tipoDocumento}
                   onChange={onTipoDocumentoChange}
-                  className={errors.tipoDocumento ? 'input-error' : ''}
+                  className={getInputClass("tipoDocumento")}
                   disabled={!!currentProveedorId}
                   required
                 >
+                  <option value="">Seleccione...</option>
                   <option value="CC">Cédula de Ciudadanía</option>
                   <option value="NIT">NIT</option>
                   <option value="CE">Cédula de Extranjería</option>
                   <option value="PAS">Pasaporte</option>
                 </select>
-                {errors.tipoDocumento && <span className="error">{errors.tipoDocumento}</span>}
+                {errors.tipoDocumento && (
+                  <span className="error">{errors.tipoDocumento}</span>
+                )}
               </div>
             </div>
 
             <div className="inline-group">
               <div className="form-group">
-                <label>N° Documento <span className="required-asterisk">*</span></label>
+                <label>N° Documento *</label>
                 <input
                   type="text"
                   name="numeroDocumento"
                   value={formData.numeroDocumento}
                   onChange={onChange}
-                  className={errors.numeroDocumento ? 'input-error' : ''}
+                  className={getInputClass("numeroDocumento")}
                   disabled={!!currentProveedorId}
                   required
                   placeholder={
-                    formData.tipoDocumento === 'NIT' ? '123456789-1' : 
-                    formData.tipoDocumento === 'CC' ? '1234567890' : 
-                    formData.tipoDocumento === 'CE' ? 'ABC123456' : 'AB123456'
+                    placeholders[formData.tipoDocumento] || "Ingrese documento"
                   }
+                  aria-invalid={!!errors.numeroDocumento}
+                  autoFocus
                 />
-                {errors.numeroDocumento && <span className="error">{errors.numeroDocumento}</span>}
+                {errors.numeroDocumento && (
+                  <span className="error">{errors.numeroDocumento}</span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Persona Natural o Jurídica */}
-          {formData.tipoPersona === 'Natural' ? (
+          {/* Natural o Jurídica */}
+          {formData.tipoPersona === "Natural" ? (
             <div className="form-row">
               <div className="inline-group">
                 <div className="form-group">
-                  <label>Nombres <span className="required-asterisk">*</span></label>
+                  <label>Nombres *</label>
                   <input
                     type="text"
                     name="nombres"
                     value={formData.nombres}
                     onChange={onChange}
-                    className={errors.nombres ? 'input-error' : ''}
+                    className={getInputClass("nombres")}
                     required
                     placeholder="Ej: Juan Carlos"
                   />
-                  {errors.nombres && <span className="error">{errors.nombres}</span>}
+                  {errors.nombres && (
+                    <span className="error">{errors.nombres}</span>
+                  )}
                 </div>
               </div>
 
               <div className="inline-group">
                 <div className="form-group">
-                  <label>Apellidos <span className="required-asterisk">*</span></label>
+                  <label>Apellidos *</label>
                   <input
                     type="text"
                     name="apellidos"
                     value={formData.apellidos}
                     onChange={onChange}
-                    className={errors.apellidos ? 'input-error' : ''}
+                    className={getInputClass("apellidos")}
                     required
                     placeholder="Ej: Pérez García"
                   />
-                  {errors.apellidos && <span className="error">{errors.apellidos}</span>}
+                  {errors.apellidos && (
+                    <span className="error">{errors.apellidos}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -124,51 +166,60 @@ const ProveedorFormModal = ({
             <div className="form-row">
               <div className="inline-group full-width">
                 <div className="form-group">
-                  <label>Razón Social <span className="required-asterisk">*</span></label>
+                  <label>Razón Social *</label>
                   <input
                     type="text"
                     name="razonSocial"
                     value={formData.razonSocial}
                     onChange={onChange}
-                    className={errors.razonSocial ? 'input-error' : ''}
+                    className={getInputClass("razonSocial")}
                     required
                     placeholder="Ej: Tecnologías Avanzadas SAS"
                   />
-                  {errors.razonSocial && <span className="error">{errors.razonSocial}</span>}
+                  {errors.razonSocial && (
+                    <span className="error">{errors.razonSocial}</span>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
+          {/* Campo oculto nombre */}
+          <input type="hidden" name="nombre" value={nombreGenerado} />
+
           {/* Teléfono, Correo y Dirección */}
           <div className="form-row">
             <div className="inline-group">
               <div className="form-group">
-                <label>Teléfono <span className="required-asterisk">*</span></label>
+                <label>Teléfono *</label>
                 <input
                   type="text"
                   name="telefono"
                   value={formData.telefono}
                   onChange={onChange}
-                  className={errors.telefono ? 'input-error' : ''}
+                  className={getInputClass("telefono")}
                   placeholder="Ej: 3001234567 o 6012345678"
                 />
-                {errors.telefono && <span className="error">{errors.telefono}</span>}
+                {errors.telefono && (
+                  <span className="error">{errors.telefono}</span>
+                )}
               </div>
             </div>
 
             <div className="inline-group">
               <div className="form-group">
-                <label>Correo Electrónico <span className="required-asterisk">*</span></label>
+                <label>Correo Electrónico *</label>
                 <input
                   type="email"
                   name="correo"
                   value={formData.correo}
                   onChange={onChange}
-                  className={errors.correo ? 'input-error' : ''}
+                  className={getInputClass("correo")}
                   placeholder="Ej: contacto@proveedor.com"
                 />
-                {errors.correo && <span className="error">{errors.correo}</span>}
+                {errors.correo && (
+                  <span className="error">{errors.correo}</span>
+                )}
               </div>
             </div>
           </div>
@@ -176,25 +227,29 @@ const ProveedorFormModal = ({
           <div className="form-row">
             <div className="inline-group full-width">
               <div className="form-group">
-                <label>Dirección <span className="required-asterisk">*</span></label>
+                <label>Dirección *</label>
                 <input
                   type="text"
                   name="direccion"
                   value={formData.direccion}
                   onChange={onChange}
+                  className={getInputClass("direccion")}
                   placeholder="Dirección completa"
                 />
-                {errors.direccion && <span className="error">{errors.direccion}</span>}
+                {errors.direccion && (
+                  <span className="error">{errors.direccion}</span>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Botones */}
           <div className="form-actions">
             <button type="button" className="cancel-button" onClick={onClose}>
               Cancelar
             </button>
             <button type="submit" className="submit-button">
-              {currentProveedorId ? 'Actualizar Proveedor' : 'Crear Proveedor'}
+              {currentProveedorId ? "Actualizar Proveedor" : "Crear Proveedor"}
             </button>
           </div>
         </form>

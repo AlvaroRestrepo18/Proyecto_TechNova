@@ -1,4 +1,4 @@
-/* Estilos para el modal de nueva venta grande */
+/* ===== MODAL NUEVA VENTA ===== */
 .nueva-venta-overlay {
   position: fixed;
   top: 0;
@@ -17,6 +17,10 @@
   max-width: 1200px;
   max-height: 90vh;
   overflow-y: auto;
+  border-radius: 10px;
+  background-color: #e3f0ff; /* azul clarito */
+  padding: 20px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
 }
 
 .nueva-venta-content {
@@ -25,28 +29,30 @@
   margin-top: 20px;
 }
 
+/* ===== PANELES ===== */
 .seleccion-panel {
   flex: 1;
-  background: #f8f9fa;
+  background: #d0e7ff;
   padding: 20px;
   border-radius: 8px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #a0c4ff;
 }
 
 .items-panel {
   flex: 2;
-  background: #fff;
+  background: #ffffff;
   padding: 20px;
   border-radius: 8px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #a0c4ff;
   max-height: 500px;
   overflow-y: auto;
 }
 
+/* ===== TABS ===== */
 .tabs-header {
   display: flex;
   margin-bottom: 20px;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 2px solid #a0c4ff;
 }
 
 .tab {
@@ -55,39 +61,62 @@
   border: none;
   cursor: pointer;
   font-weight: 500;
-  color: #6c757d;
+  color: #4a6fa5;
   border-bottom: 2px solid transparent;
 }
 
 .tab.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
+  color: #1d4e89;
+  border-bottom-color: #1d4e89;
 }
 
-.tab-content {
-  margin-top: 15px;
-}
-
-.select-group {
+/* ===== FORM GROUP (Inputs + Labels sincronizados) ===== */
+.select-group{
   margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* espacio uniforme entre label e input */
+}
+.cantidad-input {
+  padding: 10px 12px;
+  border: 1px solid #a0c4ff;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  transition: all 0.2s ease-in-out;
 }
 
 .select-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-}
-
-.item-select, .cantidad-input, .cliente-input, .pago-select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  font-weight: 600;
   font-size: 14px;
+  color: #1d4e89;
 }
 
+.item-select,
+
+.cliente-input,
+.pago-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #a0c4ff;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #ffffff;
+  transition: all 0.2s ease-in-out;
+}
+
+.item-select:focus,
+.cantidad-input:focus,
+.cliente-input:focus,
+.pago-select:focus {
+  outline: none;
+  border-color: #1d4e89;
+  box-shadow: 0 0 4px rgba(29, 78, 137, 0.3);
+}
+
+/* ===== BOTONES ===== */
 .add-item-button {
-  background-color: #28a745;
+  background-color: #1d4e89;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -96,10 +125,11 @@
   font-weight: 500;
   width: 100%;
   margin-top: 10px;
+  transition: background 0.2s ease;
 }
 
 .add-item-button:hover:not(:disabled) {
-  background-color: #218838;
+  background-color: #0f3360;
 }
 
 .add-item-button:disabled {
@@ -107,6 +137,35 @@
   cursor: not-allowed;
 }
 
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.submit-button {
+  background-color: #1d4e89;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #5a6268;
+}
+
+.submit-button:hover {
+  background-color: #0f3360;
+}
+
+/* ===== TABLA DE ITEMS ===== */
 .items-table {
   width: 100%;
   border-collapse: collapse;
@@ -117,18 +176,23 @@
 .items-table td {
   padding: 10px;
   text-align: left;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid #a0c4ff;
 }
 
 .items-table th {
-  background-color: #f8f9fa;
+  background-color: #d0e7ff;
   font-weight: 600;
+  color: #1d4e89;
+}
+
+.items-table tr:nth-child(even) {
+  background-color: #f0f8ff;
 }
 
 .cantidad-input-table {
   width: 60px;
   padding: 5px;
-  border: 1px solid #ced4da;
+  border: 1px solid #a0c4ff;
   border-radius: 4px;
 }
 
@@ -151,10 +215,11 @@
   padding: 30px;
 }
 
+/* ===== TOTALES ===== */
 .totals-section {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 2px solid #dee2e6;
+  border-top: 2px solid #a0c4ff;
 }
 
 .total-row {
@@ -167,45 +232,20 @@
 .grand-total {
   font-size: 1.2em;
   font-weight: bold;
-  color: #007bff;
+  color: #1d4e89;
 }
 
+/* ===== FORM ACTIONS ===== */
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
   padding-top: 20px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid #a0c4ff;
 }
 
-.cancel-button {
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.submit-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.cancel-button:hover {
-  background-color: #5a6268;
-}
-
-.submit-button:hover {
-  background-color: #0069d9;
-}
-
-/* Responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 992px) {
   .nueva-venta-content {
     flex-direction: column;

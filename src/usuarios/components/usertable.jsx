@@ -1,12 +1,18 @@
+// src/components/usuarios/UserTable.jsx
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faPen, faTrash, faPowerOff } from "@fortawesome/free-solid-svg-icons";
 import "../../app.css";
-import '../usuarios.css';
+import "../usuarios.css";
 
 const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
-  const getEstadoClass = (estado) => (estado === "activo" ? "active" : "inactive");
-  const getEstadoText = (estado) => (estado === "activo" ? "Activo" : "Inactivo");
+  const getEstadoClass = (estado) => {
+    return estado === "activo" ? "active" : "inactive";
+  };
+
+  const getEstadoText = (estado) => {
+    return estado === "activo" ? "Activo" : "Inactivo";
+  };
 
   return (
     <div className="table-container">
@@ -22,12 +28,12 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((usuario) => (
-            <tr key={usuario.id}>
-              <td>{usuario.name || "-"}</td>
+          {users.map((usuario, index) => (
+            <tr key={usuario.id || index}>
+              <td>{usuario.nombre || "-"}</td>
               <td>{usuario.email || "-"}</td>
               <td>{usuario.telefono || "-"}</td>
-              <td>{usuario.role || "-"}</td>
+              <td>{usuario.rol || "-"}</td>
               <td>
                 <button
                   className={`status-toggle ${getEstadoClass(usuario.estado)}`}
@@ -42,7 +48,8 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
                 <button
                   className="icon-button"
                   title="Ver"
-                  onClick={() => onView(usuario.id)}
+                  disabled={usuario.estado !== "activo"}
+                  onClick={() => onView(usuario)} // ✅ pasa el objeto completo
                 >
                   <FontAwesomeIcon icon={faEye} />
                 </button>
