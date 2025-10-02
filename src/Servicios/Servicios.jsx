@@ -1,46 +1,52 @@
-import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import '../app.css';
-import './servicios.css';
+import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import "../app.css";
+import "./servicios.css";
 
 // Componentes
-import ServiciosTable from './components/ServiciosTable';
-import ServiciosFormModal from './components/ServiciosFormModal';
-import ServiciosViewModal from './components/ServiciosViewModal';
-import DeleteModal from './components/DeleteModal';
-import ConfirmationModal from './components/ConfirmationModal';
+import ServiciosTable from "./components/ServiciosTable";
+import ServiciosFormModal from "./components/ServiciosFormModal";
+import ServiciosViewModal from "./components/ServiciosViewModal";
+import DeleteModal from "./components/DeleteModal";
+import ConfirmationModal from "./components/ConfirmationModal";
+
+// API
+import {
+  getServicios,
+  createServicio,
+  updateServicio,
+  deleteServicio,
+} from "./services/servicios";
 
 const Servicios = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [currentService, setCurrentService] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  const [servicesData, setServicesData] = useState([
-    {
-      id: '1',
-      name: 'Impresiones',
-      price: 100,
-      details: 'Impresion a blanco y negro : 100 \nImpresion a color: 200',
-      image: 'https://imprentalascondes.cl/wp-content/uploads/2020/02/COPIAS-EN-BLANCO-Y-NEGRO.jpg',
-      active: true
-    },
-    {
-      id: '2',
-      name: 'Fomi',
-      price: 150,
-      details: 'Fomi : 500',
-      image: 'https://lagarza.com.co/rails/active_storage/representations/proxy/.../unnamed.png?locale=es',
-      active: true
-    },
-  ]);
+  const [servicesData, setServicesData] = useState([]);
 
-  // Handlers
+  // 🔹 Cargar servicios al iniciar
+  useEffect(() => {
+    fetchServicios();
+  }, []);
+
+  const fetchServicios = async () => {
+    try {
+      const data = await getServicios();
+      setServicesData(data);
+    } catch (error) {
+      console.error("❌ Error al obtener servicios:", error);
+    }
+  };
+
+  // --- Handlers ---
   const openForm = () => {
     setIsFormOpen(true);
     setIsEditing(false);
@@ -65,12 +71,6 @@ const Servicios = () => {
     setCurrentService(null);
   };
 
-  const toggleServiceStatus = (id) => {
-    setServicesData(servicesData.map(servicio =>
-      servicio.id === id ? { ...servicio, active: !servicio.active } : servicio
-    ));
-  };
-
   const confirmDelete = (id) => {
     setServiceToDelete(id);
     setShowDeleteConfirmation(true);
@@ -81,45 +81,67 @@ const Servicios = () => {
     setServiceToDelete(null);
   };
 
-  const executeDelete = () => {
-    setServicesData(servicesData.filter(servicio => servicio.id !== serviceToDelete));
-    closeDeleteModal();
-  };
-
-  const handleSubmitConfirmation = () => {
-    setShowConfirmation(false);
-    handleSubmit();
-  };
-
-  const handleSubmit = () => {
-    if (!currentService) return;
-
-    if (isEditing) {
-      setServicesData(servicesData.map(servicio =>
-        servicio.id === currentService.id ? currentService : servicio
-      ));
-    } else {
-      const newService = {
-        id: Date.now().toString(),
-        name: currentService.name,
-        price: currentService.price,
-        details: currentService.details,
-        image: currentService.image || 'https://via.placeholder.com/150',
-        active: currentService.active
-      };
-      setServicesData([...servicesData, newService]);
+  const executeDelete = async () => {
+    try {
+      await deleteServicio(serviceToDelete);
+      setServicesData(servicesData.filter((s) => s.id !== serviceToDelete));
+      closeDeleteModal();
+    } catch (error) {
+      console.error("❌ Error al eliminar servicio:", error);
     }
-    closeForm();
   };
 
+  // --- Crear/Editar servicio ---
   const handleCreateService = (serviceData) => {
+    console.log("📩 Datos recibidos del modal:", serviceData);
     setCurrentService(serviceData);
     setShowConfirmation(true);
   };
 
-  const filteredServices = servicesData.filter(servicio =>
-    servicio.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    servicio.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleSubmitConfirmation = () => {
+    setShowConfirmation(false);
+    handleSubmit(currentService);
+  };
+
+  const handleSubmit = async (serviceData) => {
+    if (!serviceData) return;
+
+    // 🔹 Normalizar datos para que coincidan con el backend
+    const payload = {
+      id: serviceData.id || null, // No enviar id si es nuevo
+      nombre: serviceData.nombre || serviceData.name,
+      detalles: serviceData.detalles || "",
+      precio: Number(serviceData.precio || serviceData.price),
+      categoriaId: Number(serviceData.categoriaId), // Corregido: usando categoriaId
+    };
+
+    console.log("🚀 Payload enviado al backend:", payload);
+
+    try {
+      if (isEditing && currentService?.id) {
+        const updated = await updateServicio(currentService.id, payload);
+        setServicesData(
+          servicesData.map((s) => (s.id === updated.id ? updated : s))
+        );
+        console.log("✅ Servicio actualizado:", updated);
+      } else {
+        const created = await createServicio(payload);
+        setServicesData([...servicesData, created]);
+        console.log("✅ Servicio creado:", created);
+      }
+    } catch (error) {
+      console.error("❌ Error al guardar servicio:", error.response?.data || error);
+    }
+
+    closeForm();
+  };
+
+  // --- Buscar servicios ---
+  const filteredServices = servicesData.filter(
+    (servicio) =>
+      servicio.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      servicio.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      servicio.id.toString().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -142,9 +164,8 @@ const Servicios = () => {
       </div>
 
       <div className="table-container">
-        <ServiciosTable 
+        <ServiciosTable
           servicios={filteredServices}
-          onToggleStatus={toggleServiceStatus}
           onEdit={openEditForm}
           onDelete={confirmDelete}
           onView={showServiceDetails}
@@ -177,14 +198,14 @@ const Servicios = () => {
           isOpen={showDeleteConfirmation}
           onClose={closeDeleteModal}
           onConfirm={executeDelete}
-          itemName={servicesData.find(s => s.id === serviceToDelete)?.name}
+          itemName={servicesData.find((s) => s.id === serviceToDelete)?.nombre}
           itemType="servicio"
         />
       )}
 
       {/* Modal de Detalles */}
       {showDetailsModal && (
-        <ServiciosViewModal 
+        <ServiciosViewModal
           servicio={currentService}
           onClose={closeDetailsModal}
         />

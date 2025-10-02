@@ -1,131 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
-const ServiciosFormModal = ({ servicio, isEditing, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    id: '',
-    name: '',
-    price: '',
-    details: '',
-    estado: 'activo'
-  });
+const ServiciosViewModal = ({ servicio, onClose }) => {
+  if (!servicio) return null; // 🔹 Evita renderizar si no hay servicio
 
-  useEffect(() => {
-    if (servicio) {
-      setFormData({
-        id: servicio.id || '',
-        name: servicio.name || '',
-        price: servicio.price || '',
-        details: servicio.details || '',
-        estado: servicio.active ? 'activo' : 'inactivo'
-      });
-    } else {
-      setFormData({
-        id: '',
-        name: '',
-        price: '',
-        details: '',
-        estado: 'activo'
-      });
-    }
-  }, [servicio]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.price || !formData.details) {
-      alert('Por favor complete todos los campos obligatorios');
-      return;
-    }
-
-    const serviceData = {
-      id: formData.id,
-      name: formData.name,
-      price: formData.price,
-      details: formData.details,
-      active: formData.estado === 'activo'
-    };
-
-    onSubmit(serviceData);
-  };
+  // 🔹 Normalizar detalles: aseguramos que sea string
+  const detalles =
+    typeof servicio.detalles === "string" && servicio.detalles.trim() !== ""
+      ? servicio.detalles.split(/\r?\n|,/) // soporta comas o saltos de línea
+      : [];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header" style={{ backgroundColor: '#1e3c72' }}>
-          <h2>{isEditing ? 'Editar Servicio' : 'Crear Servicio'}</h2>
+      <div
+        className="modal-content details-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="modal-header">
+          <h2>Detalles del Servicio</h2>
           <button className="close-button" onClick={onClose}>
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        <form className="form-body" onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Nombre</label>
-              <input 
-                name="name" 
-                value={formData.name} 
-                onChange={handleChange} 
-                required 
-              />
-            </div>
-            <div className="form-group">
-              <label>Precio</label>
-              <input 
-                type="number" 
-                name="price" 
-                value={formData.price} 
-                onChange={handleChange} 
-                required 
-              />
-            </div>
+        {/* Body */}
+        <div className="details-body">
+          <div className="details-row">
+            <strong>Nombre:</strong>
+            <span>{servicio.nombre || "—"}</span>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Detalles</label>
-              <textarea 
-                name="details" 
-                value={formData.details} 
-                onChange={handleChange} 
-                required 
-              />
-            </div>
+          <div className="details-row">
+            <strong>Precio:</strong>
+            <span>
+              {servicio.precio
+                ? `$${Number(servicio.precio).toLocaleString("es-CO")}`
+                : "—"}
+            </span>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Estado</label>
-              <select 
-                name="estado" 
-                value={formData.estado} 
-                onChange={handleChange}
-              >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
-            </div>
+          <div className="details-row">
+            <strong>Detalles:</strong>
+            <span>
+              {detalles.length > 0
+                ? detalles.map((d, i) => <div key={i}>{d.trim()}</div>)
+                : "Sin detalles"}
+            </span>
           </div>
 
-          <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="submit" className="submit-button">
-              {isEditing ? 'Actualizar' : 'Crear'}
-            </button>
+          <div className="details-row">
+            <strong>Categoría:</strong>
+            <span>{servicio.categoria?.nombre || "Sin categoría"}</span>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
 };
 
-export default ServiciosFormModal;
+export default ServiciosViewModal;

@@ -11,7 +11,6 @@ const ProductosTable = ({ productos, onEdit, onDelete, onView }) => {
     <table className="productos-table">
       <thead>
         <tr>
-          {/* ❌ Eliminado ID */}
           <th>Nombre</th>
           <th>Categoría</th>
           <th>Cantidad</th>
@@ -23,7 +22,6 @@ const ProductosTable = ({ productos, onEdit, onDelete, onView }) => {
       <tbody>
         {productos.map((producto, index) => (
           <tr key={index}>
-            {/* ❌ Eliminado producto.id */}
             <td>{producto.nombre}</td>
             <td>{producto.categoria?.nombre || "Sin categoría"}</td>
             <td>{producto.cantidad ?? 0}</td>

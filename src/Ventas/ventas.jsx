@@ -1,138 +1,119 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import ViewModal from './components/ViewModal';
-import PdfModal from './components/PdfModal';
 import TablaVentas from './components/TablaVentas';
 import NuevaVenta from './components/NuevaVenta';
+import axios from 'axios';
+
+const API_VENTAS_URL = "https://localhost:7228/api/Ventas";
 
 const Ventas = () => {
-  // Estados principales
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState("activas");
-  const [currentVentaId, setCurrentVentaId] = useState(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [ventasData, setVentasData] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const itemsPerPage = 7;
 
-  // Datos mockeados (simulan la API)
-  const ventasMock = [
-    { id: 1, cliente: { nombre: "Juan Pérez" }, estado: "Activo" },
-    { id: 2, cliente: { nombre: "María López" }, estado: "Activo" },
-    { id: 3, cliente: { nombre: "Carlos Gómez" }, estado: "Inactivo" },
-    { id: 4, cliente: { nombre: "Ana Torres" }, estado: "Activo" },
-    { id: 5, cliente: { nombre: "Luis Fernández" }, estado: "Inactivo" },
-  ];
-
+  // 🔹 Cargar ventas según pestaña
   useEffect(() => {
     fetchVentas();
   }, [activeTab]);
 
-  const fetchVentas = () => {
-    const filteredVentas = ventasMock.filter(venta =>
-      activeTab === "activas" ? venta.estado === 'Activo' : venta.estado === 'Inactivo'
-    );
-    setVentasData(filteredVentas);
-    setCurrentPage(1);
+  const fetchVentas = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(API_VENTAS_URL);
+      let data = response.data || [];
+
+      // Filtrar por pestaña
+      data = data.filter(v =>
+        activeTab === "activas" ? v.estado === true : v.estado === false
+      );
+
+      setVentasData(data);
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("❌ Error cargando ventas:", err);
+      setError("Error al cargar ventas.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Filtros de ventas
-  const filteredVentas = ventasData.filter(venta => 
+  // 🔹 Filtrado (por cliente o ID)
+  const filteredVentas = ventasData.filter(venta =>
     (venta.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    venta.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+      venta.id?.toString().includes(searchTerm.toLowerCase()))
   );
 
-  const totalPages = Math.ceil(filteredVentas.length / itemsPerPage);
+  // 🔹 Paginación
+  const totalPages = Math.max(1, Math.ceil(filteredVentas.length / itemsPerPage));
   const paginatedVentas = filteredVentas.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Handlers
-  const toggleEstado = (id, currentEstado) => {
-    setVentasData(prev =>
-      prev.map(venta =>
-        venta.id === id
-          ? { ...venta, estado: currentEstado === "Activo" ? "Inactivo" : "Activo" }
-          : venta
-      )
-    );
-  };
+  // 🔹 Abrir / cerrar modal
+  const openNuevaVenta = () => setIsNuevaVentaOpen(true);
+  const closeNuevaVenta = () => setIsNuevaVentaOpen(false);
 
-  // Modal de visualización
-  const openViewModal = (ventaId) => {
-    setCurrentVentaId(ventaId);
-    setIsViewModalOpen(true);
-  };
+  // ✅ Guardar nueva venta y recargar lista
+  const handleSaveVenta = async (nuevaVenta) => {
+    try {
+      setLoading(true);
 
-  const closeViewModal = () => {
-    setIsViewModalOpen(false);
-    setCurrentVentaId(null);
-  };
+      // 👀 Debug: Ver qué llega desde NuevaVenta
+      console.log("📦 Payload final que se enviará a la API:", nuevaVenta);
 
-  const openPdfModal = (ventaId) => {
-    setCurrentVentaId(ventaId);
-    setIsPdfModalOpen(true);
-  };
+      // Enviar directo el payload completo
+      const response = await axios.post(API_VENTAS_URL, nuevaVenta);
+      const ventaGuardada = response.data;
 
-  const closePdfModal = () => {
-    setIsPdfModalOpen(false);
-    setCurrentVentaId(null);
-  };
+      // Insertar al inicio de la lista
+      setVentasData(prev => [ventaGuardada, ...prev]);
+      setIsNuevaVentaOpen(false);
 
-  const openNuevaVenta = () => {
-    setIsNuevaVentaOpen(true);
-  };
-
-  const closeNuevaVenta = () => {
-    setIsNuevaVentaOpen(false);
-  };
-
-  const handleSaveVenta = (nuevaVenta) => {
-    setVentasData(prev => [...prev, { ...nuevaVenta, id: prev.length + 1, estado: "Activo" }]);
-    setIsNuevaVentaOpen(false);
-  };
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+      // Refrescar lista desde backend
+      await fetchVentas();
+    } catch (err) {
+      console.error("❌ Error guardando la venta:", err.response?.data || err.message);
+      alert("Error al guardar la venta. Revisa los datos.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container">
       <h1>Ventas</h1>
-      
-      <div className="section-divider"></div>
-      
-      {/* Pestañas */}
+
+      {/* Tabs */}
       <div className="tabs">
         <button
           className={`tab-button ${activeTab === "activas" ? "active-tab" : ""}`}
-          onClick={() => {
-            setActiveTab("activas");
-            setCurrentPage(1);
-          }}
+          onClick={() => setActiveTab("activas")}
         >
           Ventas Activas
         </button>
         <button
           className={`tab-button ${activeTab === "inactivas" ? "active-tab" : ""}`}
-          onClick={() => {
-            setActiveTab("inactivas");
-            setCurrentPage(1);
-          }}
+          onClick={() => setActiveTab("inactivas")}
         >
           Ventas Inactivas
         </button>
       </div>
 
+      {/* Buscador + Crear */}
       <div className="search-container">
         <input
           type="text"
-          placeholder={activeTab === "activas" ? "Buscar ventas activas" : "Buscar ventas inactivas"}
+          placeholder={`Buscar ventas ${activeTab}`}
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
@@ -146,32 +127,39 @@ const Ventas = () => {
           </button>
         )}
       </div>
-      
-      <div className="table-container">
-        <TablaVentas 
-          ventas={paginatedVentas} 
-          toggleEstado={toggleEstado}
-          openViewModal={openViewModal}
-          openPdfModal={openPdfModal}
-        />
-      </div>
 
+      {/* Estado de carga / error */}
+      {loading && <p>⏳ Cargando ventas...</p>}
+      {error && <p className="error">{error}</p>}
+
+      {/* Tabla */}
+      {!loading && !error && (
+        <div className="table-container">
+          {paginatedVentas.length > 0 ? (
+            <TablaVentas ventas={paginatedVentas} />
+          ) : (
+            <p>No hay ventas para mostrar.</p>
+          )}
+        </div>
+      )}
+
+      {/* Paginación */}
       {totalPages > 1 && (
         <div className="pagination-controls">
-          <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+          <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
             &lt;
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
               className={currentPage === i + 1 ? "active-page" : ""}
-              onClick={() => handlePageChange(i + 1)}
+              onClick={() => setCurrentPage(i + 1)}
             >
               {i + 1}
             </button>
           ))}
           <button
-            onClick={() => handlePageChange(currentPage + 1)}
+            onClick={() => setCurrentPage(currentPage + 1)}
             disabled={currentPage === totalPages}
           >
             &gt;
@@ -179,23 +167,7 @@ const Ventas = () => {
         </div>
       )}
 
-      {/* Modal de visualización */}
-      {isViewModalOpen && (
-        <ViewModal 
-          ventaId={currentVentaId} 
-          onClose={closeViewModal} 
-        />
-      )}
-
-      {/* Modal de PDF */}
-      {isPdfModalOpen && (
-        <PdfModal 
-          ventaId={currentVentaId} 
-          onClose={closePdfModal} 
-        />
-      )}
-
-      {/* Modal de Nueva Venta */}
+      {/* Modal Nueva Venta */}
       {isNuevaVentaOpen && (
         <NuevaVenta onClose={closeNuevaVenta} onSave={handleSaveVenta} />
       )}

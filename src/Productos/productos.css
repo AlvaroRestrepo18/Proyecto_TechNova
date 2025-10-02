@@ -1,117 +1,376 @@
-/* Estilos específicos para Productos */
-.create-header {
+/* ================================
+   🎨 Estilos para Servicios
+================================ */
+
+/* Filas anuladas/inactivas */
+.anulado-row {
+  background-color: #f3f3f3;
+  color: #6c757d;
+}
+
+/* ================================
+   📋 Tablas
+================================ */
+.servicios-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.9rem;
+}
+
+.servicios-table th {
+  background-color: #1e3c72;
+  color: #fff;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.servicios-table td {
+  padding: 10px 12px;
+  border-top: 1px solid #eee;
+  color: #34495e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.servicios-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Contenedor con sombra y borde redondeado */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+
+/* ================================
+   ✅ Estado (botones toggle)
+================================ */
+.status-toggle {
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.status-toggle.active {
+  background-color: #4CAF50; /* Verde */
+  color: #fff;
+}
+
+.status-toggle.inactive {
+  background-color: #F44336; /* Rojo */
+  color: #fff;
+}
+
+.status-toggle:hover {
+  opacity: 0.9;
+}
+
+/* ================================
+   🔘 Botones de acción
+================================ */
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 7px;
+  margin: 0 4px;
+  color: #1e3c72;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.icon-button:hover {
+  background: #e3eafc;
+  color: #27408b;
+}
+
+.icon-button.delete {
+  color: #f44336;
+}
+
+.icon-button.delete:hover {
+  background: #fdecea;
+  color: #d32f2f;
+}
+
+/* Botones anulados */
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================================
+   📦 Contenedores
+================================ */
+.container {
+  padding: 24px 0;
+  max-width: 1100px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  gap: 1rem;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 350px;
+  padding: 12px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #1e3c72;
+  background: #fff;
+  outline: none;
+}
+
+.create-button {
+  background-color: #1e3c72;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 22px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.create-button:hover {
+  background-color: #27408b;
+}
+
+/* ================================
+   🪟 Modales
+================================ */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  width: 95vw;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-radius: 10px 10px 0 0;
+  color: #fff;
+  background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.close-button:hover {
+  color: #d1e7dd;
+}
+
+/* ================================
+   📝 Formularios
+================================ */
+.form-body {
+  padding: 24px;
+}
+
+.form-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 0px;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #1e3c72;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 12px 14px;
+  width: 100%;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1.5px solid #d1d5db;
+  background: #f9fafb;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #1e3c72;
+  background: #fff;
+  outline: none;
+}
+
+.form-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 15px;
+  padding-top: 18px;
+  border-top: 1px solid #eaeaea;
 }
 
-.input-error {
-  border-color: #e74c3c !important;
+.cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
 }
 
-.no-results {
-  text-align: center;
-  padding: 40px;
-  color: #7f8c8d;
-  font-style: italic;
+.cancel-button:hover {
+  background-color: #495057;
 }
 
-/* Ajustes para tablas */
-.equipment-table .Action {
-  text-align: center;
+.submit-button {
+  background-color: #1e3c72;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
 }
 
-/* Estilos para botones de estado */
-.status-toggle.active { 
-  background-color: #4CAF50; 
-  color: white; 
+.submit-button:hover {
+  background-color: #27408b;
 }
 
-.status-toggle.inactive { 
-  background-color: #f44336; 
-  color: white; 
+/* ================================
+   📖 Detalles
+================================ */
+.details-modal {
+  max-width: 600px;
 }
 
-.status-toggle:hover { 
-  opacity: 0.9; 
+.details-body {
+  padding: 24px;
 }
 
-/* Ajustes para modales de detalles */
-.product-details-modal {
-  max-width: 700px;
-}
-
-.product-details-container {
-  padding: 20px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.product-details-row {
+.details-row {
   display: flex;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 0;
+  font-size: 1rem;
 }
 
-.detail-label {
+.details-row:last-child {
+  border-bottom: none;
+}
+
+.details-row strong {
+  width: 140px;
+  color: #1e3c72;
   font-weight: 600;
-  width: 180px;
-  color: #555;
+  flex-shrink: 0;
 }
 
-.detail-value {
-  flex: 1;
-  color: #34495e;
-}
-
-.status-active {
+.details-value.active {
   color: #4CAF50;
   font-weight: 600;
 }
 
-.status-inactive {
+.details-value.inactive {
   color: #F44336;
   font-weight: 600;
 }
 
-.close-details-button {
-  background-color: #2196F3;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 20px;
+/* ================================
+   📱 Responsive
+================================ */
+@media (max-width: 768px) {
+  .modal-content, .details-modal {
+    width: 98vw;
+    max-width: 98vw;
+  }
+  .form-body, .details-body {
+    padding: 12px 6px;
+  }
+  .details-row strong {
+    width: 90px;
+    font-size: 0.95rem;
+  }
+  .details-row {
+    font-size: 0.95rem;
+    padding: 8px 0;
+  }
 }
 
-.close-details-button:hover {
-  background-color: #0b7dda;
-}
-
-/* Estilos para modal de eliminación */
-.delete-modal {
-  max-width: 500px;
-}
-
-.delete-modal-body {
-  text-align: center;
-  padding: 20px;
-}
-
-.delete-warning-icon {
-  color: #ff9800;
-  margin-bottom: 15px;
-}
-
-.delete-confirm-button {
-  background-color: #f44336;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.delete-confirm-button:hover {
-  background-color: #d32f2f;
+@media (max-width: 900px) {
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
 }

@@ -11,7 +11,7 @@ import Compras from './Compras/Compras';
 import Footer from './shared/footer/footer';
 import Roles from './roles/roles';
 import Login from './acceso/login/login';
-import Servicios from './Servicios/servicios';   
+import Servicios from './Servicios/Servicios';   
 import Clientes from './Clientes/clientes';    
 import ForgotPassword from './acceso/forgot/forgot';
 import ResetPassword from './acceso/reset/resetpassword';

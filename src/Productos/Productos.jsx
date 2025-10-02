@@ -164,7 +164,6 @@ const Productos = () => {
             </button>
           </div>
           <div className="user-details-container">
-            <p><b>ID:</b> {producto.id}</p>
             <p><b>Nombre:</b> {producto.nombre}</p>
             <p><b>Categoría:</b> {
               categoriasDisponibles.find(cat => cat.id === producto.categoriaId)?.nombre || "Sin categoría"
@@ -183,12 +182,11 @@ const Productos = () => {
     );
   };
 
-  // Tabla de productos
+  // Tabla de productos SIN ID
   const TablaProductos = ({ productos }) => (
     <table className="table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Nombre</th>
           <th>Categoría</th>
           <th>Precio</th>
@@ -199,7 +197,6 @@ const Productos = () => {
       <tbody>
         {productos.map((producto) => (
           <tr key={producto.id}>
-            <td>{producto.id}</td>
             <td>{producto.nombre}</td>
             <td>{categoriasDisponibles.find(cat => cat.id === producto.categoriaId)?.nombre || "Sin categoría"}</td>
             <td>${producto.precio?.toFixed(2)}</td>

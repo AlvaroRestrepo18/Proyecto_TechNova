@@ -1,67 +1,80 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://cyber360-api.onrender.com/api";
-const VENTAS_URL = `${API_BASE_URL}/ventas`;
-const PRODUCTO_VENTA_URL = `${API_BASE_URL}/productoxventa`;
-const SERVICIO_VENTA_URL = `${API_BASE_URL}/servicioxventums`;
-const PRODUCTOS_URL = `${API_BASE_URL}/productos`;
-const SERVICIOS_URL = `${API_BASE_URL}/servicios`;
-const CLIENTES_URL = `${API_BASE_URL}/clientes`;
+const API_BASE_URL = "https://localhost:7228/api";
 
-// Mapeo backend -> frontend venta (versión mejorada)
+// ✅ Endpoints correctos
+const VENTAS_URL = `${API_BASE_URL}/Ventas`;
+const PRODUCTO_VENTA_URL = `${API_BASE_URL}/Productoxventas`;
+const SERVICIO_VENTA_URL = `${API_BASE_URL}/Servicioxventums`;
+const PRODUCTOS_URL = `${API_BASE_URL}/Productos`;
+const SERVICIOS_URL = `${API_BASE_URL}/Servicios`;
+const CLIENTES_URL = `${API_BASE_URL}/Clientes`;
+
+// ======================= Mapeos =======================
+
+// ✅ Backend → Frontend
 const mapBackendToFrontend = (venta) => {
   console.log("Venta cruda desde API:", venta);
-  
-  // Manejo flexible del estado
-  const estado = venta.activo !== undefined ? 
-    (venta.activo ? 'Activo' : 'Inactivo') : 
-    venta.estado || 'Activo';
-  
-  // Manejo flexible del cliente - ahora incluye nombre completo
-  const clienteNombreCompleto = venta.cliente?.nombre && venta.cliente?.apellido 
-    ? `${venta.cliente.nombre} ${venta.cliente.apellido}`
-    : venta.cliente?.nombre || venta.nombreCliente || venta.nombre || 'N/A';
+
+  const estado = venta.estado ? "Activo" : "Inactivo";
+
+  const clienteNombreCompleto =
+    venta.fkClienteNavigation?.nombre && venta.fkClienteNavigation?.apellido
+      ? `${venta.fkClienteNavigation.nombre} ${venta.fkClienteNavigation.apellido}`
+      : venta.fkClienteNavigation?.nombre || "N/A";
 
   return {
-    id: venta.id || venta.ID,
-    fecha: venta.fecha || venta.fechaVenta,
-    clienteId: venta.clienteId || venta.idCliente,
-    total: venta.total || venta.montoTotal || 0,
+    id: venta.id,
+    fecha: venta.fecha,
+    clienteId: venta.fkCliente,
+    total: venta.total,
+    estado: estado,
     cliente: {
-      id: venta.cliente?.id,
-      nombre: venta.cliente?.nombre,
-      apellido: venta.cliente?.apellido,
-      nombreCompleto: clienteNombreCompleto
+      id: venta.fkClienteNavigation?.id,
+      nombre: venta.fkClienteNavigation?.nombre,
+      apellido: venta.fkClienteNavigation?.apellido,
+      nombreCompleto: clienteNombreCompleto,
     },
-    productos: venta.productoxventa || venta.productos || [],
-    servicios: venta.servicioxventa || venta.servicios || [],
-    metodo: venta.metodo || venta.metodoPago || 'Efectivo',
-    estado: estado
+    // 🔹 Ojo: aquí sí preservamos productos y servicios
+    productos: venta.productoxventa || [],
+    servicios: venta.servicioxventum || [],
   };
 };
 
-// Mapeo frontend -> backend venta
+// ✅ Frontend → Backend
 const mapFrontendToBackend = (venta) => ({
+  id: venta.id || 0,
   fecha: venta.fecha,
-  clienteId: venta.clienteId,
+  fkCliente: venta.fkCliente,   // usa el mismo nombre que llega del modal
   total: venta.total,
-  metodo: venta.metodo,
-  activo: venta.estado === 'Activo'
+  estado: venta.estado === true || venta.estado === "Activo",
+
+  productoxventa: venta.productos?.map(p => ({
+    fkProducto: p.productoId,
+    cantidad: p.cantidad,
+    precioUnitario: p.precioUnitario,  
+    valorTotal: p.cantidad * p.precioUnitario
+  })) || [],
+
+  servicioxventa: venta.servicios?.map(s => ({
+    fkServicio: s.servicioId,
+    cantidad: s.cantidad,
+    precioUnitario: s.precioUnitario,  
+    valorTotal: s.cantidad * s.precioUnitario
+  })) || []
 });
+
+
+
+// ======================= CRUD Ventas =======================
 
 // Obtener todas las ventas
 export const getVentas = async () => {
   try {
-    console.log("Haciendo petición a:", VENTAS_URL);
     const response = await axios.get(VENTAS_URL);
-    console.log("Respuesta de la API:", response.data);
-    return response.data.map(venta => mapBackendToFrontend(venta));
+    return response.data.map((venta) => mapBackendToFrontend(venta));
   } catch (error) {
-    console.error("Error al obtener ventas:", error);
-    if (error.response) {
-      console.error("Respuesta del error:", error.response.data);
-      console.error("Status del error:", error.response.status);
-    }
+    console.error("Error al obtener ventas:", error.response?.data || error);
     throw error;
   }
 };
@@ -77,22 +90,30 @@ export const getVentaById = async (id) => {
   }
 };
 
-// Resto de las funciones se mantienen igual...
+// Crear venta
 export const createVenta = async (ventaData) => {
   try {
     const payload = mapFrontendToBackend(ventaData);
-    const response = await axios.post(VENTAS_URL, payload);
+    console.log("📦 Payload enviado:", payload);
+
+    const response = await axios.post(VENTAS_URL, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+
     return mapBackendToFrontend(response.data);
   } catch (error) {
-    console.error("Error al crear venta:", error);
+    console.error("Error al crear venta:", error.response?.data || error);
     throw error;
   }
 };
 
+// Actualizar venta
 export const updateVenta = async (id, ventaData) => {
   try {
     const payload = mapFrontendToBackend(ventaData);
-    const response = await axios.put(`${VENTAS_URL}/${id}`, payload);
+    const response = await axios.put(`${VENTAS_URL}/${id}`, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
     return mapBackendToFrontend(response.data);
   } catch (error) {
     console.error(`Error al actualizar venta con id ${id}:`, error);
@@ -100,9 +121,10 @@ export const updateVenta = async (id, ventaData) => {
   }
 };
 
-export const changeVentaStatus = async (id, activo) => {
+// Cambiar estado
+export const changeVentaStatus = async (id, estado) => {
   try {
-    const response = await axios.patch(`${VENTAS_URL}/${id}/estado`, { activo });
+    const response = await axios.patch(`${VENTAS_URL}/${id}/estado`, { estado });
     return mapBackendToFrontend(response.data);
   } catch (error) {
     console.error(`Error al cambiar estado de venta con id ${id}:`, error);
@@ -110,13 +132,16 @@ export const changeVentaStatus = async (id, activo) => {
   }
 };
 
+// ======================= Productos & Servicios en Venta =======================
+
 export const addProductoToVenta = async (ventaId, productoData) => {
   try {
     const payload = {
-      ventaId: ventaId,
-      productoId: productoData.productoId,
+      fkVenta: ventaId,
+      fkProducto: productoData.productoId,
       cantidad: productoData.cantidad,
-      precioUnitario: productoData.precioUnitario
+      valorUnitario: productoData.valorUnitario,
+      valorTotal: productoData.valorTotal,
     };
     const response = await axios.post(PRODUCTO_VENTA_URL, payload);
     return response.data;
@@ -129,10 +154,11 @@ export const addProductoToVenta = async (ventaId, productoData) => {
 export const addServicioToVenta = async (ventaId, servicioData) => {
   try {
     const payload = {
-      ventaId: ventaId,
-      servicioId: servicioData.servicioId,
-      cantidad: servicioData.cantidad,
-      precioUnitario: servicioData.precioUnitario
+      fkVenta: ventaId,
+      fkServicio: servicioData.servicioId,
+      precio: servicioData.precio,
+      detalles: servicioData.detalles,
+      valorTotal: servicioData.valorTotal,
     };
     const response = await axios.post(SERVICIO_VENTA_URL, payload);
     return response.data;
@@ -141,6 +167,8 @@ export const addServicioToVenta = async (ventaId, servicioData) => {
     throw error;
   }
 };
+
+// ======================= Catálogos =======================
 
 export const getProductos = async () => {
   try {
@@ -177,7 +205,7 @@ export const getClienteById = async (id) => {
     const response = await axios.get(`${CLIENTES_URL}/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Error al obtener cliente con id para la venta ${id}:`, error);
+    console.error(`Error al obtener cliente con id ${id}:`, error);
     throw error;
   }
 };

@@ -1,64 +1,61 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 
-const ServiciosTable = ({ servicios, onToggleStatus, onEdit, onDelete, onView }) => {
+const ServiciosTable = ({ servicios, onEdit, onDelete, onView }) => {
   return (
-    <table className="pedidos-table servicios-table">
+    <table className="servicios-table">
       <thead>
         <tr>
           <th>Nombre</th>
           <th>Precio</th>
-          <th>Estado</th>
+          <th>Detalles</th>
           <th className="actions-header">Acciones</th>
         </tr>
       </thead>
       <tbody>
-        {servicios.map((servicio) => {
-          const isInactive = !servicio.active;
-          return (
-            <tr key={servicio.id} className={isInactive ? 'anulado-row' : ''}>
-              <td>{servicio.name}</td>
-              <td>${servicio.price}</td>
+        {servicios.length > 0 ? (
+          servicios.map((servicio) => (
+            <tr key={servicio.id}>
+              <td>{servicio.nombre}</td>
               <td>
-                <button
-                  className={`status-toggle ${servicio.active ? 'active' : 'anulado'}`}
-                  onClick={() => onToggleStatus(servicio.id)}
-                  disabled={isInactive}
-                  title={servicio.active ? 'Desactivar' : 'Inactivo'}
-                >
-                  {servicio.active ? 'Activo' : 'Inactivo'}
-                </button>
+                {servicio.precio
+                  ? `$${servicio.precio.toLocaleString("es-CO")}`
+                  : "—"}
               </td>
-              <td>
+              <td>{servicio.detalles?.trim() || "—"}</td>
+              <td className="actions-cell">
                 <button
-                  className="icon-button"
+                  className="icon-button view"
                   title="Ver detalles"
                   onClick={() => onView(servicio)}
-                  disabled={isInactive}
                 >
                   <FontAwesomeIcon icon={faEye} />
                 </button>
                 <button
-                  className="icon-button"
+                  className="icon-button edit"
                   title="Editar"
                   onClick={() => onEdit(servicio)}
-                  disabled={isInactive}
                 >
                   <FontAwesomeIcon icon={faPen} />
                 </button>
                 <button
-                  className={`icon-button ${isInactive ? 'anulado' : 'delete'}`}
-                  title={isInactive ? 'Inactivo' : 'Eliminar'}
+                  className="icon-button delete"
+                  title="Eliminar"
                   onClick={() => onDelete(servicio.id)}
-                  disabled={isInactive}
                 >
                   <FontAwesomeIcon icon={faTrash} />
                 </button>
               </td>
             </tr>
-          );
-        })}
+          ))
+        ) : (
+          <tr>
+            <td colSpan="4" className="no-data">
+              No hay servicios registrados.
+            </td>
+          </tr>
+        )}
       </tbody>
     </table>
   );

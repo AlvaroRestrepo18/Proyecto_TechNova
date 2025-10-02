@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://cyber360-api.onrender.com/api";
+const API_BASE_URL = "https://localhost:7228/api/Productoxventums";
 const PRODUCTO_VENTA_URL = `${API_BASE_URL}/productoxventa`;
 
 // Mapeo backend -> frontend producto x venta (DEBUG VERSION)

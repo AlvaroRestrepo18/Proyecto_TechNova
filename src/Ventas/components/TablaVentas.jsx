@@ -28,7 +28,6 @@ const TablaVentas = ({ ventas, toggleEstado, openViewModal, openPdfModal }) => (
               }
             </td>
             <td>{venta.fecha}</td>
-            <td>{venta.metodo || 'N/A'}</td>
             <td>${venta.total?.toFixed(2) || '0.00'}</td>
             <td>
               <button
