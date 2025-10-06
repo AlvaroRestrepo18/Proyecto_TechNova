@@ -34,7 +34,8 @@ const Users = () => {
     tipoDocumento: "CC",
     documento: "",
     direccion: "",
-    idRol: null, // ✅ ahora usamos idRol (igual al backend)
+    idRol: null,
+    rol: "",
     contrasena: "",
     estado: true,
   });
@@ -62,7 +63,7 @@ const Users = () => {
     try {
       const payload = {
         ...formData,
-        estado: formData.estado ? "activo" : "inactivo", // 👈 ajusta según tu backend
+        estado: formData.estado ? "activo" : "inactivo",
       };
 
       if (formMode === "create") {
@@ -83,7 +84,7 @@ const Users = () => {
 
   const confirmDelete = async () => {
     try {
-      await deleteUsuario(userToDelete.id);
+      await deleteUsuario(userToDelete.idUsuario);
       fetchUsuarios();
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
@@ -92,8 +93,14 @@ const Users = () => {
     }
   };
 
+  // ✅ CORREGIDO: Función simplificada
   const handleToggleEstado = async (id, estado) => {
     try {
+      if (!id) {
+        console.error("ID de usuario es undefined");
+        return;
+      }
+      
       await toggleUsuarioEstado(id, estado);
       fetchUsuarios();
     } catch (error) {
@@ -118,6 +125,30 @@ const Users = () => {
     currentPage * itemsPerPage
   );
 
+  // VISUALIZAR
+  const openViewForm = (user) => {
+    if (!user) return;
+
+    setFormMode("view");
+    setCurrentUserId(user.idUsuario);
+    setIsFormOpen(true);
+
+    setFormData({
+      id: user.idUsuario,
+      nombre: user.nombre,
+      email: user.email,
+      telefono: user.celular || user.telefono || "",
+      tipoDocumento: user.tipoDoc || user.tipoDocumento || "CC",
+      documento: user.documento,
+      direccion: user.direccion,
+      idRol: user.fkRol || user.idRol,
+      rol: user.fkRolNavigation?.nombreRol || user.rol || "No asignado",
+      contrasena: "",
+      estado: user.estado,
+    });
+  };
+
+  // CREAR
   const openCreateForm = () => {
     setFormMode("create");
     setIsFormOpen(true);
@@ -129,13 +160,15 @@ const Users = () => {
       documento: "",
       direccion: "",
       idRol: null,
+      rol: "",
       contrasena: "",
       estado: true,
     });
   };
 
+  // EDITAR
   const openEditForm = (userId) => {
-    const u = userData.find((u) => u.id === userId);
+    const u = userData.find((u) => u.idUsuario === userId);
     if (!u) return;
 
     setFormMode("edit");
@@ -146,18 +179,20 @@ const Users = () => {
       id: userId,
       nombre: u.nombre,
       email: u.email,
-      telefono: u.telefono || "",
-      tipoDocumento: u.tipoDocumento || "CC",
+      telefono: u.celular || u.telefono || "",
+      tipoDocumento: u.tipoDoc || u.tipoDocumento || "CC",
       documento: u.documento,
       direccion: u.direccion,
-      idRol: u.idRol, // ✅ siempre mandamos idRol
+      idRol: u.fkRol || u.idRol,
+      rol: u.fkRolNavigation?.nombreRol || u.rol || "No asignado",
       contrasena: "",
-      estado: u.estado === "activo",
+      estado: u.estado,
     });
   };
 
+  // ELIMINAR
   const openDeleteModal = (userId) => {
-    const u = userData.find((u) => u.id === userId);
+    const u = userData.find((u) => u.idUsuario === userId);
     if (u) {
       setUserToDelete(u);
       setIsDeleteModalOpen(true);
@@ -217,13 +252,10 @@ const Users = () => {
 
       <UserTable
         users={paginatedUsers}
-        onView={() => {}}
+        onView={openViewForm}
         onEdit={openEditForm}
         onDelete={openDeleteModal}
-        onToggleEstado={(id) => {
-          const u = userData.find((x) => x.id === id);
-          handleToggleEstado(id, u.estado);
-        }}
+        onToggleEstado={handleToggleEstado} // ✅ CORREGIDO: Pasar función directamente
       />
 
       {totalPages > 1 && (

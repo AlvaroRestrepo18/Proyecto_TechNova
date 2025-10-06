@@ -9,7 +9,7 @@ import {
   updateCliente,
   deleteCliente,
 } from "./service/Clientes";
-import "../App.css"; // 🔹 estilos globales
+import './clientes.css';
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);

@@ -1,82 +1,86 @@
+// src/acceso/forgot/forgot.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEnvelope, faArrowLeft, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import '../login/login.css'; // Reutilizamos los mismos estilos
+import '../login/login.css';
+import { recuperarContrasena } from '../services/auth';
 
 const Forgot = () => {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    setTimeout(() => {
-      if (email.includes('@')) {
-        setSuccess(true);
-      } else {
-        setError('Por favor ingresa un correo electrónico válido');
-      }
-      setLoading(false);
-    }, 1500);
+  const handleBack = () => {
+    navigate('/login');
   };
 
-  const handleBackToLogin = () => {
-    navigate('/login');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    if (!email) {
+      setError('El email es obligatorio');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await recuperarContrasena(email);
+      if (res.success) {
+        setSuccess(true);
+        setTimeout(() => navigate('/reset-password'), 2000); // redirige a resetpassword
+      } else {
+        setError(res.message || 'Error enviando código');
+      }
+    } catch (err) {
+      setError(err.message || 'Error inesperado');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <button 
-          onClick={handleBackToLogin}
-          className="back-button"
-        >
+        <button onClick={handleBack} className="back-button">
           <FontAwesomeIcon icon={faArrowLeft} /> Volver al login
         </button>
-        
+
         <h1>Recuperar contraseña</h1>
-        
+
         {success ? (
           <div className="success-message">
             <FontAwesomeIcon icon={faCheckCircle} className="success-icon" />
-            <p>Hemos enviado un enlace para restablecer tu contraseña al correo electrónico proporcionado.</p>
-            <p>Por favor revisa tu bandeja de entrada.</p>
+            <p>Se ha enviado un código a tu correo electrónico.</p>
+            <p>Redirigiendo a restablecer contraseña...</p>
           </div>
         ) : (
-          <>
-            <p className="instructions">
-              Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
-            </p>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="input-group">
-                <label htmlFor="email">Correo electrónico</label>
-                <div className="auth-input-field">
-                  <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Ingresa tu correo electrónico"
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label htmlFor="email">Correo electrónico</label>
+              <div className="auth-input-field">
+                <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Ingresa tu correo"
+                  required
+                />
               </div>
-              
-              {error && <div className="error-message">{error}</div>}
-              
-              <button type="submit" className="login-button" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar enlace de recuperación'}
-              </button>
-            </form>
-          </>
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar código'}
+            </button>
+          </form>
         )}
 
         <div className="login-footer">

@@ -14,6 +14,20 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
     return estado === "activo" ? "Activo" : "Inactivo";
   };
 
+  const getRolName = (usuario) => {
+    return usuario.fkRolNavigation?.nombreRol || usuario.rol || "No asignado";
+  };
+
+  const getTelefono = (usuario) => {
+    return usuario.celular || usuario.telefono || "-";
+  };
+
+  const handleViewClick = (usuario) => {
+    if (usuario.estado === "activo") {
+      onView(usuario);
+    }
+  };
+
   return (
     <div className="table-container">
       <table className="table">
@@ -29,15 +43,15 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
         </thead>
         <tbody>
           {users.map((usuario, index) => (
-            <tr key={usuario.id || index}>
+            <tr key={usuario.idUsuario || index}>
               <td>{usuario.nombre || "-"}</td>
               <td>{usuario.email || "-"}</td>
-              <td>{usuario.telefono || "-"}</td>
-              <td>{usuario.rol || "-"}</td>
+              <td>{getTelefono(usuario)}</td>
+              <td>{getRolName(usuario)}</td>
               <td>
                 <button
                   className={`status-toggle ${getEstadoClass(usuario.estado)}`}
-                  onClick={() => onToggleEstado(usuario.id, usuario.estado)}
+                  onClick={() => onToggleEstado(usuario.idUsuario, usuario.estado)} // ✅ CORREGIDO: Pasar idUsuario y estado
                   title={`Cambiar estado (actual: ${getEstadoText(usuario.estado)})`}
                 >
                   <FontAwesomeIcon icon={faPowerOff} />
@@ -49,7 +63,7 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
                   className="icon-button"
                   title="Ver"
                   disabled={usuario.estado !== "activo"}
-                  onClick={() => onView(usuario)} // ✅ pasa el objeto completo
+                  onClick={() => handleViewClick(usuario)}
                 >
                   <FontAwesomeIcon icon={faEye} />
                 </button>
@@ -58,7 +72,7 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
                   className="icon-button"
                   title="Editar"
                   disabled={usuario.estado !== "activo"}
-                  onClick={() => onEdit(usuario.id)}
+                  onClick={() => onEdit(usuario.idUsuario)}
                 >
                   <FontAwesomeIcon icon={faPen} />
                 </button>
@@ -67,7 +81,7 @@ const UserTable = ({ users, onView, onEdit, onDelete, onToggleEstado }) => {
                   className="icon-button"
                   title="Eliminar"
                   disabled={usuario.estado === "activo"}
-                  onClick={() => onDelete(usuario.id)}
+                  onClick={() => onDelete(usuario.idUsuario)}
                 >
                   <FontAwesomeIcon icon={faTrash} />
                 </button>

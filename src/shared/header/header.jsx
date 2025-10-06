@@ -4,23 +4,19 @@ import "./header.css";
 import { faSignInAlt, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { logout, getCurrentUser } from "../../acceso/services/auth.js";
-import { getRoleNameById } from "../../roles/services/roles.js";
 
 const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(getCurrentUser());
   const [rolNombre, setRolNombre] = useState("");
   const isLoggedIn = !!user;
-  console.log(user)
+
   useEffect(() => {
     if (user?.fkRol) {
-      const token = localStorage.getItem("token");
-      getRoleNameById(user.fkRol, token)
-        .then((nombre) => setRgolNombre(nombre || "Rol desconocido"))
-        .catch((err) => {
-          console.error("Error obteniendo rol:", err);
-          setRolNombre("Error cargando rol");
-        });
+      // Si el campo fkRol ya viene con el nombre, no hay que pedir nada al backend
+      setRolNombre(user.fkRol);
+    } else {
+      setRolNombre("Rol desconocido");
     }
   }, [user]);
 

@@ -1,218 +1,290 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faTrash, faSpinner, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import './NuevaVenta.css';
 
-const API_VENTAS_URL = "https://localhost:7228/api/Ventas";
-const API_CLIENTES_URL = "https://localhost:7228/api/Clientes";
-const API_PRODUCTOS_URL = "https://localhost:7228/api/Productos/lista-simple";
-const API_SERVICIOS_URL = "https://localhost:7228/api/Servicios/lista-simple";
+import {
+  getProductos,
+  getServicios,
+  getClientes,
+  createVenta,
+  addProductoToVenta,
+  addServicioToVenta
+} from '../services/ventas';
 
 const NuevaVenta = ({ onClose, onSave }) => {
-  // 📌 Estado principal
-  const [clientes, setClientes] = useState([]);
-  const [productosDisponibles, setProductosDisponibles] = useState([]);
-  const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
-
-  const [clienteSeleccionado, setClienteSeleccionado] = useState('');
+  const [activeTab, setActiveTab] = useState('productos');
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
   const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
-
-  // Estados auxiliares para selects
+  const [clienteId, setClienteId] = useState('');
   const [productoSeleccionado, setProductoSeleccionado] = useState('');
   const [cantidadProducto, setCantidadProducto] = useState(1);
   const [servicioSeleccionado, setServicioSeleccionado] = useState('');
-
-  // Totales
-  const [subtotal, setSubtotal] = useState(0);
-  const [iva, setIva] = useState(0);
-  const [descuento, setDescuento] = useState(0);
-  const [total, setTotal] = useState(0);
-
-  const [loading, setLoading] = useState(false);
+  const [productosDisponibles, setProductosDisponibles] = useState([]);
+  const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
+  const [clientesDisponibles, setClientesDisponibles] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [guardando, setGuardando] = useState(false);
 
-  // ⚡ Cargar datos iniciales
+  const makeLocalId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        const [clientesRes, productosRes, serviciosRes] = await Promise.all([
-          axios.get(API_CLIENTES_URL),
-          axios.get(API_PRODUCTOS_URL),
-          axios.get(API_SERVICIOS_URL),
+        const [productos, servicios, clientes] = await Promise.all([
+          getProductos(),
+          getServicios(),
+          getClientes()
         ]);
-        setClientes(clientesRes.data);
-        setProductosDisponibles(productosRes.data);
-        setServiciosDisponibles(serviciosRes.data);
+
+        setProductosDisponibles(productos || []);
+        setServiciosDisponibles(servicios || []);
+        setClientesDisponibles(clientes || []);
       } catch (err) {
-        console.error("❌ Error cargando datos iniciales:", err);
-        setError("Error cargando clientes, productos o servicios.");
+        console.error('❌ Error al cargar datos:', err);
+        setError('Error al cargar los datos.');
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
-  // 📌 Recalcular totales cuando cambian items
-  useEffect(() => {
-    const subtotalProductos = productosSeleccionados.reduce(
-      (sum, p) => sum + p.cantidad * p.precioUnitario,
-      0
-    );
-    const subtotalServicios = serviciosSeleccionados.reduce(
-      (sum, s) => sum + s.precioUnitario,
-      0
-    );
-
-    const nuevoSubtotal = subtotalProductos + subtotalServicios;
-    const nuevoIva = nuevoSubtotal * 0.19; // 19%
-    const nuevoTotal = nuevoSubtotal + nuevoIva - descuento;
-
-    setSubtotal(nuevoSubtotal);
-    setIva(nuevoIva);
-    setTotal(nuevoTotal);
-  }, [productosSeleccionados, serviciosSeleccionados, descuento]);
-
-  // 📌 Agregar producto
   const agregarProducto = () => {
-    if (!productoSeleccionado) return;
-    const producto = productosDisponibles.find(p => p.id === parseInt(productoSeleccionado));
-    if (!producto) return;
-
-    const existente = productosSeleccionados.find(p => p.id === producto.id);
-    if (existente) {
-      setProductosSeleccionados(
-        productosSeleccionados.map(p =>
-          p.id === producto.id
-            ? { ...p, cantidad: p.cantidad + cantidadProducto }
-            : p
-        )
-      );
-    } else {
-      setProductosSeleccionados([
-        ...productosSeleccionados,
-        {
-          id: producto.id,
-          nombre: producto.nombre,
-          cantidad: cantidadProducto,
-          precioUnitario: producto.precio,
-        },
-      ]);
+    if (!productoSeleccionado) {
+      alert('❌ Seleccione un producto.');
+      return;
     }
+
+    const producto = productosDisponibles.find(p => p.id === Number(productoSeleccionado));
+    if (!producto) {
+      alert('❌ Producto no encontrado.');
+      return;
+    }
+
+    const cantidad = Math.max(1, Number(cantidadProducto));
+    const precio = producto.precioUnitario || producto.precio || producto.valorUnitario || 0;
+
+    setProductosSeleccionados(prev => {
+      const existente = prev.find(p => p.productoId === producto.id);
+      if (existente) {
+        return prev.map(p =>
+          p.productoId === producto.id
+            ? { ...p, cantidad: p.cantidad + cantidad }
+            : p
+        );
+      }
+      return [
+        ...prev,
+        {
+          localId: makeLocalId(),
+          productoId: producto.id,
+          nombre: producto.nombre,
+          cantidad,
+          valorUnitario: precio
+        }
+      ];
+    });
 
     setProductoSeleccionado('');
     setCantidadProducto(1);
   };
 
-  // 📌 Agregar servicio
   const agregarServicio = () => {
-    if (!servicioSeleccionado) return;
-    const servicio = serviciosDisponibles.find(s => s.id === parseInt(servicioSeleccionado));
-    if (!servicio) return;
-
-    if (!serviciosSeleccionados.find(s => s.id === servicio.id)) {
-      setServiciosSeleccionados([
-        ...serviciosSeleccionados,
-        {
-          id: servicio.id,
-          nombre: servicio.nombre,
-          precioUnitario: servicio.precio,
-          detalles: servicio.descripcion || `Servicio: ${servicio.nombre}`,
-        },
-      ]);
+    if (!servicioSeleccionado) {
+      alert('❌ Seleccione un servicio.');
+      return;
     }
+
+    const servicio = serviciosDisponibles.find(s => s.id === Number(servicioSeleccionado));
+    if (!servicio) {
+      alert('❌ Servicio no encontrado.');
+      return;
+    }
+
+    const precio = servicio.precioUnitario || servicio.precio || servicio.valorUnitario || 0;
+
+    setServiciosSeleccionados(prev => {
+      const existente = prev.find(s => s.fkServicio === servicio.id);
+      if (existente) {
+        return prev.map(s =>
+          s.fkServicio === servicio.id
+            ? { ...s, cantidad: s.cantidad + 1 }
+            : s
+        );
+      }
+      return [
+        ...prev,
+        {
+          localId: makeLocalId(),
+          fkServicio: servicio.id,
+          nombre: servicio.nombre,
+          cantidad: 1,
+          precio: precio
+        }
+      ];
+    });
 
     setServicioSeleccionado('');
   };
 
-  // 📌 Quitar item
-  const quitarItem = (id, tipo) => {
+  const quitarItem = (localId, tipo) => {
     if (tipo === 'producto') {
-      setProductosSeleccionados(productosSeleccionados.filter(p => p.id !== id));
+      setProductosSeleccionados(prev => prev.filter(p => p.localId !== localId));
     } else {
-      setServiciosSeleccionados(serviciosSeleccionados.filter(s => s.id !== id));
+      setServiciosSeleccionados(prev => prev.filter(s => s.localId !== localId));
     }
   };
 
-  // 📌 Actualizar cantidad producto
-  const actualizarCantidad = (id, cantidad) => {
-    if (cantidad < 1) return;
-    setProductosSeleccionados(
-      productosSeleccionados.map(p =>
-        p.id === id ? { ...p, cantidad } : p
+  const actualizarCantidad = (localId, cantidad) => {
+    const nuevaCantidad = Math.max(1, Number(cantidad));
+    setProductosSeleccionados(prev =>
+      prev.map(p =>
+        p.localId === localId ? { ...p, cantidad: nuevaCantidad } : p
       )
     );
   };
 
-  // 📌 Guardar venta en backend
+  const calcularTotal = () => {
+    const totalProductos = productosSeleccionados.reduce(
+      (acc, p) => acc + p.cantidad * p.valorUnitario,
+      0
+    );
+    const totalServicios = serviciosSeleccionados.reduce(
+      (acc, s) => acc + s.cantidad * s.precio,
+      0
+    );
+    return (totalProductos + totalServicios).toFixed(2);
+  };
+
   const handleGuardar = async () => {
-    if (!clienteSeleccionado) {
-      alert("Seleccione un cliente");
+    console.log('🔍 Cliente seleccionado ID:', clienteId);
+
+    if (!clienteId || clienteId === "" || clienteId === "0") {
+      alert('❌ Debe seleccionar un cliente.');
       return;
     }
+
     if (productosSeleccionados.length === 0 && serviciosSeleccionados.length === 0) {
-      alert("Agregue al menos un producto o servicio");
+      alert('❌ Agregue al menos un producto o servicio.');
       return;
     }
-
-    const payload = {
-      fkCliente: parseInt(clienteSeleccionado),
-      fecha: new Date().toISOString().split("T")[0],
-      subtotal: parseFloat(subtotal.toFixed(2)),
-      iva: parseFloat(iva.toFixed(2)),
-      descuento: parseFloat(descuento.toFixed(2)),
-      total: parseFloat(total.toFixed(2)),
-      estado: true,
-      productoxventa: productosSeleccionados.map(p => ({
-        fkProducto: p.id,
-        cantidad: p.cantidad,
-        valorUnitario: p.precioUnitario,
-        valorTotal: p.cantidad * p.precioUnitario,
-      })),
-      servicioxventa: serviciosSeleccionados.map(s => ({
-        fkServicio: s.id,
-        precio: s.precioUnitario,
-        detalles: s.detalles,
-        valorTotal: s.precioUnitario,
-      })),
-    };
-
-    console.log("🚀 Payload enviado:", payload);
 
     try {
-      setLoading(true);
-      const res = await axios.post(API_VENTAS_URL, payload);
-      onSave(res.data);
+      setGuardando(true);
 
-      // reset
-      setClienteSeleccionado('');
-      setProductosSeleccionados([]);
-      setServiciosSeleccionados([]);
-      setSubtotal(0);
-      setIva(0);
-      setTotal(0);
+      // ✅ PASO 1: Crear VENTA BASE
+      const ventaData = {
+        id: 0,
+        ClienteId: Number(clienteId),
+        fecha: new Date().toISOString().split('T')[0],
+        total: Number(calcularTotal()),
+        estado: true
+      };
 
-      onClose();
+      console.log('📤 Creando venta...', ventaData);
+      const ventaCreada = await createVenta(ventaData);
+      console.log('✅ Venta creada COMPLETA:', ventaCreada);
+      
+      const ventaId = ventaCreada?.Id || ventaCreada?.id;
+      console.log('🔍 Venta ID encontrado:', ventaId);
+
+      if (!ventaId) {
+        console.error('❌ No se pudo encontrar el ID en:', ventaCreada);
+        throw new Error("No se pudo obtener el ID de la venta creada");
+      }
+
+      console.log('🔍 Usando Venta ID:', ventaId);
+
+      // ✅ PASO 2: Agregar PRODUCTOS
+      if (productosSeleccionados.length > 0) {
+        console.log('📤 Agregando productos a venta ID:', ventaId);
+        for (const producto of productosSeleccionados) {
+          const productoData = {
+            ProductoId: producto.productoId,
+            VentaId: ventaId,
+            Cantidad: producto.cantidad,
+            ValorUnitario: producto.valorUnitario,
+            ValorTotal: producto.cantidad * producto.valorUnitario
+          };
+          console.log('🚀 ENVIANDO PRODUCTO:', productoData);
+          await addProductoToVenta(ventaId, productoData);
+        }
+      }
+
+      // ✅ PASO 3: Agregar SERVICIOS
+      if (serviciosSeleccionados.length > 0) {
+        console.log('📤 Agregando servicios a venta ID:', ventaId);
+        for (const servicio of serviciosSeleccionados) {
+          const servicioData = {
+            FkServicio: servicio.fkServicio,
+            FkVenta: ventaId,
+            Precio: servicio.precio,
+            Detalles: `Servicio: ${servicio.nombre}`,
+            ValorTotal: servicio.cantidad * servicio.precio
+          };
+          console.log('🚀 ENVIANDO SERVICIO:', servicioData);
+          await addServicioToVenta(ventaId, servicioData);
+        }
+      }
+
+      alert('🎉 ¡Venta creada CORRECTAMENTE!');
+      
+      if (onSave) onSave();
+      if (onClose) onClose();
+      
     } catch (err) {
-      console.error("❌ Error guardando venta:", err);
-      alert("Error al guardar la venta");
+      console.error('❌ Error completo en handleGuardar:', err);
+      
+      if (err.response?.data?.errors) {
+        const errores = err.response.data.errors;
+        let mensajeError = '❌ ERRORES DE VALIDACIÓN:\n\n';
+        for (const [campo, mensajes] of Object.entries(errores)) {
+          mensajeError += `🔸 ${campo}: ${mensajes.join(', ')}\n`;
+        }
+        alert(mensajeError);
+        console.log('📋 ERRORES COMPLETOS:', errores);
+      } 
+      else if (err.response?.data) {
+        console.log('📋 RESPUESTA COMPLETA DEL ERROR:', err.response.data);
+        alert(`❌ Error: ${JSON.stringify(err.response.data)}`);
+      }
+      else {
+        alert(`❌ Error: ${err.message}`);
+      }
     } finally {
-      setLoading(false);
+      setGuardando(false);
     }
   };
 
-  // 📌 UI
-  const todosLosItems = [
-    ...productosSeleccionados.map(p => ({ ...p, tipo: 'producto' })),
-    ...serviciosSeleccionados.map(s => ({ ...s, tipo: 'servicio', cantidad: 1 })),
-  ];
+  if (loading) {
+    return (
+      <div className="modal-overlay nueva-venta-overlay">
+        <div className="modal-content nueva-venta-container grande">
+          <p className="loading">
+            <FontAwesomeIcon icon={faSpinner} spin /> Cargando...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="modal-overlay nueva-venta-overlay">
+        <div className="modal-content nueva-venta-container grande">
+          <p className="error">{error}</p>
+          <button onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="modal-overlay nueva-venta-overlay" onClick={onClose}>
-      <div className="modal-content nueva-venta-container grande" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay nueva-venta-overlay" onClick={() => !loading && onClose?.()}>
+      <div className="modal-content nueva-venta-container grande" onClick={e => e.stopPropagation()}>
         <div className="nueva-venta-header">
           <h2>Nueva Venta</h2>
           <button className="close-button" onClick={onClose}>
@@ -220,130 +292,149 @@ const NuevaVenta = ({ onClose, onSave }) => {
           </button>
         </div>
 
-        {error && <p className="error">{error}</p>}
+        <div className="nueva-venta-body nueva-venta-content">
+          {/* PANEL IZQUIERDO: Selección */}
+          <div className="seleccion-panel">
+            {/* Cliente */}
+            <div className="select-group">
+              <label>Cliente: *</label>
+              <select
+                className="cliente-input"
+                value={clienteId}
+                onChange={e => setClienteId(e.target.value)}
+              >
+                <option value="">-- Seleccione cliente --</option>
+                {clientesDisponibles.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre} {c.apellido} ({c.documento})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="form-group">
-          <label>Cliente:</label>
-          <select
-            value={clienteSeleccionado}
-            onChange={(e) => setClienteSeleccionado(e.target.value)}
-          >
-            <option value="">-- Seleccione un cliente --</option>
-            {clientes.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.nombre} {c.apellido || ''} - {c.documento || ''}
-              </option>
-            ))}
-          </select>
-        </div>
+            {/* Tabs */}
+            <div className="tabs-header">
+              <button className={`tab ${activeTab === 'productos' ? 'active' : ''}`} onClick={() => setActiveTab('productos')}>
+                Productos
+              </button>
+              <button className={`tab ${activeTab === 'servicios' ? 'active' : ''}`} onClick={() => setActiveTab('servicios')}>
+                Servicios
+              </button>
+            </div>
 
-        <div className="tabs-header">
-          <button className="tab active">Productos</button>
-        </div>
+            <div className="tab-content">
+              {activeTab === 'productos' && (
+                <div className="tab-panel">
+                  <h3>Agregar Producto</h3>
+                  <div className="add-item-controls">
+                    <select className="item-select" value={productoSeleccionado} onChange={e => setProductoSeleccionado(e.target.value)}>
+                      <option value="">-- Seleccione producto --</option>
+                      {productosDisponibles.map(p => {
+                        const precio = p.precioUnitario || p.precio || 0;
+                        return (
+                          <option key={p.id} value={p.id}>
+                            {p.nombre} - ${precio.toFixed(2)}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <input className="cantidad-input" type="number" min="1" value={cantidadProducto} onChange={e => setCantidadProducto(e.target.value)} />
+                    <button className="add-item-button" onClick={agregarProducto}>Agregar</button>
+                  </div>
+                </div>
+              )}
 
-        <div className="tab-panel">
-          <h3>Agregar Producto</h3>
-          <div className="select-group">
-            <select
-              value={productoSeleccionado}
-              onChange={(e) => setProductoSeleccionado(e.target.value)}
-            >
-              <option value="">-- Seleccione un producto --</option>
-              {productosDisponibles.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre} - ${p.precio}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min="1"
-              value={cantidadProducto}
-              onChange={(e) => setCantidadProducto(parseInt(e.target.value))}
-            />
-            <button onClick={agregarProducto}>
-              <FontAwesomeIcon icon={faPlus} /> Agregar
-            </button>
+              {activeTab === 'servicios' && (
+                <div className="tab-panel">
+                  <h3>Agregar Servicio</h3>
+                  <div className="add-item-controls">
+                    <select className="item-select" value={servicioSeleccionado} onChange={e => setServicioSeleccionado(e.target.value)}>
+                      <option value="">-- Seleccione servicio --</option>
+                      {serviciosDisponibles.map(s => {
+                        const precio = s.precioUnitario || s.precio || 0;
+                        return (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre} - ${precio.toFixed(2)}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <button className="add-item-button" onClick={agregarServicio}>Agregar</button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="tab-panel">
-          <h3>Agregar Servicio</h3>
-          <div className="select-group">
-            <select
-              value={servicioSeleccionado}
-              onChange={(e) => setServicioSeleccionado(e.target.value)}
-            >
-              <option value="">-- Seleccione un servicio --</option>
-              {serviciosDisponibles.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.nombre} - ${s.precio}
-                </option>
-              ))}
-            </select>
-            <button onClick={agregarServicio}>
-              <FontAwesomeIcon icon={faPlus} /> Agregar
-            </button>
+          {/* PANEL DERECHO: Items agregados */}
+          <div className="items-panel">
+            <h3>Items Agregados</h3>
+            {(productosSeleccionados.length === 0 && serviciosSeleccionados.length === 0) ? (
+              <p className="no-items">No hay items.</p>
+            ) : (
+              <table className="items-table">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th>Nombre</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosSeleccionados.map(p => (
+                    <tr key={p.localId}>
+                      <td>Producto</td>
+                      <td>{p.nombre}</td>
+                      <td>
+                        <input className="cantidad-input-table" type="number" min="1" value={p.cantidad} onChange={e => actualizarCantidad(p.localId, e.target.value)} />
+                      </td>
+                      <td>${p.valorUnitario.toFixed(2)}</td>
+                      <td>${(p.cantidad * p.valorUnitario).toFixed(2)}</td>
+                      <td>
+                        <button className="remove-item-button" onClick={() => quitarItem(p.localId, 'producto')}>
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {serviciosSeleccionados.map(s => (
+                    <tr key={s.localId}>
+                      <td>Servicio</td>
+                      <td>{s.nombre}</td>
+                      <td>{s.cantidad}</td>
+                      <td>${s.precio.toFixed(2)}</td>
+                      <td>${(s.precio * s.cantidad).toFixed(2)}</td>
+                      <td>
+                        <button className="remove-item-button" onClick={() => quitarItem(s.localId, 'servicio')}>
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {/* Totales */}
+            <div className="totals-section">
+              <div className="total-row">
+                <span>Total:</span>
+                <span className="grand-total">${calcularTotal()}</span>
+              </div>
+            </div>
+
+            {/* Acciones */}
+            <div className="form-actions">
+              <button className="cancel-button" onClick={onClose}>Cancelar</button>
+              <button className="submit-button" onClick={handleGuardar} disabled={guardando || !clienteId}>
+                {guardando ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Guardar Venta'}
+              </button>
+            </div>
           </div>
-        </div>
-
-        <h3>Items Agregados</h3>
-        {todosLosItems.length === 0 ? (
-          <p>No hay items agregados</p>
-        ) : (
-          <table className="items-table">
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>Nombre</th>
-                <th>Cantidad</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todosLosItems.map((item, index) => (
-                <tr key={`${item.tipo}-${item.id}-${index}`}>
-                  <td>{item.tipo}</td>
-                  <td>{item.nombre}</td>
-                  <td>
-                    {item.tipo === 'producto' ? (
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.cantidad}
-                        onChange={(e) => actualizarCantidad(item.id, parseInt(e.target.value))}
-                      />
-                    ) : (
-                      1
-                    )}
-                  </td>
-                  <td>${item.precioUnitario}</td>
-                  <td>${(item.precioUnitario * item.cantidad).toFixed(2)}</td>
-                  <td>
-                    <button onClick={() => quitarItem(item.id, item.tipo)}>
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        <div className="totals">
-          <p>Subtotal: ${subtotal.toFixed(2)}</p>
-          <p>IVA (19%): ${iva.toFixed(2)}</p>
-          <p>Descuento: ${descuento.toFixed(2)}</p>
-          <h3>Total: ${total.toFixed(2)}</h3>
-        </div>
-
-        <div className="form-actions">
-          <button className="cancel-button" onClick={onClose}>Cancelar</button>
-          <button className="submit-button" onClick={handleGuardar} disabled={loading}>
-            {loading ? <FontAwesomeIcon icon={faSpinner} spin /> : "Guardar Venta"}
-          </button>
         </div>
       </div>
     </div>

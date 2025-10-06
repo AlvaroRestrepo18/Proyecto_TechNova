@@ -1,10 +1,13 @@
+// src/acceso/reset/resetpassword.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faArrowLeft, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faArrowLeft, faCheckCircle, faKey } from '@fortawesome/free-solid-svg-icons';
 import '../login/login.css'; // Reutiliza estilos existentes
+import { resetearContrasena } from '../services/auth'; // Ajusta la ruta según tu proyecto
 
 const ResetPassword = () => {
+  const [codigo, setCodigo] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,26 +15,46 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleBack = () => {
+    navigate('/login');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      if (newPassword.length < 6) {
-        setError('La contraseña debe tener al menos 6 caracteres');
-      } else if (newPassword !== confirmPassword) {
-        setError('Las contraseñas no coinciden');
-      } else {
+    if (!codigo || !newPassword || !confirmPassword) {
+      setError('Todos los campos son obligatorios');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await resetearContrasena(codigo, newPassword);
+      if (res.success) {
         setSuccess(true);
         setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setError(res.message || 'Error al resetear contraseña');
       }
+    } catch (err) {
+      setError(err.message || 'Error inesperado');
+    } finally {
       setLoading(false);
-    }, 1200);
-  };
-
-  const handleBack = () => {
-    navigate('/login');
+    }
   };
 
   return (
@@ -51,6 +74,21 @@ const ResetPassword = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label htmlFor="codigo">Código de recuperación</label>
+              <div className="auth-input-field">
+                <FontAwesomeIcon icon={faKey} className="input-icon" />
+                <input
+                  type="text"
+                  id="codigo"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  placeholder="Ingresa el código recibido"
+                  required
+                />
+              </div>
+            </div>
+
             <div className="input-group">
               <label htmlFor="newPassword">Nueva contraseña</label>
               <div className="auth-input-field">

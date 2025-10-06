@@ -9,18 +9,17 @@ const API_BASE_URL = "https://localhost:7228/api/Usuarios";
 
 // Backend -> Frontend
 const mapBackendToFrontend = (u) => ({
-  id: u.idUsuario,                     // PK
+  idUsuario: u.idUsuario,              // 🔥 MANTENER idUsuario
+  id: u.idUsuario,                     // También mantener id por compatibilidad
   nombre: u.nombre,
   email: u.email,
-  rol:
-    u.rol ||                           // caso 1: backend ya devuelve el nombre
-    u.fkRolNavigation?.nombreRol ||    // caso 2: backend devuelve objeto de navegación
-    null,                              // si solo viene fkRol, queda null
+  rol: u.fkRolNavigation?.nombreRol || null,
   rolId: u.fkRol,
   tipoDocumento: u.tipoDoc,
   documento: u.documento,
   direccion: u.direccion,
   telefono: u.celular,
+  celular: u.celular,                  // 🔥 AGREGAR celular también
   estado: u.estado ? "activo" : "inactivo",
 });
 
@@ -52,7 +51,9 @@ const mapFrontendToBackend = (usuario, isEdit = false) => {
 export const getUsuarios = async () => {
   try {
     const response = await axios.get(API_BASE_URL);
-    return response.data.map(mapBackendToFrontend);
+    const mappedData = response.data.map(mapBackendToFrontend);
+    console.log("🔍 Usuarios mapeados:", mappedData); // 🔥 DEBUG
+    return mappedData;
   } catch (error) {
     console.error("❌ Error al obtener usuarios:", error.response?.data || error);
     throw error;
@@ -96,12 +97,24 @@ export const updateUsuario = async (id, usuarioData) => {
 
 export const toggleUsuarioEstado = async (id, estadoActual) => {
   try {
+    console.log("🔄 Cambiando estado para usuario ID:", id, "Estado actual:", estadoActual); // 🔥 DEBUG
+    
+    if (!id) {
+      throw new Error("ID de usuario es undefined");
+    }
+    
     const nuevoEstado = estadoActual === "activo" ? false : true;
+    
+    console.log("📤 Enviando PATCH a:", `${API_BASE_URL}/${id}/estado`);
+    console.log("📤 Payload:", { Estado: nuevoEstado });
+    
     await axios.patch(
       `${API_BASE_URL}/${id}/estado`,
       { Estado: nuevoEstado },
       { headers: { "Content-Type": "application/json" } }
     );
+    
+    console.log("✅ Estado cambiado exitosamente");
   } catch (error) {
     console.error(`❌ Error al cambiar estado del usuario con id ${id}:`, error.response?.data || error);
     throw error;

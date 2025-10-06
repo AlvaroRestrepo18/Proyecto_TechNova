@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import TablaVentas from './components/TablaVentas';
 import NuevaVenta from './components/NuevaVenta';
-import axios from 'axios';
-
-const API_VENTAS_URL = "https://localhost:7228/api/Ventas";
+import { getVentas } from './services/ventas';
 
 const Ventas = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState("activas");
+  const [activeTab, setActiveTab] = useState('activas');
   const [ventasData, setVentasData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
@@ -18,39 +16,56 @@ const Ventas = () => {
 
   const itemsPerPage = 7;
 
-  // 🔹 Cargar ventas según pestaña
-  useEffect(() => {
-    fetchVentas();
-  }, [activeTab]);
-
-  const fetchVentas = async () => {
+  // 🔹 Cargar ventas desde la API
+  const fetchVentas = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
+      const data = await getVentas();
 
-      const response = await axios.get(API_VENTAS_URL);
-      let data = response.data || [];
+      console.log('📦 Ventas cargadas desde backend:', data);
 
-      // Filtrar por pestaña
-      data = data.filter(v =>
-        activeTab === "activas" ? v.estado === true : v.estado === false
-      );
+      if (!Array.isArray(data)) {
+        console.error('❌ La respuesta del backend no es un array:', data);
+        setVentasData([]);
+        return;
+      }
 
-      setVentasData(data);
+      // ✅ Manejo flexible del campo estado
+      const filteredData = data.filter(v => {
+        const estadoActivo =
+          v.estado === true ||
+          v.estado === 1 ||
+          v.estado === 'Activo' ||
+          v.estado === 'activo';
+
+        return activeTab === 'activas' ? estadoActivo : !estadoActivo;
+      });
+
+      console.log('✅ Ventas filtradas para tab:', activeTab, filteredData);
+      setVentasData(filteredData);
       setCurrentPage(1);
     } catch (err) {
-      console.error("❌ Error cargando ventas:", err);
-      setError("Error al cargar ventas.");
+      console.error('❌ Error cargando ventas:', err);
+      setError('Error al cargar ventas.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
-  // 🔹 Filtrado (por cliente o ID)
-  const filteredVentas = ventasData.filter(venta =>
-    (venta.cliente?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      venta.id?.toString().includes(searchTerm.toLowerCase()))
-  );
+  useEffect(() => {
+    fetchVentas();
+  }, [fetchVentas]);
+
+  // 🔹 Filtrar por cliente o ID
+  const filteredVentas = ventasData.filter(venta => {
+    const nombreCliente = venta.cliente?.nombre
+      ? venta.cliente.nombre.toLowerCase()
+      : '';
+    return (
+      nombreCliente.includes(searchTerm.toLowerCase()) ||
+      venta.id?.toString().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // 🔹 Paginación
   const totalPages = Math.max(1, Math.ceil(filteredVentas.length / itemsPerPage));
@@ -59,34 +74,26 @@ const Ventas = () => {
     currentPage * itemsPerPage
   );
 
-  // 🔹 Abrir / cerrar modal
+  // 🔹 Modal Nueva Venta
   const openNuevaVenta = () => setIsNuevaVentaOpen(true);
   const closeNuevaVenta = () => setIsNuevaVentaOpen(false);
 
-  // ✅ Guardar nueva venta y recargar lista
-  const handleSaveVenta = async (nuevaVenta) => {
-    try {
-      setLoading(true);
+  const handleSaveVenta = () => {
+    fetchVentas(); // 🔄 Recarga al guardar nueva venta
+    closeNuevaVenta();
+  };
 
-      // 👀 Debug: Ver qué llega desde NuevaVenta
-      console.log("📦 Payload final que se enviará a la API:", nuevaVenta);
+  // 🔹 Funciones para acciones
+  const toggleEstado = (id, estadoActual) => {
+    console.log(`Cambiar estado de venta ${id}:`, estadoActual);
+  };
 
-      // Enviar directo el payload completo
-      const response = await axios.post(API_VENTAS_URL, nuevaVenta);
-      const ventaGuardada = response.data;
+  const openViewModal = (id) => {
+    console.log(`Abrir modal de detalles para venta ${id}`);
+  };
 
-      // Insertar al inicio de la lista
-      setVentasData(prev => [ventaGuardada, ...prev]);
-      setIsNuevaVentaOpen(false);
-
-      // Refrescar lista desde backend
-      await fetchVentas();
-    } catch (err) {
-      console.error("❌ Error guardando la venta:", err.response?.data || err.message);
-      alert("Error al guardar la venta. Revisa los datos.");
-    } finally {
-      setLoading(false);
-    }
+  const openPdfModal = (id) => {
+    console.log(`Generar PDF para venta ${id}`);
   };
 
   return (
@@ -96,20 +103,20 @@ const Ventas = () => {
       {/* Tabs */}
       <div className="tabs">
         <button
-          className={`tab-button ${activeTab === "activas" ? "active-tab" : ""}`}
-          onClick={() => setActiveTab("activas")}
+          className={`tab-button ${activeTab === 'activas' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('activas')}
         >
           Ventas Activas
         </button>
         <button
-          className={`tab-button ${activeTab === "inactivas" ? "active-tab" : ""}`}
-          onClick={() => setActiveTab("inactivas")}
+          className={`tab-button ${activeTab === 'inactivas' ? 'active-tab' : ''}`}
+          onClick={() => setActiveTab('inactivas')}
         >
           Ventas Inactivas
         </button>
       </div>
 
-      {/* Buscador + Crear */}
+      {/* Buscar / Crear */}
       <div className="search-container">
         <input
           type="text"
@@ -121,7 +128,7 @@ const Ventas = () => {
           }}
           className="search-input"
         />
-        {activeTab === "activas" && (
+        {activeTab === 'activas' && (
           <button className="create-button" onClick={openNuevaVenta}>
             <FontAwesomeIcon icon={faPlus} /> Crear
           </button>
@@ -136,7 +143,12 @@ const Ventas = () => {
       {!loading && !error && (
         <div className="table-container">
           {paginatedVentas.length > 0 ? (
-            <TablaVentas ventas={paginatedVentas} />
+            <TablaVentas
+              ventas={paginatedVentas}
+              toggleEstado={toggleEstado}
+              openViewModal={openViewModal}
+              openPdfModal={openPdfModal}
+            />
           ) : (
             <p>No hay ventas para mostrar.</p>
           )}
@@ -146,23 +158,28 @@ const Ventas = () => {
       {/* Paginación */}
       {totalPages > 1 && (
         <div className="pagination-controls">
-          <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
-            &lt;
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            ‹
           </button>
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i + 1}
-              className={currentPage === i + 1 ? "active-page" : ""}
+              className={currentPage === i + 1 ? 'active-page' : ''}
               onClick={() => setCurrentPage(i + 1)}
             >
               {i + 1}
             </button>
           ))}
           <button
-            onClick={() => setCurrentPage(currentPage + 1)}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             disabled={currentPage === totalPages}
           >
-            &gt;
+            ›
           </button>
         </div>
       )}

@@ -11,20 +11,22 @@ import Compras from './Compras/Compras';
 import Footer from './shared/footer/footer';
 import Roles from './roles/roles';
 import Login from './acceso/login/login';
-import Servicios from './Servicios/Servicios';   
-import Clientes from './Clientes/clientes';    
+import Servicios from './Servicios/Servicios';
+import Clientes from './Clientes/clientes';
 import ForgotPassword from './acceso/forgot/forgot';
 import ResetPassword from './acceso/reset/resetpassword';
 import ModalAlerta from './shared/modals/ModalAlerta';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
-
-library.add(fas);
 import './App.css';
 
-// Importamos el PrivateRoute
+// FontAwesome icons
+library.add(fas);
+
+// Importar el PrivateRoute
 import PrivateRoute from './PrivateRoute';
 
+// 📦 Componente que maneja el layout principal
 function AppLayout({ children }) {
   const location = useLocation();
   const isAuthPage = ['/login', '/forgot', '/reset'].includes(location.pathname);
@@ -43,37 +45,106 @@ function AppLayout({ children }) {
   );
 }
 
+// 🚀 App principal con rutas
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Rutas sin layout */}
+        {/* 🔓 Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot" element={<ForgotPassword />} />
         <Route path="/reset" element={<ResetPassword />} />
 
-        {/* Rutas con layout */}
+        {/* 🔒 Rutas protegidas con layout */}
         <Route
           path="*"
           element={
             <AppLayout>
               <ModalAlerta />
-              {/* Aquí se definen las rutas principales de la aplicación */}
               <Routes>
-                {/* ✅ Quitamos el PrivateRoute en Usuarios y Roles */}
-                <Route path="/usuarios" element={<Users />} />
-                <Route path="/roles" element={<Roles />} />
+                {/* ✅ TODAS las rutas protegidas por PrivateRoute */}
+                <Route
+                  path="/usuarios"
+                  element={
+                    <PrivateRoute>
+                      <Users />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/roles"
+                  element={
+                    <PrivateRoute>
+                      <Roles />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Productos"
+                  element={
+                    <PrivateRoute>
+                      <Productos />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Proveedores"
+                  element={
+                    <PrivateRoute>
+                      <Proveedores />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/ventas"
+                  element={
+                    <PrivateRoute>
+                      <Ventas />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/catpro"
+                  element={
+                    <PrivateRoute>
+                      <Catpro />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Compras"
+                  element={
+                    <PrivateRoute>
+                      <Compras />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Clientes"
+                  element={
+                    <PrivateRoute>
+                      <Clientes />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/Servicios"
+                  element={
+                    <PrivateRoute>
+                      <Servicios />
+                    </PrivateRoute>
+                  }
+                />
 
-                <Route path="/Productos" element={<Productos />} />
-                <Route path="/Proveedores" element={<Proveedores />} />
-                <Route path="/ventas" element={<Ventas />} />
-                <Route path="/catpro" element={<Catpro />} />
-                <Route path="/Compras" element={<Compras />} />
-                <Route path="/Clientes" element={<Clientes />} />
-                <Route path="/Servicios" element={<Servicios />} />
-
-                {/* Página raíz ahora apunta a Usuarios */}
-                <Route path="/" element={<Users />} />
+                {/* Página raíz → Usuarios */}
+                <Route
+                  path="/"
+                  element={
+                    <PrivateRoute>
+                      <Users />
+                    </PrivateRoute>
+                  }
+                />
               </Routes>
             </AppLayout>
           }
