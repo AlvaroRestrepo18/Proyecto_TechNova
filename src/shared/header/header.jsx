@@ -9,11 +9,11 @@ const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(getCurrentUser());
   const [rolNombre, setRolNombre] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
   const isLoggedIn = !!user;
 
   useEffect(() => {
     if (user?.fkRol) {
-      // Si el campo fkRol ya viene con el nombre, no hay que pedir nada al backend
       setRolNombre(user.fkRol);
     } else {
       setRolNombre("Rol desconocido");
@@ -22,10 +22,15 @@ const Header = () => {
 
   const handleLoginClick = () => navigate("/login");
 
-  const handleLogoutClick = () => {
+  const handleLogoutClick = () => setShowConfirm(true);
+
+  const handleCancel = () => setShowConfirm(false);
+
+  const handleConfirmLogout = () => {
     logout();
     setUser(null);
     setRolNombre("");
+    setShowConfirm(false);
   };
 
   return (
@@ -61,6 +66,24 @@ const Header = () => {
           </>
         )}
       </div>
+
+      {/* === MODAL DE CONFIRMACIÓN === */}
+      {showConfirm && (
+        <div className="logout-confirm-overlay">
+          <div className="logout-confirm-modal">
+            <h3>¿Seguro que quieres cerrar sesión?</h3>
+            <p>🤔 Si lo haces, tendrás que iniciar sesión otra vez.</p>
+            <div className="logout-confirm-actions">
+              <button className="cancel-btn" onClick={handleCancel}>
+                Cancelar
+              </button>
+              <button className="confirm-btn" onClick={handleConfirmLogout}>
+                Sí, cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

@@ -7,7 +7,7 @@ import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('alvarostivens13@gmail.com');
-  const [password, setPassword] = useState('123456');
+  const [password, setPassword] = useState('1138824002Stivens');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showRecovery, setShowRecovery] = useState(false);
@@ -60,7 +60,11 @@ const Login = () => {
     return (
       <div className="login-container">
         <div className="login-card">
-          <h1>Recuperar Contraseña</h1>
+          <div className="login-header">
+            <h1 className="brand-title">TechNova</h1>
+          </div>
+
+          <h2>Recuperar Contraseña</h2>
 
           {recoverySent ? (
             <div className="success-message">
@@ -113,7 +117,11 @@ const Login = () => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Iniciar sesión</h1>
+        <div className="login-header">
+          <h1 className="brand-title">TechNova</h1>
+        </div>
+
+        <h2>Iniciar sesión</h2>
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -171,7 +179,7 @@ const Login = () => {
         <div className="demo-info">
           <h4>💡 Credenciales de Prueba:</h4>
           <p><strong>Email:</strong> alvarostivens13@gmail.com</p>
-          <p><strong>Contraseña:</strong> 123456</p>
+          <p><strong>Contraseña:</strong> 1138824002Stivens</p>
         </div>
 
         <div className="login-footer">

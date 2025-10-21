@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faTrash, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faTrash, faSpinner, faCheckCircle, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import './NuevaVenta.css';
 
 import {
@@ -19,6 +19,7 @@ const NuevaVenta = ({ onClose, onSave }) => {
   const [clienteId, setClienteId] = useState('');
   const [productoSeleccionado, setProductoSeleccionado] = useState('');
   const [cantidadProducto, setCantidadProducto] = useState(1);
+  const [errorCantidad, setErrorCantidad] = useState('');
   const [servicioSeleccionado, setServicioSeleccionado] = useState('');
   const [productosDisponibles, setProductosDisponibles] = useState([]);
   const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
@@ -27,7 +28,18 @@ const NuevaVenta = ({ onClose, onSave }) => {
   const [error, setError] = useState(null);
   const [guardando, setGuardando] = useState(false);
 
-  const makeLocalId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  // Nueva notificación visual
+  const [mensaje, setMensaje] = useState('');
+  const [tipoMensaje, setTipoMensaje] = useState('');
+
+  const mostrarMensaje = (texto, tipo = 'info') => {
+    setMensaje(texto);
+    setTipoMensaje(tipo);
+    setTimeout(() => setMensaje(''), 2500);
+  };
+
+  const makeLocalId = () =>
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +49,6 @@ const NuevaVenta = ({ onClose, onSave }) => {
           getServicios(),
           getClientes()
         ]);
-
         setProductosDisponibles(productos || []);
         setServiciosDisponibles(servicios || []);
         setClientesDisponibles(clientes || []);
@@ -48,31 +59,53 @@ const NuevaVenta = ({ onClose, onSave }) => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
+  const productoActual = productosDisponibles.find(
+    p => p.id === Number(productoSeleccionado)
+  );
+
   const agregarProducto = () => {
-    if (!productoSeleccionado) {
-      alert('❌ Seleccione un producto.');
+    if (!clienteId) {
+      mostrarMensaje('Selecciona un cliente primero.', 'error');
       return;
     }
 
-    const producto = productosDisponibles.find(p => p.id === Number(productoSeleccionado));
+    if (!productoSeleccionado) {
+      mostrarMensaje('Selecciona un producto.', 'error');
+      return;
+    }
+
+    const producto = productosDisponibles.find(
+      p => p.id === Number(productoSeleccionado)
+    );
     if (!producto) {
-      alert('❌ Producto no encontrado.');
+      mostrarMensaje('Producto no encontrado.', 'error');
       return;
     }
 
     const cantidad = Math.max(1, Number(cantidadProducto));
-    const precio = producto.precioUnitario || producto.precio || producto.valorUnitario || 0;
+
+    if (producto.cantidad !== undefined && cantidad > producto.cantidad) {
+      setErrorCantidad('No hay suficiente cantidad de producto.');
+      return;
+    }
+
+    const precio =
+      producto.precioUnitario || producto.precio || producto.valorUnitario || 0;
 
     setProductosSeleccionados(prev => {
       const existente = prev.find(p => p.productoId === producto.id);
       if (existente) {
+        const nuevaCantidad = existente.cantidad + cantidad;
+        if (producto.cantidad && nuevaCantidad > producto.cantidad) {
+          setErrorCantidad('No hay suficiente cantidad de producto.');
+          return prev;
+        }
         return prev.map(p =>
           p.productoId === producto.id
-            ? { ...p, cantidad: p.cantidad + cantidad }
+            ? { ...p, cantidad: nuevaCantidad }
             : p
         );
       }
@@ -90,21 +123,31 @@ const NuevaVenta = ({ onClose, onSave }) => {
 
     setProductoSeleccionado('');
     setCantidadProducto(1);
+    setErrorCantidad('');
+    mostrarMensaje('Producto agregado correctamente.', 'success');
   };
 
   const agregarServicio = () => {
+    if (!clienteId) {
+      mostrarMensaje('Selecciona un cliente primero.', 'error');
+      return;
+    }
+
     if (!servicioSeleccionado) {
-      alert('❌ Seleccione un servicio.');
+      mostrarMensaje('Selecciona un servicio.', 'error');
       return;
     }
 
-    const servicio = serviciosDisponibles.find(s => s.id === Number(servicioSeleccionado));
+    const servicio = serviciosDisponibles.find(
+      s => s.id === Number(servicioSeleccionado)
+    );
     if (!servicio) {
-      alert('❌ Servicio no encontrado.');
+      mostrarMensaje('Servicio no encontrado.', 'error');
       return;
     }
 
-    const precio = servicio.precioUnitario || servicio.precio || servicio.valorUnitario || 0;
+    const precio =
+      servicio.precioUnitario || servicio.precio || servicio.valorUnitario || 0;
 
     setServiciosSeleccionados(prev => {
       const existente = prev.find(s => s.fkServicio === servicio.id);
@@ -128,6 +171,7 @@ const NuevaVenta = ({ onClose, onSave }) => {
     });
 
     setServicioSeleccionado('');
+    mostrarMensaje('Servicio agregado correctamente.', 'success');
   };
 
   const quitarItem = (localId, tipo) => {
@@ -136,6 +180,7 @@ const NuevaVenta = ({ onClose, onSave }) => {
     } else {
       setServiciosSeleccionados(prev => prev.filter(s => s.localId !== localId));
     }
+    mostrarMensaje('Elemento eliminado.', 'info');
   };
 
   const actualizarCantidad = (localId, cantidad) => {
@@ -160,22 +205,21 @@ const NuevaVenta = ({ onClose, onSave }) => {
   };
 
   const handleGuardar = async () => {
-    console.log('🔍 Cliente seleccionado ID:', clienteId);
-
-    if (!clienteId || clienteId === "" || clienteId === "0") {
-      alert('❌ Debe seleccionar un cliente.');
+    if (!clienteId || clienteId === '' || clienteId === '0') {
+      mostrarMensaje('Selecciona un cliente.', 'error');
       return;
     }
-
-    if (productosSeleccionados.length === 0 && serviciosSeleccionados.length === 0) {
-      alert('❌ Agregue al menos un producto o servicio.');
+    if (
+      productosSeleccionados.length === 0 &&
+      serviciosSeleccionados.length === 0
+    ) {
+      mostrarMensaje('Agrega al menos un producto o servicio.', 'error');
       return;
     }
 
     try {
       setGuardando(true);
 
-      // ✅ PASO 1: Crear VENTA BASE
       const ventaData = {
         id: 0,
         ClienteId: Number(clienteId),
@@ -184,78 +228,53 @@ const NuevaVenta = ({ onClose, onSave }) => {
         estado: true
       };
 
-      console.log('📤 Creando venta...', ventaData);
       const ventaCreada = await createVenta(ventaData);
-      console.log('✅ Venta creada COMPLETA:', ventaCreada);
-      
       const ventaId = ventaCreada?.Id || ventaCreada?.id;
-      console.log('🔍 Venta ID encontrado:', ventaId);
 
-      if (!ventaId) {
-        console.error('❌ No se pudo encontrar el ID en:', ventaCreada);
-        throw new Error("No se pudo obtener el ID de la venta creada");
+      if (!ventaId)
+        throw new Error('No se pudo obtener el ID de la venta creada');
+
+      for (const producto of productosSeleccionados) {
+        const productoData = {
+          ProductoId: producto.productoId,
+          VentaId: ventaId,
+          Cantidad: producto.cantidad,
+          ValorUnitario: producto.valorUnitario,
+          ValorTotal: producto.cantidad * producto.valorUnitario
+        };
+        await addProductoToVenta(ventaId, productoData);
       }
 
-      console.log('🔍 Usando Venta ID:', ventaId);
-
-      // ✅ PASO 2: Agregar PRODUCTOS
-      if (productosSeleccionados.length > 0) {
-        console.log('📤 Agregando productos a venta ID:', ventaId);
-        for (const producto of productosSeleccionados) {
-          const productoData = {
-            ProductoId: producto.productoId,
-            VentaId: ventaId,
-            Cantidad: producto.cantidad,
-            ValorUnitario: producto.valorUnitario,
-            ValorTotal: producto.cantidad * producto.valorUnitario
-          };
-          console.log('🚀 ENVIANDO PRODUCTO:', productoData);
-          await addProductoToVenta(ventaId, productoData);
-        }
+      for (const servicio of serviciosSeleccionados) {
+        const servicioData = {
+          fkServicio: servicio.fkServicio,
+          fkVenta: ventaId,
+          Precio: servicio.precio,
+          Detalles: `Servicio: ${servicio.nombre}`,
+          ValorTotal: servicio.cantidad * servicio.precio
+        };
+        await addServicioToVenta(ventaId, servicioData);
       }
 
-      // ✅ PASO 3: Agregar SERVICIOS
-      if (serviciosSeleccionados.length > 0) {
-        console.log('📤 Agregando servicios a venta ID:', ventaId);
-        for (const servicio of serviciosSeleccionados) {
-          const servicioData = {
-            FkServicio: servicio.fkServicio,
-            FkVenta: ventaId,
-            Precio: servicio.precio,
-            Detalles: `Servicio: ${servicio.nombre}`,
-            ValorTotal: servicio.cantidad * servicio.precio
-          };
-          console.log('🚀 ENVIANDO SERVICIO:', servicioData);
-          await addServicioToVenta(ventaId, servicioData);
-        }
-      }
-
-      alert('🎉 ¡Venta creada CORRECTAMENTE!');
-      
-      if (onSave) onSave();
-      if (onClose) onClose();
-      
+      mostrarMensaje('Venta creada correctamente 🎉', 'success');
+      onSave?.();
+      setTimeout(() => onClose?.(), 1000);
     } catch (err) {
-      console.error('❌ Error completo en handleGuardar:', err);
-      
-      if (err.response?.data?.errors) {
-        const errores = err.response.data.errors;
-        let mensajeError = '❌ ERRORES DE VALIDACIÓN:\n\n';
-        for (const [campo, mensajes] of Object.entries(errores)) {
-          mensajeError += `🔸 ${campo}: ${mensajes.join(', ')}\n`;
-        }
-        alert(mensajeError);
-        console.log('📋 ERRORES COMPLETOS:', errores);
-      } 
-      else if (err.response?.data) {
-        console.log('📋 RESPUESTA COMPLETA DEL ERROR:', err.response.data);
-        alert(`❌ Error: ${JSON.stringify(err.response.data)}`);
-      }
-      else {
-        alert(`❌ Error: ${err.message}`);
-      }
+      console.error('❌ Error en handleGuardar:', err);
+      mostrarMensaje('Error al crear la venta. Revisa la consola.', 'error');
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const handleCantidadChange = e => {
+    const valor = e.target.value;
+    setCantidadProducto(valor);
+
+    if (productoActual && Number(valor) > productoActual.cantidad) {
+      setErrorCantidad('No hay suficiente cantidad de producto.');
+    } else {
+      setErrorCantidad('');
     }
   };
 
@@ -293,9 +312,8 @@ const NuevaVenta = ({ onClose, onSave }) => {
         </div>
 
         <div className="nueva-venta-body nueva-venta-content">
-          {/* PANEL IZQUIERDO: Selección */}
+          {/* PANEL IZQUIERDO */}
           <div className="seleccion-panel">
-            {/* Cliente */}
             <div className="select-group">
               <label>Cliente: *</label>
               <select
@@ -312,12 +330,17 @@ const NuevaVenta = ({ onClose, onSave }) => {
               </select>
             </div>
 
-            {/* Tabs */}
             <div className="tabs-header">
-              <button className={`tab ${activeTab === 'productos' ? 'active' : ''}`} onClick={() => setActiveTab('productos')}>
+              <button
+                className={`tab ${activeTab === 'productos' ? 'active' : ''}`}
+                onClick={() => setActiveTab('productos')}
+              >
                 Productos
               </button>
-              <button className={`tab ${activeTab === 'servicios' ? 'active' : ''}`} onClick={() => setActiveTab('servicios')}>
+              <button
+                className={`tab ${activeTab === 'servicios' ? 'active' : ''}`}
+                onClick={() => setActiveTab('servicios')}
+              >
                 Servicios
               </button>
             </div>
@@ -327,19 +350,47 @@ const NuevaVenta = ({ onClose, onSave }) => {
                 <div className="tab-panel">
                   <h3>Agregar Producto</h3>
                   <div className="add-item-controls">
-                    <select className="item-select" value={productoSeleccionado} onChange={e => setProductoSeleccionado(e.target.value)}>
+                    <select
+                      className="item-select"
+                      value={productoSeleccionado}
+                      onChange={e => setProductoSeleccionado(e.target.value)}
+                    >
                       <option value="">-- Seleccione producto --</option>
-                      {productosDisponibles.map(p => {
-                        const precio = p.precioUnitario || p.precio || 0;
-                        return (
-                          <option key={p.id} value={p.id}>
-                            {p.nombre} - ${precio.toFixed(2)}
-                          </option>
-                        );
-                      })}
+                      {productosDisponibles.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} - ${p.precioUnitario?.toFixed(2) || p.precio?.toFixed(2) || 0}
+                        </option>
+                      ))}
                     </select>
-                    <input className="cantidad-input" type="number" min="1" value={cantidadProducto} onChange={e => setCantidadProducto(e.target.value)} />
-                    <button className="add-item-button" onClick={agregarProducto}>Agregar</button>
+
+                    {productoActual && (
+                      <p className="stock-info">
+                        🏷️ Stock disponible: <strong>{productoActual.cantidad ?? 'N/D'}</strong> unidades
+                      </p>
+                    )}
+
+                    <div className="cantidad-section">
+                      <label htmlFor="cantidad-input" className="cantidad-label">
+                        Cantidad de producto:
+                      </label>
+
+                      {errorCantidad && (
+                        <p className="stock-error">❌ No hay suficiente cantidad de producto.</p>
+                      )}
+
+                      <input
+                        id="cantidad-input"
+                        className="cantidad-input"
+                        type="number"
+                        min="1"
+                        value={cantidadProducto}
+                        onChange={handleCantidadChange}
+                      />
+                    </div>
+
+                    <button className="add-item-button" onClick={agregarProducto}>
+                      Agregar
+                    </button>
                   </div>
                 </div>
               )}
@@ -348,28 +399,31 @@ const NuevaVenta = ({ onClose, onSave }) => {
                 <div className="tab-panel">
                   <h3>Agregar Servicio</h3>
                   <div className="add-item-controls">
-                    <select className="item-select" value={servicioSeleccionado} onChange={e => setServicioSeleccionado(e.target.value)}>
+                    <select
+                      className="item-select"
+                      value={servicioSeleccionado}
+                      onChange={e => setServicioSeleccionado(e.target.value)}
+                    >
                       <option value="">-- Seleccione servicio --</option>
-                      {serviciosDisponibles.map(s => {
-                        const precio = s.precioUnitario || s.precio || 0;
-                        return (
-                          <option key={s.id} value={s.id}>
-                            {s.nombre} - ${precio.toFixed(2)}
-                          </option>
-                        );
-                      })}
+                      {serviciosDisponibles.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.nombre} - ${s.precioUnitario?.toFixed(2) || s.precio?.toFixed(2) || 0}
+                        </option>
+                      ))}
                     </select>
-                    <button className="add-item-button" onClick={agregarServicio}>Agregar</button>
+                    <button className="add-item-button" onClick={agregarServicio}>
+                      Agregar
+                    </button>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* PANEL DERECHO: Items agregados */}
+          {/* PANEL DERECHO */}
           <div className="items-panel">
             <h3>Items Agregados</h3>
-            {(productosSeleccionados.length === 0 && serviciosSeleccionados.length === 0) ? (
+            {productosSeleccionados.length === 0 && serviciosSeleccionados.length === 0 ? (
               <p className="no-items">No hay items.</p>
             ) : (
               <table className="items-table">
@@ -389,18 +443,26 @@ const NuevaVenta = ({ onClose, onSave }) => {
                       <td>Producto</td>
                       <td>{p.nombre}</td>
                       <td>
-                        <input className="cantidad-input-table" type="number" min="1" value={p.cantidad} onChange={e => actualizarCantidad(p.localId, e.target.value)} />
+                        <input
+                          className="cantidad-input-table"
+                          type="number"
+                          min="1"
+                          value={p.cantidad}
+                          onChange={e => actualizarCantidad(p.localId, e.target.value)}
+                        />
                       </td>
                       <td>${p.valorUnitario.toFixed(2)}</td>
                       <td>${(p.cantidad * p.valorUnitario).toFixed(2)}</td>
                       <td>
-                        <button className="remove-item-button" onClick={() => quitarItem(p.localId, 'producto')}>
+                        <button
+                          className="remove-item-button"
+                          onClick={() => quitarItem(p.localId, 'producto')}
+                        >
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
                       </td>
                     </tr>
                   ))}
-
                   {serviciosSeleccionados.map(s => (
                     <tr key={s.localId}>
                       <td>Servicio</td>
@@ -409,7 +471,10 @@ const NuevaVenta = ({ onClose, onSave }) => {
                       <td>${s.precio.toFixed(2)}</td>
                       <td>${(s.precio * s.cantidad).toFixed(2)}</td>
                       <td>
-                        <button className="remove-item-button" onClick={() => quitarItem(s.localId, 'servicio')}>
+                        <button
+                          className="remove-item-button"
+                          onClick={() => quitarItem(s.localId, 'servicio')}
+                        >
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
                       </td>
@@ -419,7 +484,6 @@ const NuevaVenta = ({ onClose, onSave }) => {
               </table>
             )}
 
-            {/* Totales */}
             <div className="totals-section">
               <div className="total-row">
                 <span>Total:</span>
@@ -427,16 +491,33 @@ const NuevaVenta = ({ onClose, onSave }) => {
               </div>
             </div>
 
-            {/* Acciones */}
             <div className="form-actions">
-              <button className="cancel-button" onClick={onClose}>Cancelar</button>
-              <button className="submit-button" onClick={handleGuardar} disabled={guardando || !clienteId}>
-                {guardando ? <FontAwesomeIcon icon={faSpinner} spin /> : 'Guardar Venta'}
+              <button className="cancel-button" onClick={onClose}>
+                Cancelar
+              </button>
+              <button
+                className="submit-button"
+                onClick={handleGuardar}
+                disabled={guardando || !clienteId}
+              >
+                {guardando ? (
+                  <FontAwesomeIcon icon={faSpinner} spin />
+                ) : (
+                  'Guardar Venta'
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {mensaje && (
+        <div className={`mensaje-popup ${tipoMensaje}`}>
+          {tipoMensaje === 'success' && <FontAwesomeIcon icon={faCheckCircle} />}
+          {tipoMensaje === 'error' && <FontAwesomeIcon icon={faExclamationCircle} />}
+          <span>{mensaje}</span>
+        </div>
+      )}
     </div>
   );
 };

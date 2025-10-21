@@ -27,7 +27,6 @@ const menuSections = [
     title: "Compras",
     icon: <FiShoppingCart />,
     items: [
-      { name: 'Gestion de compras', path: '/compras', icon: <FiShoppingCart /> },
       { name: 'Gestion de productos', path: '/productos', icon: <FiBox /> },
       { name: 'Gestion de  proveedores', path: '/proveedores', icon: <FiTruck /> },
       { name: 'Gestion de categorías', path: '/catpro', icon: <FiTag /> }

@@ -3,7 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import TablaVentas from './components/TablaVentas';
 import NuevaVenta from './components/NuevaVenta';
-import { getVentas } from './services/ventas';
+import ViewModal from './components/ViewModal';
+import PdfModal from './components/PdfModal';
+import { getVentas, getVentaById, cambiarEstadoVenta } from './services/ventas'; // ✅ agregado cambiarEstadoVenta
 
 const Ventas = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,6 +13,9 @@ const Ventas = () => {
   const [ventasData, setVentasData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isNuevaVentaOpen, setIsNuevaVentaOpen] = useState(false);
+  const [viewVentaId, setViewVentaId] = useState(null);
+  const [pdfVenta, setPdfVenta] = useState(null);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -21,9 +26,6 @@ const Ventas = () => {
     try {
       setLoading(true);
       const data = await getVentas();
-
-      console.log('📦 Ventas cargadas desde backend:', data);
-
       if (!Array.isArray(data)) {
         console.error('❌ La respuesta del backend no es un array:', data);
         setVentasData([]);
@@ -37,11 +39,9 @@ const Ventas = () => {
           v.estado === 1 ||
           v.estado === 'Activo' ||
           v.estado === 'activo';
-
         return activeTab === 'activas' ? estadoActivo : !estadoActivo;
       });
 
-      console.log('✅ Ventas filtradas para tab:', activeTab, filteredData);
       setVentasData(filteredData);
       setCurrentPage(1);
     } catch (err) {
@@ -77,23 +77,54 @@ const Ventas = () => {
   // 🔹 Modal Nueva Venta
   const openNuevaVenta = () => setIsNuevaVentaOpen(true);
   const closeNuevaVenta = () => setIsNuevaVentaOpen(false);
-
   const handleSaveVenta = () => {
-    fetchVentas(); // 🔄 Recarga al guardar nueva venta
+    fetchVentas();
     closeNuevaVenta();
   };
 
-  // 🔹 Funciones para acciones
-  const toggleEstado = (id, estadoActual) => {
-    console.log(`Cambiar estado de venta ${id}:`, estadoActual);
+  // 🔹 Cambiar estado (✅ versión funcional)
+  const toggleEstado = async (id, estadoActual) => {
+    try {
+      const nuevoEstado = !estadoActual; // Cambiar de activo a inactivo o viceversa
+      console.log(`🌀 Cambiando estado venta ${id} → ${nuevoEstado}`);
+
+      await cambiarEstadoVenta(id, nuevoEstado); // Llamar al backend
+      await fetchVentas(); // Refrescar lista
+
+      console.log('✅ Estado actualizado correctamente');
+    } catch (error) {
+      console.error('❌ Error cambiando estado:', error);
+      alert('Error al cambiar el estado de la venta.');
+    }
   };
 
+  // 🔹 Ver detalles
   const openViewModal = (id) => {
-    console.log(`Abrir modal de detalles para venta ${id}`);
+    setViewVentaId(id);
   };
 
-  const openPdfModal = (id) => {
-    console.log(`Generar PDF para venta ${id}`);
+  // 🔹 Abrir modal PDF (funcional)
+  const openPdfModal = async (id) => {
+    try {
+      setLoading(true);
+      const data = await getVentaById(id);
+      if (!data) {
+        alert('No se pudo obtener la información de la venta.');
+        return;
+      }
+      setPdfVenta(data);
+      setIsPdfModalOpen(true);
+    } catch (error) {
+      console.error('❌ Error al cargar venta para PDF:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Cerrar modal PDF
+  const closePdfModal = () => {
+    setPdfVenta(null);
+    setIsPdfModalOpen(false);
   };
 
   return (
@@ -135,11 +166,9 @@ const Ventas = () => {
         )}
       </div>
 
-      {/* Estado de carga / error */}
       {loading && <p>⏳ Cargando ventas...</p>}
       {error && <p className="error">{error}</p>}
 
-      {/* Tabla */}
       {!loading && !error && (
         <div className="table-container">
           {paginatedVentas.length > 0 ? (
@@ -155,7 +184,6 @@ const Ventas = () => {
         </div>
       )}
 
-      {/* Paginación */}
       {totalPages > 1 && (
         <div className="pagination-controls">
           <button
@@ -184,9 +212,17 @@ const Ventas = () => {
         </div>
       )}
 
-      {/* Modal Nueva Venta */}
+      {/* Modales */}
       {isNuevaVentaOpen && (
         <NuevaVenta onClose={closeNuevaVenta} onSave={handleSaveVenta} />
+      )}
+
+      {viewVentaId && (
+        <ViewModal ventaId={viewVentaId} onClose={() => setViewVentaId(null)} />
+      )}
+
+      {isPdfModalOpen && pdfVenta && (
+        <PdfModal venta={pdfVenta} onClose={closePdfModal} />
       )}
     </div>
   );

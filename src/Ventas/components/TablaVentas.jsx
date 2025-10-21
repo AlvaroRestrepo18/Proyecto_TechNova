@@ -1,6 +1,6 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 
 const TablaVentas = ({ ventas = [], toggleEstado, openViewModal, openPdfModal }) => {
   if (!ventas || ventas.length === 0) {
@@ -12,6 +12,7 @@ const TablaVentas = ({ ventas = [], toggleEstado, openViewModal, openPdfModal })
       <thead>
         <tr>
           <th>Cliente</th>
+          <th>Documento</th>
           <th>Fecha</th>
           <th>Total</th>
           <th>Estado</th>
@@ -22,23 +23,39 @@ const TablaVentas = ({ ventas = [], toggleEstado, openViewModal, openPdfModal })
       <tbody>
         {ventas.map((venta, index) => (
           <tr key={venta.id || index}>
-
             {/* 👤 Cliente */}
             <td>
-              {venta.cliente.nombre && venta.cliente?.apellido
-                ? `${venta.cliente.nombre} ${venta.cliente.apellido}`
-                : venta.cliente?.nombre || `Cliente #${venta.clienteId || 'N/A'}`}
+              {venta.cliente ? (
+                <strong>
+                  {venta.cliente.nombre?.trim()} {venta.cliente.apellido?.trim()}
+                </strong>
+              ) : (
+                `Cliente #${venta.clienteId || "N/A"}`
+              )}
+            </td>
+
+            {/* 🪪 Documento */}
+            <td>
+              {venta.cliente?.documento ||
+              venta.cliente?.numDocumento ||
+              venta.cliente?.numeroDocumento
+                ? String(
+                    venta.cliente.documento ||
+                      venta.cliente.numDocumento ||
+                      venta.cliente.numeroDocumento
+                  )
+                : "No registrado"}
             </td>
 
             {/* 📅 Fecha */}
             <td>
               {venta.fecha
-                ? new Date(venta.fecha).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
+                ? new Date(venta.fecha).toLocaleDateString("es-ES", {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
                   })
-                : 'Sin fecha'}
+                : "Sin fecha"}
             </td>
 
             {/* 💰 Total */}
@@ -47,10 +64,10 @@ const TablaVentas = ({ ventas = [], toggleEstado, openViewModal, openPdfModal })
             {/* ⚙️ Estado */}
             <td>
               <button
-                className={`status-toggle ${venta.estado ? 'active' : 'inactive'}`}
+                className={`status-toggle ${venta.estado ? "active" : "inactive"}`}
                 onClick={() => toggleEstado?.(venta.id, venta.estado)}
               >
-                {venta.estado ? 'Activo' : 'Inactivo'}
+                {venta.estado ? "Activo" : "Inactivo"}
               </button>
             </td>
 
