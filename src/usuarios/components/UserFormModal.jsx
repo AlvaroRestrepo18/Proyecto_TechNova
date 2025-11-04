@@ -18,7 +18,7 @@ const UserFormModal = ({
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   const isViewMode = mode === "view";
 
-  // 🔹 Cargar roles desde el backend
+  // Cargar roles
   useEffect(() => {
     if (isOpen) {
       setLoadingRoles(true);
@@ -30,26 +30,25 @@ const UserFormModal = ({
     }
   }, [isOpen]);
 
-  // 🔹 Reset errores al abrir
+  // Reset errores
   useEffect(() => {
     if (isOpen) {
       setErrors({});
     }
   }, [isOpen]);
 
-  // 🔹 Sincronizar datos del usuario al abrir modal
+  // Sincronizar datos al abrir modal
   useEffect(() => {
     if (isOpen && formData) {
       setFormData((prev) => ({
         ...prev,
-        tipoDocumento:
-          prev?.tipoDocumento || prev?.tipoDoc || "", // normaliza tipo doc
-        rolId: prev?.rolId || prev?.fkRol || "", // normaliza rol
+        tipoDocumento: prev?.tipoDocumento || prev?.tipoDoc || "",
+        rolId: prev?.rolId || prev?.fkRol || "",
       }));
     }
   }, [isOpen]);
 
-  // 🔹 Validaciones
+  // Validaciones
   const validate = () => {
     const newErrors = {};
     if (!formData.tipoDocumento) newErrors.tipoDocumento = "Requerido";
@@ -71,46 +70,42 @@ const UserFormModal = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔹 Funciones API
-  const createUsuario = async (payload) =>
-    axios.post("https://localhost:7228/api/Usuarios", payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-  const updateUsuario = async (id, payload) =>
-    axios.put(`https://localhost:7228/api/Usuarios/${id}`, payload, {
-      headers: { "Content-Type": "application/json" },
-    });
-
-  // 🔹 Submit corregido
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setLoadingSubmit(true);
 
+    // 🔹 Payload directo, nombres exactos del modelo C#
     const payload = {
-      IdUsuario: formData.id || formData.idUsuario || 0,
-      FkRol: formData.rolId,
+      IdUsuario: formData.idUsuario || formData.id || 0,
+      FkRol: parseInt(formData.rolId),
       Nombre: formData.nombre,
       Email: formData.email,
       Contrasena: formData.contrasena || "123456",
-      Estado: formData.estado !== undefined ? formData.estado : true,
+      Estado: formData.estado === "activo" || formData.estado === true,
       TipoDoc: formData.tipoDocumento,
       Documento: formData.documento,
       Direccion: formData.direccion,
       Celular: formData.telefono,
     };
 
+    console.log("Payload enviado:", payload);
+
     try {
       if (mode === "edit") {
-        const userId = formData.id || formData.idUsuario;
+        const userId = payload.IdUsuario;
         if (!userId) throw new Error("No se encontró el ID del usuario para editar");
 
-        await updateUsuario(userId, payload);
+        await axios.put(`https://localhost:7228/api/Usuarios/${userId}`, payload, {
+          headers: { "Content-Type": "application/json" },
+        });
         window.mostrarAlerta("✅ Usuario actualizado con éxito");
       } else {
-        await createUsuario(payload);
+        await axios.post("https://localhost:7228/api/Usuarios", payload, {
+          headers: { "Content-Type": "application/json" },
+        });
         window.mostrarAlerta("✅ Usuario creado con éxito");
       }
 

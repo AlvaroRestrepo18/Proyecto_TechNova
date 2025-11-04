@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import UserFormModal from "./components/UserFormModal.jsx";
-import DeleteConfirmationModal from "./components/DeleteModal.jsx.jsx";
+import DeleteConfirmationModal from "./components/DeleteModal.jsx";
 import UserTable from "./components/usertable.jsx";
 import "../app.css";
 import "./usuarios.css";
@@ -41,10 +41,12 @@ const Users = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // 🔹 Cargar usuarios al montar el componente
   useEffect(() => {
     fetchUsuarios();
   }, []);
 
+  // 🔹 Función central para obtener todos los usuarios
   const fetchUsuarios = async () => {
     try {
       setLoading(true);
@@ -72,7 +74,8 @@ const Users = () => {
         await updateUsuario(currentUserId, payload);
       }
 
-      fetchUsuarios();
+      // ✅ Recargar automáticamente después de guardar
+      await fetchUsuarios();
       closeForm();
     } catch (error) {
       console.error("Error guardando usuario:", error);
@@ -85,7 +88,7 @@ const Users = () => {
   const confirmDelete = async () => {
     try {
       await deleteUsuario(userToDelete.idUsuario);
-      fetchUsuarios();
+      await fetchUsuarios();
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
     } catch (error) {
@@ -93,21 +96,22 @@ const Users = () => {
     }
   };
 
-  // ✅ CORREGIDO: Función simplificada
+  // ✅ Mantiene sincronizado el estado cuando se activa/inactiva un usuario
   const handleToggleEstado = async (id, estado) => {
     try {
       if (!id) {
         console.error("ID de usuario es undefined");
         return;
       }
-      
+
       await toggleUsuarioEstado(id, estado);
-      fetchUsuarios();
+      await fetchUsuarios();
     } catch (error) {
       console.error("Error cambiando estado:", error);
     }
   };
 
+  // 🔎 Filtros de búsqueda y pestañas
   const filteredUsers = userData.filter(
     (u) =>
       u.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,10 +129,9 @@ const Users = () => {
     currentPage * itemsPerPage
   );
 
-  // VISUALIZAR
+  // 👁️ Visualizar
   const openViewForm = (user) => {
     if (!user) return;
-
     setFormMode("view");
     setCurrentUserId(user.idUsuario);
     setIsFormOpen(true);
@@ -148,7 +151,7 @@ const Users = () => {
     });
   };
 
-  // CREAR
+  // ➕ Crear
   const openCreateForm = () => {
     setFormMode("create");
     setIsFormOpen(true);
@@ -166,7 +169,7 @@ const Users = () => {
     });
   };
 
-  // EDITAR
+  // ✏️ Editar
   const openEditForm = (userId) => {
     const u = userData.find((u) => u.idUsuario === userId);
     if (!u) return;
@@ -190,7 +193,7 @@ const Users = () => {
     });
   };
 
-  // ELIMINAR
+  // 🗑️ Eliminar
   const openDeleteModal = (userId) => {
     const u = userData.find((u) => u.idUsuario === userId);
     if (u) {
@@ -255,7 +258,7 @@ const Users = () => {
         onView={openViewForm}
         onEdit={openEditForm}
         onDelete={openDeleteModal}
-        onToggleEstado={handleToggleEstado} // ✅ CORREGIDO: Pasar función directamente
+        onToggleEstado={handleToggleEstado}
       />
 
       {totalPages > 1 && (
@@ -284,6 +287,7 @@ const Users = () => {
         </div>
       )}
 
+      {/* ✅ Modal con actualización automática al guardar */}
       <UserFormModal
         isOpen={isFormOpen}
         onClose={closeForm}
@@ -292,6 +296,7 @@ const Users = () => {
         mode={formMode}
         loading={loading}
         onSubmit={handleSubmit}
+        onSaved={fetchUsuarios} // 🔹 Esto permite actualizar sin recargar la página
       />
 
       <DeleteConfirmationModal

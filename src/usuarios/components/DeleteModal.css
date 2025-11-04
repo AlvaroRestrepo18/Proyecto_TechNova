@@ -1,0 +1,122 @@
+/* === Fondo oscuro del modal === */
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* === Contenedor del modal === */
+.delete-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  animation: popIn 0.25s ease-out;
+}
+
+/* === Título y texto === */
+.delete-modal-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.delete-modal-message {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* === Botones === */
+.delete-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.delete-cancel-btn {
+  background: #f4f4f4;
+  border: 1px solid #d1d1d1;
+  color: #333;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-cancel-btn:hover {
+  background: #ebebeb;
+  transform: translateY(-1px);
+}
+
+/* === Botón rojo (Eliminar) === */
+.delete-confirm-btn {
+  background: linear-gradient(90deg, #ff4b4b, #ff2e2e);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 26px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.25);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.delete-confirm-btn:hover {
+  background: linear-gradient(90deg, #ff2e2e, #e60000);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 0, 0, 0.35);
+}
+
+/* === Ícono del basurero === */
+.delete-icon {
+  font-size: 1rem;
+}
+
+/* === Animación de entrada === */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === Adaptativo === */
+@media (max-width: 480px) {
+  .delete-modal {
+    max-width: 90%;
+    padding: 24px;
+  }
+  .delete-modal-title {
+    font-size: 1.3rem;
+  }
+  .delete-modal-message {
+    font-size: 0.95rem;
+  }
+  .delete-modal-actions {
+    flex-direction: column;
+  }
+  .delete-cancel-btn,
+  .delete-confirm-btn {
+    width: 100%;
+  }
+}
