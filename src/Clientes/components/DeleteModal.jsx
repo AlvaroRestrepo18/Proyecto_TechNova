@@ -1,38 +1,44 @@
-import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faExclamationTriangle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash, faExclamationTriangle, faTimes } from "@fortawesome/free-solid-svg-icons";
+import "./ConfirmationModal.css";
 
-const DeleteModal = ({ isOpen, onClose, onConfirm, itemName, itemType = "cliente" }) => {
+const DeleteModal = ({ isOpen, onClose, onConfirm, itemName = "", itemType = "registro" }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content delete-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Confirmar Eliminación</h2>
-          <button className="close-button" onClick={onClose}>
+    <div className="delete-overlay" onClick={onClose}>
+      <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+        
+        {/* 🔹 Encabezado */}
+        <div className="delete-header">
+          <FontAwesomeIcon icon={faExclamationTriangle} className="delete-icon-alert" />
+          <span>Eliminar {itemType}</span>
+          <button className="delete-close-btn" onClick={onClose}>
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        <div className="delete-modal-body">
-          <FontAwesomeIcon icon={faExclamationTriangle} className="warning-icon" />
-          <p>¿Estás seguro de eliminar este {itemType}?</p>
-          <p>Esta acción no se puede deshacer.</p>
+        {/* 🔹 Cuerpo */}
+        <div className="delete-body">
+          <FontAwesomeIcon icon={faTrash} className="delete-icon" />
+          <div className="delete-text">
+            <h3>
+              ¿Estás seguro de eliminar{" "}
+              <strong>{itemName || `este ${itemType}`}</strong>?
+            </h3>
+            <p>Esta acción no se puede deshacer.</p>
+          </div>
         </div>
 
-        <div className="form-actions">
-          <button 
-            className="cancel-button" 
-            onClick={onClose}
-          >
+        {/* 🔹 Pie */}
+        <div className="delete-footer">
+          <button className="delete-cancel-btn" onClick={onClose}>
             Cancelar
           </button>
-          <button 
-            className="delete-confirm-button" 
-            onClick={onConfirm}
-          >
-            <FontAwesomeIcon icon={faTrash} /> Eliminar
+          <button className="delete-confirm-btn" onClick={onConfirm}>
+            <FontAwesomeIcon icon={faTrash} />
+            Eliminar
           </button>
         </div>
       </div>

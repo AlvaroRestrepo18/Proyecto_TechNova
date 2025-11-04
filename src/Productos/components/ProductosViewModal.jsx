@@ -2,62 +2,24 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const ProductosViewModal = ({ producto, onClose }) => {
+const ProductosViewModal = ({ producto, categorias, onClose }) => {
   if (!producto) return null;
-
+  const categoria = categorias.find(c => c.id === producto.categoriaId)?.nombre || "Sin categoría";
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content details-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content details-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Detalles del Producto</h2>
-          <button className="close-button" onClick={onClose}>
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
+          <button className="close-button" onClick={onClose}><FontAwesomeIcon icon={faTimes} /></button>
         </div>
-
-        <div className="details-container">
-          <div className="detail-row">
-            <span className="detail-label">ID:</span>
-            <span className="detail-value">{producto.id}</span>
-          </div>
-
-          <div className="detail-row">
-            <span className="detail-label">Nombre:</span>
-            <span className="detail-value">{producto.nombre}</span>
-          </div>
-
-          <div className="detail-row">
-            <span className="detail-label">Categoría:</span>
-            <span className="detail-value">
-              {producto.categoria?.nombre || 'Sin categoría'}
-            </span>
-          </div>
-
-          <div className="detail-row">
-            <span className="detail-label">Cantidad:</span>
-            <span className="detail-value">{producto.cantidad ?? 0} unidades</span>
-          </div>
-
-          <div className="detail-row">
-            <span className="detail-label">Precio:</span>
-            <span className="detail-value">
-              ${producto.precio?.toFixed(2) ?? '0.00'}
-            </span>
-          </div>
-
-          <div className="detail-row">
-            <span className="detail-label">Fecha de Creación:</span>
-            <span className="detail-value">
-              {producto.fechaCreacion
-                ? new Date(producto.fechaCreacion).toLocaleDateString()
-                : 'N/A'}
-            </span>
-          </div>
-
-          <div className="modal-actions">
-            <button type="button" className="close-button" onClick={onClose}>
-              Cerrar
-            </button>
+        <div className="user-details-container">
+          <p><b>Nombre:</b> {producto.nombre}</p>
+          <p><b>Categoría:</b> {categoria}</p>
+          <p><b>Precio:</b> ${producto.precio?.toFixed(2)}</p>
+          <p><b>Cantidad:</b> {producto.cantidad}</p>
+          <p><b>Fecha de Creación:</b> {new Date(producto.fechaCreacion).toLocaleDateString()}</p>
+          <div className="form-actions">
+            <button type="button" onClick={onClose}>Cerrar</button>
           </div>
         </div>
       </div>

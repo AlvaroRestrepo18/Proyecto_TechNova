@@ -13,7 +13,7 @@ const CLIENTES_URL = `${API_BASE_URL}/Clientes`;
 const mapBackendToFrontend = (venta) => {
   if (!venta) return null;
 
-  const estado = venta.estado ? "Activo" : "Inactivo";
+ const estado = Boolean(venta.estado);
   const clienteNav = venta.cliente || venta.fkClienteNavigation || {};
 
   const productos = (venta.productoxventa || venta.productoxventums || []).map((p) => ({
