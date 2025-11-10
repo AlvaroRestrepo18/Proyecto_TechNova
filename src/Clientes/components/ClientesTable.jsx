@@ -25,7 +25,7 @@ const ClientesTable = ({ clientes, onToggleStatus, onEdit, onDelete, onView }) =
             <td>
               <button
                 className={`status-toggle ${cliente.activo ? 'active' : 'inactive'}`}
-                onClick={() => onToggleStatus(cliente.id)}
+                onClick={() => onToggleStatus(cliente)}  
                 title={cliente.activo ? 'Desactivar cliente' : 'Activar cliente'}
               >
                 <FontAwesomeIcon icon={faPowerOff} />

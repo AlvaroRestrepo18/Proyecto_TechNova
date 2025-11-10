@@ -85,6 +85,9 @@ const Servicios = () => {
     try {
       await deleteServicio(serviceToDelete);
       setServicesData(servicesData.filter((s) => s.id !== serviceToDelete));
+
+      // 🔄 Recargar lista después de eliminar
+      await fetchServicios(); // 👈 AGREGADO
       closeDeleteModal();
     } catch (error) {
       console.error("❌ Error al eliminar servicio:", error);
@@ -112,7 +115,7 @@ const Servicios = () => {
       nombre: serviceData.nombre || serviceData.name,
       detalles: serviceData.detalles || "",
       precio: Number(serviceData.precio || serviceData.price),
-      categoriaId: Number(serviceData.categoriaId), // Corregido: usando categoriaId
+      categoriaId: Number(serviceData.categoriaId),
     };
 
     console.log("🚀 Payload enviado al backend:", payload);
@@ -124,10 +127,17 @@ const Servicios = () => {
           servicesData.map((s) => (s.id === updated.id ? updated : s))
         );
         console.log("✅ Servicio actualizado:", updated);
+
+        // 🔄 Recargar lista desde el backend después de editar
+        await fetchServicios(); // 👈 AGREGADO
+
       } else {
         const created = await createServicio(payload);
         setServicesData([...servicesData, created]);
         console.log("✅ Servicio creado:", created);
+
+        // 🔄 Recargar lista desde el backend después de crear
+        await fetchServicios(); // 👈 AGREGADO
       }
     } catch (error) {
       console.error("❌ Error al guardar servicio:", error.response?.data || error);

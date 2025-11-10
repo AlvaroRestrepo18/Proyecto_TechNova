@@ -16,6 +16,7 @@ const UserFormModal = ({
   const [roles, setRoles] = useState([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [documentoInfo, setDocumentoInfo] = useState(""); // 🔹 Info adicional sobre el tipo de documento
   const isViewMode = mode === "view";
 
   // Cargar roles
@@ -38,32 +39,67 @@ const UserFormModal = ({
   }, [isOpen]);
 
   // Sincronizar datos al abrir modal
-  useEffect(() => {
-    if (isOpen && formData) {
-      setFormData((prev) => ({
-        ...prev,
-        tipoDocumento: prev?.tipoDocumento || prev?.tipoDoc || "",
-        rolId: prev?.rolId || prev?.fkRol || "",
-      }));
-    }
-  }, [isOpen]);
+// 🔹 Mostrar info del tipo de documento
+useEffect(() => {
+  const tipo = formData.tipoDocumento?.toUpperCase();
+  const docLength = formData.documento?.length || 0;
+  let mensaje = "";
+
+  // Primero mostramos el mensaje base según el tipo
+  switch (tipo) {
+    case "CC":
+      mensaje = "La Cédula de Ciudadanía (C.C.) debe tener entre 6 y 10 dígitos en Colombia.";
+      break;
+    case "TI":
+      mensaje = "La Tarjeta de Identidad (T.I.) suele tener entre 8 y 11 dígitos para menores de edad.";
+      break;
+    case "CE":
+      mensaje = "La Cédula de Extranjería (C.E.) puede tener entre 6 y 12 dígitos alfanuméricos.";
+      break;
+    case "RUC":
+      mensaje = "El Registro Único de Contribuyentes (R.U.C.) normalmente tiene entre 9 y 13 caracteres.";
+      break;
+    case "DNI":
+      mensaje = "El Documento Nacional de Identidad (D.N.I.) suele tener entre 8 y 10 dígitos.";
+      break;
+    case "PASAPORTE":
+      mensaje = "El Pasaporte puede tener letras y números, con una longitud de 6 a 9 caracteres.";
+      break;
+    default:
+      mensaje = "";
+      break;
+  }
+
+  // Luego lo ocultamos si ya cumple el rango (por ejemplo 6 a 10)
+  if (docLength >= 6 && docLength <= 10) {
+    setDocumentoInfo(""); // ✅ Oculta el texto
+  } else {
+    setDocumentoInfo(mensaje); // ⚠️ Muestra mientras sea inválido
+  }
+}, [formData.tipoDocumento, formData.documento]);
+
 
   // Validaciones
   const validate = () => {
     const newErrors = {};
     if (!formData.tipoDocumento) newErrors.tipoDocumento = "Requerido";
-    if (!formData.documento || formData.documento.length < 5)
-      newErrors.documento = "Debe tener al menos 5 caracteres";
+    if (!formData.documento || formData.documento.length < 6 )
+      newErrors.documento = "Debe tener al menos 6 caracteres";
     if (!formData.nombre || formData.nombre.length < 3)
       newErrors.nombre = "Debe tener al menos 3 caracteres";
     if (!formData.telefono || formData.telefono.length < 7)
       newErrors.telefono = "Debe tener al menos 7 caracteres";
+    if (!formData.nombre || /\d/.test(formData.nombre)) 
+      newErrors.nombre = "El nombre no puede contener números";
     if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email inválido";
     if (!formData.direccion || formData.direccion.length < 5)
       newErrors.direccion = "Debe tener al menos 5 caracteres";
-    if (mode === "create" && (!formData.contrasena || formData.contrasena.length < 6))
-      newErrors.contrasena = "Debe tener al menos 6 caracteres";
+    if (mode === "create" && (!formData.contrasena || formData.contrasena.length < 6)){
+      newErrors.contrasena = "Debe tener al menos 6 caracteres";}
+      else if (/\s/.test(formData.contrasena)) {
+      newErrors.contrasena = "La contraseña no puede contener espacios";
+      }
     if (!formData.rolId) newErrors.rol = "Requerido";
 
     setErrors(newErrors);
@@ -77,7 +113,6 @@ const UserFormModal = ({
 
     setLoadingSubmit(true);
 
-    // 🔹 Payload directo, nombres exactos del modelo C#
     const payload = {
       IdUsuario: formData.idUsuario || formData.id || 0,
       FkRol: parseInt(formData.rolId),
@@ -184,6 +219,13 @@ const UserFormModal = ({
               />
               {errors.documento && (
                 <small className="error">{errors.documento}</small>
+              )}
+
+              {/* 🔹 Info contextual sobre el tipo de documento */}
+              {documentoInfo && (
+                <small className="info-text" style={{ color: "#007bff" }}>
+                  {documentoInfo}
+                </small>
               )}
             </div>
           </div>

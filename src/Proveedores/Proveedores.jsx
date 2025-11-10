@@ -34,7 +34,7 @@ const Proveedores = () => {
 
   const API_URL = "https://localhost:7228/api/Proveedores"; // ⚡ cambia a tu URL real
 
-  // 🔹 Cargar proveedores desde API
+  // 🔹 Cargar proveedores
   useEffect(() => {
     const fetchProveedores = async () => {
       try {
@@ -47,7 +47,7 @@ const Proveedores = () => {
     fetchProveedores();
   }, []);
 
-  // 🔽 Filtro por búsqueda
+  // 🔹 Filtro
   const filteredProveedores = proveedoresData.filter(proveedor => {
     const nombreCompleto = proveedor.tipoPersona === 'Natural'
       ? `${proveedor.nombres} ${proveedor.apellidos}`.toLowerCase()
@@ -55,7 +55,7 @@ const Proveedores = () => {
     return nombreCompleto.includes(searchTerm.toLowerCase());
   });
 
-  // 🔹 Eliminar
+  // 🔹 Eliminar proveedor
   const eliminarProveedor = (id) => {
     const proveedor = proveedoresData.find(p => p.id === id);
     if (proveedor.tieneCompras) {
@@ -119,7 +119,7 @@ const Proveedores = () => {
 
   const closeForm = () => setIsFormOpen(false);
 
-  // 🔹 Handlers de formulario
+  // 🔹 Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -142,24 +142,83 @@ const Proveedores = () => {
     setFormData({ ...formData, tipoDocumento: value, numeroDocumento: '' });
   };
 
+  // ✅ VALIDACIÓN COMPLETA
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.numeroDocumento.trim()) newErrors.numeroDocumento = 'Este campo es requerido';
-    if (formData.tipoPersona === 'Natural') {
-      if (!formData.nombres.trim()) newErrors.nombres = 'Los nombres son requeridos';
-      if (!formData.apellidos.trim()) newErrors.apellidos = 'Los apellidos son requeridos';
-    } else {
-      if (!formData.razonSocial.trim()) newErrors.razonSocial = 'La razón social es requerida';
+
+    // Tipo de persona
+    if (!formData.tipoPersona.trim()) {
+      newErrors.tipoPersona = "El tipo de persona es obligatorio";
     }
+
+    // Tipo de documento
+    if (!formData.tipoDocumento.trim()) {
+      newErrors.tipoDocumento = "El tipo de documento es obligatorio";
+    }
+
+    // Documento
+    if (!formData.numeroDocumento.trim()) {
+      newErrors.numeroDocumento = "El número de documento es requerido";
+    } else if (!/^\d+$/.test(formData.numeroDocumento)) {
+      newErrors.numeroDocumento = "Solo se permiten números";
+    } else if (formData.numeroDocumento.length < 6) {
+      newErrors.numeroDocumento = "Debe tener al menos 6 dígitos";
+    }
+
+    // Persona natural
+    if (formData.tipoPersona === 'Natural') {
+      if (!formData.nombres.trim()) {
+        newErrors.nombres = "Los nombres son requeridos";
+      } else if (/\d/.test(formData.nombres)) {
+        newErrors.nombres = "Los nombres no pueden tener números";
+      }
+
+      if (!formData.apellidos.trim()) {
+        newErrors.apellidos = "Los apellidos son requeridos";
+      } else if (/\d/.test(formData.apellidos)) {
+        newErrors.apellidos = "Los apellidos no pueden tener números";
+      }
+    }
+
+    // Persona jurídica
+    if (formData.tipoPersona === 'Jurídica') {
+      if (!formData.razonSocial.trim()) {
+        newErrors.razonSocial = "La razón social es requerida";
+      } else if (formData.razonSocial.length < 3) {
+        newErrors.razonSocial = "Debe tener al menos 3 caracteres";
+      }
+    }
+
+    // Correo
+    if (!formData.correo.trim()) {
+      newErrors.correo = "El correo electrónico es requerido";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo)) {
+      newErrors.correo = "Ingrese un correo válido";
+    }
+
+    // Teléfono
+    if (!formData.telefono.trim()) {
+      newErrors.telefono = "El teléfono es requerido";
+    } else if (!/^\d{7,}$/.test(formData.telefono)) {
+      newErrors.telefono = "Ingrese un teléfono válido (mínimo 7 dígitos)";
+    }
+
+    // Dirección
+    if (!formData.direccion.trim()) {
+      newErrors.direccion = "La dirección es requerida";
+    } else if (formData.direccion.length < 4) {
+      newErrors.direccion = "Debe tener al menos 4 caracteres";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // 🔹 Guardar
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    // 👇 Construir el campo "nombre" antes de enviar
     const payload = {
       ...formData,
       nombre: formData.tipoPersona === "Natural"
@@ -169,16 +228,19 @@ const Proveedores = () => {
 
     try {
       if (currentProveedorId) {
-        // 🔄 Editar
         const res = await axios.put(`${API_URL}/${currentProveedorId}`, payload);
         setProveedoresData(proveedoresData.map(p =>
           p.id === currentProveedorId ? res.data : p
         ));
       } else {
-        // ➕ Crear
         const res = await axios.post(API_URL, payload);
         setProveedoresData([...proveedoresData, res.data]);
       }
+
+      // Refrescar lista
+      const updatedList = await axios.get(API_URL);
+      setProveedoresData(updatedList.data);
+
       closeForm();
     } catch (error) {
       console.error("❌ Error al guardar proveedor:", error);
@@ -190,7 +252,7 @@ const Proveedores = () => {
       <h1>Proveedores</h1>
       <div className="section-divider"></div>
 
-      {/* Buscador y botón crear */}
+      {/* Buscar y agregar */}
       <div className="search-container">
         <input
           type="text"
@@ -220,7 +282,7 @@ const Proveedores = () => {
         )}
       </div>
 
-      {/* Modal formulario */}
+      {/* Modales */}
       {isFormOpen && (
         <ProveedorFormModal
           formData={formData}
@@ -234,20 +296,12 @@ const Proveedores = () => {
         />
       )}
 
-      {/* Modal visualización */}
       {isViewModalOpen && (
-        <ViewModal
-          proveedor={modalProveedor}
-          onClose={closeViewModal}
-        />
+        <ViewModal proveedor={modalProveedor} onClose={closeViewModal} />
       )}
 
-      {/* Modal eliminar */}
       {showDeleteAlert && (
-        <DeleteModal
-          type="alert"
-          onClose={() => setShowDeleteAlert(false)}
-        />
+        <DeleteModal type="alert" onClose={() => setShowDeleteAlert(false)} />
       )}
 
       {showConfirmDelete && proveedorToDelete && (

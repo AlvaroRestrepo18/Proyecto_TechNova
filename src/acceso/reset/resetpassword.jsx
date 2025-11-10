@@ -1,43 +1,75 @@
-// src/acceso/reset/resetpassword.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faArrowLeft, faCheckCircle, faKey } from '@fortawesome/free-solid-svg-icons';
+import {
+  faLock,
+  faArrowLeft,
+  faCheckCircle,
+  faKey,
+  faCircleExclamation
+} from '@fortawesome/free-solid-svg-icons';
 import '../login/login.css'; // Reutiliza estilos existentes
 import { resetearContrasena } from '../services/auth'; // Ajusta la ruta según tu proyecto
+
+// 🔔 Componente de alertas visuales
+const AlertMessage = ({ type, message }) => {
+  if (!message) return null;
+
+  const icons = {
+    error: faCircleExclamation,
+    success: faCheckCircle,
+    warning: faCircleExclamation,
+  };
+
+  return (
+    <div className={`alert-message ${type}`}>
+      <FontAwesomeIcon icon={icons[type]} className="alert-icon" />
+      <span>{message}</span>
+    </div>
+  );
+};
 
 const ResetPassword = () => {
   const [codigo, setCodigo] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState({ type: '', message: '' });
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    navigate('/login');
-  };
+  // 🔙 Volver al login
+  const handleBack = () => navigate('/login');
 
+  // ⏳ Limpieza automática de alertas
+  useEffect(() => {
+    if (alert.message) {
+      const timer = setTimeout(() => setAlert({ type: '', message: '' }), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
+
+  // 💾 Manejo de envío
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setAlert({ type: '', message: '' });
     setLoading(true);
 
+    // ⚠️ Validaciones básicas
     if (!codigo || !newPassword || !confirmPassword) {
-      setError('Todos los campos son obligatorios');
+      setAlert({ type: 'warning', message: 'Todos los campos son obligatorios.' });
       setLoading(false);
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setAlert({ type: 'warning', message: 'La contraseña debe tener al menos 6 caracteres.' });
       setLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setAlert({ type: 'error', message: 'Las contraseñas no coinciden.' });
       setLoading(false);
       return;
     }
@@ -46,12 +78,16 @@ const ResetPassword = () => {
       const res = await resetearContrasena(codigo, newPassword);
       if (res.success) {
         setSuccess(true);
-        setTimeout(() => navigate('/login'), 2000);
+        setAlert({ type: 'success', message: '¡Contraseña restablecida correctamente!' });
+        setTimeout(() => navigate('/login'), 2500);
       } else {
-        setError(res.message || 'Error al resetear contraseña');
+        setAlert({ type: 'error', message: res.message || 'Código inválido o expirado.' });
       }
     } catch (err) {
-      setError(err.message || 'Error inesperado');
+      setAlert({
+        type: 'error',
+        message: err.message || 'Error inesperado al procesar la solicitud.',
+      });
     } finally {
       setLoading(false);
     }
@@ -64,10 +100,12 @@ const ResetPassword = () => {
           <FontAwesomeIcon icon={faArrowLeft} /> Volver al login
         </button>
 
-        <h1>Restablecer contraseña</h1>
+        <h1>Restablecer Contraseña</h1>
+
+        <AlertMessage type={alert.type} message={alert.message} />
 
         {success ? (
-          <div className="success-message">
+          <div className="success-message fade-in">
             <FontAwesomeIcon icon={faCheckCircle} className="success-icon" />
             <p>¡Tu contraseña ha sido restablecida exitosamente!</p>
             <p>Redirigiendo al inicio de sesión...</p>
@@ -118,8 +156,6 @@ const ResetPassword = () => {
                 />
               </div>
             </div>
-
-            {error && <div className="error-message">{error}</div>}
 
             <button type="submit" className="login-button" disabled={loading}>
               {loading ? 'Guardando...' : 'Guardar contraseña'}

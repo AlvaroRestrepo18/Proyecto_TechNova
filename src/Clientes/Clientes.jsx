@@ -26,7 +26,7 @@ const Clientes = () => {
 
   const [selectedCliente, setSelectedCliente] = useState(null);
 
-  // Cargar clientes al montar
+  // 🔹 Cargar clientes al montar
   useEffect(() => {
     fetchClientes();
   }, []);
@@ -40,40 +40,53 @@ const Clientes = () => {
     }
   };
 
+  // 🔹 Abrir modal para crear nuevo cliente
   const handleAdd = () => {
     setSelectedCliente(null);
     setShowForm(true);
   };
 
+  // 🔹 Abrir modal para editar cliente existente
   const handleEdit = (cliente) => {
     setSelectedCliente(cliente);
     setShowForm(true);
   };
 
+  // 🔹 Abrir modal para ver detalles
   const handleView = (cliente) => {
     setSelectedCliente(cliente);
     setShowView(true);
   };
 
+  // 🔹 Abrir modal para eliminar
   const handleDelete = (cliente) => {
     setSelectedCliente(cliente);
     setShowDelete(true);
   };
 
+  // 🔹 Guardar cambios (crear o editar)
   const handleSave = async (clienteData) => {
     try {
-      if (clienteData.id) {
-        await updateCliente(clienteData.id, clienteData);
+      console.log("📦 Datos enviados al backend:", clienteData);
+
+      if (selectedCliente) {
+        // modo edición
+        await updateCliente(selectedCliente.id, clienteData);
+        console.log("✅ Cliente actualizado correctamente");
       } else {
+        // modo creación
         await createCliente(clienteData);
+        console.log("✅ Cliente creado correctamente");
       }
-      await fetchClientes();
-      setShowForm(false);
+
+      await fetchClientes(); // recargar lista
+      setShowForm(false); // cerrar modal
     } catch (error) {
       console.error("❌ Error al guardar cliente:", error);
     }
   };
 
+  // 🔹 Confirmar eliminación
   const confirmDelete = async () => {
     try {
       if (!selectedCliente) return;
@@ -85,6 +98,7 @@ const Clientes = () => {
     }
   };
 
+  // 🔹 Cambiar estado activo/inactivo
   const handleToggleStatus = async (cliente) => {
     try {
       await updateCliente(cliente.id, { ...cliente, activo: !cliente.activo });
@@ -94,12 +108,10 @@ const Clientes = () => {
     }
   };
 
-  // Filtrar según tabs y búsqueda
+  // 🔹 Filtrar según pestaña activa y búsqueda
   const filteredClientes = clientes
     .filter((c) => (activeTab === "activos" ? c.activo : !c.activo))
-    .filter((c) =>
-      c.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    .filter((c) => c.nombre?.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="container">

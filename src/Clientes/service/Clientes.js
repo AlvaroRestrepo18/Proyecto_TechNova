@@ -33,7 +33,7 @@ const mapFrontendToBackend = (cliente) => {
   };
 
   if (cliente.id) {
-    payload.id = cliente.id; // solo enviar ID en update
+    payload.id = cliente.id;
   }
 
   return payload;
@@ -63,7 +63,6 @@ export const getClientes = async (soloActivos = null) => {
 
     let clientesArray;
 
-    // Normalización de respuesta
     if (Array.isArray(response.data)) {
       clientesArray = response.data;
     } else if (response.data?.data && Array.isArray(response.data.data)) {
@@ -117,11 +116,19 @@ export const createCliente = async (clienteData) => {
 */
 export const updateCliente = async (id, clienteData) => {
   try {
-    if (!clienteData.nombre) {
-      throw new Error("El nombre del cliente es obligatorio");
+    let payload;
+
+    // ⚡ Si solo viene "activo", buscamos el cliente actual
+    if (Object.keys(clienteData).length === 1 && clienteData.activo !== undefined) {
+      const clienteActual = await getClienteById(id);
+      payload = mapFrontendToBackend({ ...clienteActual, activo: clienteData.activo });
+    } else {
+      if (!clienteData.nombre) {
+        throw new Error("El nombre del cliente es obligatorio");
+      }
+      payload = mapFrontendToBackend({ ...clienteData, id });
     }
 
-    const payload = mapFrontendToBackend({ ...clienteData, id });
     const response = await axios.put(`${API_BASE_URL}/${id}`, payload);
     const clienteActualizado = response.data.data || response.data.result || response.data;
     return mapBackendToFrontend(clienteActualizado);
@@ -138,7 +145,7 @@ export const changeClienteStatus = async (id, activo) => {
     const clienteActual = await getClienteById(id);
     const payload = {
       ...mapFrontendToBackend(clienteActual),
-      estado: activo, // 👈 forzamos cambio de estado
+      estado: activo,
     };
 
     const response = await axios.put(`${API_BASE_URL}/${id}`, payload);

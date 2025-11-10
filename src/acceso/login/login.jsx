@@ -1,39 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faArrowRight, faCircleExclamation, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { authService } from '../services/auth';
 import './Login.css';
 
+// 🔔 Componente de alerta visual
+const AlertMessage = ({ type, message }) => {
+  if (!message) return null;
+
+  const icons = {
+    error: faCircleExclamation,
+    success: faCheckCircle,
+    warning: faCircleExclamation,
+  };
+
+  return (
+    <div className={`alert-message ${type}`}>
+      <FontAwesomeIcon icon={icons[type]} className="alert-icon" />
+      <span>{message}</span>
+    </div>
+  );
+};
+
 const Login = () => {
   const [email, setEmail] = useState('alvarostivens13@gmail.com');
-  const [password, setPassword] = useState('1138824002Stivens');
+  const [password, setPassword] = useState('123456');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [alert, setAlert] = useState({ type: '', message: '' });
   const [showRecovery, setShowRecovery] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoverySent, setRecoverySent] = useState(false);
   const navigate = useNavigate();
 
-  // 🔐 LOGIN REAL
+  // 🧠 Simulación de correos registrados (puedes ajustar según tu sistema)
+  const correosRegistrados = [
+    'alvarostivens13@gmail.com',
+    'admin@technova.com',
+    'cliente@technova.com',
+    'soporte@technova.com'
+  ];
+
+  // ⏳ Limpieza automática de alertas
+  useEffect(() => {
+    if (alert.message) {
+      const timer = setTimeout(() => setAlert({ type: '', message: '' }), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [alert]);
+
+  // 🔐 LOGIN PRINCIPAL
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setAlert({ type: '', message: '' });
 
     try {
-      console.log("🔄 Iniciando login...");
+      if (!email || !password) {
+        setAlert({ type: 'warning', message: 'Por favor completa todos los campos.' });
+        setLoading(false);
+        return;
+      }
+
       const result = await authService.login(email, password);
 
       if (result.success) {
-        console.log("✅ Login exitoso, redirigiendo...");
-        navigate('/'); // 👉 Redirige a la raíz o dashboard principal
+        setAlert({ type: 'success', message: 'Inicio de sesión exitoso. Redirigiendo...' });
+        setTimeout(() => navigate('/'), 1500);
       } else {
-        setError(result.message || 'Credenciales inválidas');
+        setAlert({ type: 'error', message: result.message || 'Credenciales inválidas. Inténtalo nuevamente.' });
       }
     } catch (err) {
-      console.error("❌ Error en login:", err);
-      setError(err.message || 'Error de conexión con el servidor');
+      console.error('❌ Error en login:', err);
+      setAlert({ type: 'error', message: 'Error de conexión con el servidor.' });
     } finally {
       setLoading(false);
     }
@@ -43,19 +82,47 @@ const Login = () => {
   const handleRecovery = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setAlert({ type: '', message: '' });
 
     try {
+      // Validar campo vacío
+      if (!recoveryEmail) {
+        setAlert({ type: 'warning', message: 'Debes ingresar un correo electrónico.' });
+        setLoading(false);
+        return;
+      }
+
+      // Validar formato del correo
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recoveryEmail)) {
+        setAlert({ type: 'warning', message: 'Por favor ingresa un correo electrónico válido.' });
+        setLoading(false);
+        return;
+      }
+
+      // Simular verificación de existencia
+      await new Promise((res) => setTimeout(res, 1200));
+      const existeCorreo = correosRegistrados.includes(recoveryEmail.trim().toLowerCase());
+
+      if (!existeCorreo) {
+        setAlert({ type: 'error', message: 'El correo ingresado no se encuentra registrado en TECHNOVA.' });
+        setLoading(false);
+        return;
+      }
+
+      // Simular éxito
       await authService.recuperarContrasena(recoveryEmail);
       setRecoverySent(true);
+      setAlert({ type: 'success', message: 'Correo de recuperación enviado correctamente.' });
+
     } catch (err) {
-      setError(err.message || 'Error al enviar código de recuperación');
+      setAlert({ type: 'error', message: err.message || 'Error al enviar el correo de recuperación.' });
     } finally {
       setLoading(false);
     }
   };
 
-  // 🎯 FORMULARIO DE RECUPERACIÓN
+  // 🔁 FORMULARIO DE RECUPERACIÓN
   if (showRecovery) {
     return (
       <div className="login-container">
@@ -66,13 +133,12 @@ const Login = () => {
 
           <h2>Recuperar Contraseña</h2>
 
+          <AlertMessage type={alert.type} message={alert.message} />
+
           {recoverySent ? (
             <div className="success-message">
               <p>✅ Si el correo existe, se enviarán instrucciones de recuperación.</p>
-              <button
-                onClick={() => setShowRecovery(false)}
-                className="back-button"
-              >
+              <button onClick={() => setShowRecovery(false)} className="back-button">
                 ← Volver al Login
               </button>
             </div>
@@ -93,17 +159,11 @@ const Login = () => {
                 </div>
               </div>
 
-              {error && <div className="error-message">{error}</div>}
-
               <button type="submit" className="login-button" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Instrucciones'}
+                {loading ? 'Verificando...' : 'Enviar Instrucciones'}
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowRecovery(false)}
-                className="back-button"
-              >
+              <button type="button" onClick={() => setShowRecovery(false)} className="back-button">
                 ← Volver al Login
               </button>
             </form>
@@ -113,7 +173,7 @@ const Login = () => {
     );
   }
 
-  // 🎯 FORMULARIO DE LOGIN PRINCIPAL
+  // 🔑 FORMULARIO PRINCIPAL
   return (
     <div className="login-container">
       <div className="login-card">
@@ -122,6 +182,8 @@ const Login = () => {
         </div>
 
         <h2>Iniciar sesión</h2>
+
+        <AlertMessage type={alert.type} message={alert.message} />
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -133,7 +195,6 @@ const Login = () => {
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="alvarostivens13@gmail.com"
                 required
               />
             </div>
@@ -148,7 +209,6 @@ const Login = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="123456"
                 required
               />
             </div>
@@ -163,8 +223,6 @@ const Login = () => {
               </button>
             </div>
           </div>
-
-          {error && <div className="error-message">{error}</div>}
 
           <button type="submit" className="login-button" disabled={loading}>
             {loading ? 'Cargando...' : (

@@ -19,7 +19,6 @@ const Productos = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [modalProducto, setModalProducto] = useState(null);
   const [productoAEliminar, setProductoAEliminar] = useState(null);
-
   const [productosData, setProductosData] = useState([]);
   const [categoriasDisponibles, setCategoriasDisponibles] = useState([]);
   const [formData, setFormData] = useState({
@@ -30,32 +29,32 @@ const Productos = () => {
     precio: '',
     fechaCreacion: new Date().toISOString().split("T")[0],
   });
-
   const [formErrors, setFormErrors] = useState({});
 
-  // Cargar productos y categorías
+  // 🔹 Cargar productos y categorías
+  const fetchData = async () => {
+    try {
+      const [cats, prods] = await Promise.all([
+        axios.get(API_CATEGORIA_URL),
+        axios.get(API_PRODUCTOS_URL)
+      ]);
+      setCategoriasDisponibles(cats.data);
+      setProductosData(prods.data);
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [cats, prods] = await Promise.all([
-          axios.get(API_CATEGORIA_URL),
-          axios.get(API_PRODUCTOS_URL)
-        ]);
-        setCategoriasDisponibles(cats.data);
-        setProductosData(prods.data);
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
-      }
-    };
     fetchData();
   }, []);
 
-  // Filtro de búsqueda
+  // 🔍 Filtro de búsqueda
   const filteredProductos = productosData.filter(p =>
     p.nombre?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Controladores
+  // 🧩 Controladores de modales
   const openForm = () => {
     setFormData({
       id: null,
@@ -101,27 +100,30 @@ const Productos = () => {
     setIsDeleteModalOpen(false);
   };
 
-  // CRUD
+  // 💾 Guardar / Editar producto (refresca la tabla automáticamente)
   const handleSave = async (formData) => {
     try {
       if (formData.id) {
-        const res = await axios.put(`${API_PRODUCTOS_URL}/${formData.id}`, formData);
-        setProductosData(productosData.map(p => p.id === formData.id ? res.data : p));
+        await axios.put(`${API_PRODUCTOS_URL}/${formData.id}`, formData);
       } else {
-        const res = await axios.post(API_PRODUCTOS_URL, formData);
-        setProductosData([...productosData, res.data]);
+        await axios.post(API_PRODUCTOS_URL, formData);
       }
+
+      // 🔁 Recargar lista de productos automáticamente
+      await fetchData();
+
       closeForm();
     } catch (err) {
       console.error("Error al guardar:", err);
     }
   };
 
+  // 🗑️ Eliminar producto
   const handleDelete = async () => {
     if (!productoAEliminar) return;
     try {
       await axios.delete(`${API_PRODUCTOS_URL}/${productoAEliminar.id}`);
-      setProductosData(productosData.filter(p => p.id !== productoAEliminar.id));
+      await fetchData(); // 🔁 recarga la lista
       closeDeleteModal();
     } catch (err) {
       console.error("Error al eliminar producto:", err);
@@ -131,6 +133,7 @@ const Productos = () => {
   return (
     <div>
       <h1>Productos</h1>
+
       <div className="search-container">
         <input
           type="text"

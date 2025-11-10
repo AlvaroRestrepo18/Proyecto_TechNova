@@ -149,3 +149,43 @@
   outline: none;
   border-color: #4CAF50;
 }
+/* 🔔 Alertas con animación */
+.alert-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  animation: fadeIn 0.4s ease-in;
+}
+
+.alert-message .alert-icon {
+  font-size: 1.2rem;
+}
+
+.alert-message.error {
+  background-color: #ffe5e5;
+  color: #b30000;
+  border: 1px solid #ffb3b3;
+}
+
+.alert-message.success {
+  background-color: #e5ffe5;
+  color: #027a02;
+  border: 1px solid #a3f1a3;
+}
+
+.alert-message.warning {
+  background-color: #fff4e5;
+  color: #b36b00;
+  border: 1px solid #ffd699;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

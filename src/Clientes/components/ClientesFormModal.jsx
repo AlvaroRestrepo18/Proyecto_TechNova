@@ -14,8 +14,9 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
-  // ✅ Cargar datos si es edición
+  // 🔹 Cargar datos al editar
   useEffect(() => {
     if (cliente) {
       setFormData({
@@ -23,11 +24,26 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
         apellido: cliente.apellido || '',
         tipoDoc: cliente.tipoDoc || 'CC',
         documento: cliente.documento?.toString() || '',
-        fechaNac: cliente.fechaNac || '',
+        fechaNac: cliente.fechaNac?.split('T')[0] || '',
         correo: cliente.correo || ''
       });
     }
   }, [cliente]);
+
+  // ✅ Verificar correo existente (solo al crear)
+  const verificarCorreo = async (correo) => {
+    try {
+      setCheckingEmail(true);
+      const res = await fetch(`https://tuapi.com/api/clientes/verificar-correo?email=${correo}`);
+      const data = await res.json();
+      return data.existe; // true si ya está registrado
+    } catch (err) {
+      console.error('Error verificando correo:', err);
+      return false;
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
 
   const validateEmail = (email) => {
     if (!email) return true;
@@ -35,26 +51,52 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
     return re.test(String(email).toLowerCase());
   };
 
+  // ✅ Validación del formulario
   const validateForm = () => {
     const errors = {};
     let isValid = true;
 
+    // Nombre
     if (!formData.nombre.trim()) {
-      errors.nombre = 'Nombre es requerido';
+      errors.nombre = 'El nombre es obligatorio';
+      isValid = false;
+    } else if (formData.nombre.trim().length < 3) {
+      errors.nombre = 'El nombre debe tener al menos 3 caracteres';
       isValid = false;
     }
+
+    // Apellido
     if (!formData.apellido.trim()) {
-      errors.apellido = 'Apellido es requerido';
+      errors.apellido = 'El apellido es obligatorio';
+      isValid = false;
+    } else if (formData.apellido.trim().length < 3) {
+      errors.apellido = 'El apellido debe tener al menos 3 caracteres';
       isValid = false;
     }
-    if (!formData.documento) {
+
+    // Tipo documento
+    if (!formData.tipoDoc.trim()) {
+      errors.tipoDoc = 'Tipo de documento es requerido';
+      isValid = false;
+    }
+
+    // Documento
+    if (!formData.documento.trim()) {
       errors.documento = 'Documento es requerido';
       isValid = false;
     } else if (isNaN(formData.documento)) {
       errors.documento = 'Documento debe ser numérico';
       isValid = false;
+    } else if (formData.documento.trim().length < 6 || formData.documento.trim().length > 10) {
+      errors.documento = 'Documento debe tener entre 6 y 10 dígitos';
+      isValid = false;
     }
-    if (formData.correo && !validateEmail(formData.correo)) {
+
+    // Correo
+    if (!formData.correo.trim()) {
+      errors.correo = 'Correo es requerido';
+      isValid = false;
+    } else if (!validateEmail(formData.correo)) {
       errors.correo = 'Correo electrónico inválido';
       isValid = false;
     }
@@ -77,26 +119,41 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
     }
   };
 
-  const handleSubmit = () => {
+  // ✅ Manejar envío con validación de correo solo en creación
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!validateForm()) return;
 
+    // Solo validar correo si es nuevo (no edición)
+    if (!isEditMode) {
+      const existe = await verificarCorreo(formData.correo);
+      if (existe) {
+        setFormErrors(prev => ({
+          ...prev,
+          correo: 'Este correo ya está registrado'
+        }));
+        return;
+      }
+    }
+
     const nuevoCliente = {
-      id: cliente?.id || 0, // si existe → edición
-      nombre: formData.nombre,
-      apellido: formData.apellido,
+      id: cliente?.id || null,
+      nombre: formData.nombre.trim(),
+      apellido: formData.apellido.trim(),
       tipoDoc: formData.tipoDoc,
       documento: parseInt(formData.documento),
       fechaNac: formData.fechaNac,
-      correo: formData.correo || '',
-      activo: cliente?.activo ?? true // ✅ si edita, mantiene su estado actual
+      correo: formData.correo.trim(),
+      activo: cliente?.activo ?? true,
     };
 
-    onSave(nuevoCliente); // ✅ ahora usa onSave (igual que en el padre)
+    console.log("📤 Enviando datos al padre:", nuevoCliente);
+    onSave(nuevoCliente);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{isEditMode ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
           <button className="close-button" onClick={onClose}>
@@ -104,7 +161,7 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
           </button>
         </div>
 
-        <div className="form-body">
+        <form className="form-body" onSubmit={handleSubmit}>
           <div className="form-row">
             <div className="form-group">
               <label>Nombre <span className="required">*</span></label>
@@ -145,6 +202,7 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
                 <option value="NIT">NIT</option>
                 <option value="PAS">Pasaporte</option>
               </select>
+              {formErrors.tipoDoc && <span className="error-message">{formErrors.tipoDoc}</span>}
             </div>
 
             <div className="form-group">
@@ -154,7 +212,7 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
                 name="documento"
                 value={formData.documento}
                 onChange={handleChange}
-                disabled={isEditMode} // solo se edita al crear
+                disabled={isEditMode}
                 className={formErrors.documento ? 'error-input' : ''}
               />
               {formErrors.documento && <span className="error-message">{formErrors.documento}</span>}
@@ -163,7 +221,19 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Correo</label>
+              <label>Fecha Nacimiento <span className="required">*</span></label>
+              <input
+                type="date"
+                name="fechaNac"
+                value={formData.fechaNac}
+                onChange={handleChange}
+                className={formErrors.fechaNac ? 'error-input' : ''}
+              />
+              {formErrors.fechaNac && <span className="error-message">{formErrors.fechaNac}</span>}
+            </div>
+
+            <div className="form-group">
+              <label>Correo <span className="required">*</span></label>
               <input
                 type="email"
                 name="correo"
@@ -171,19 +241,22 @@ const ClientesFormModal = ({ cliente, isEditMode, onClose, onSave }) => {
                 onChange={handleChange}
                 className={formErrors.correo ? 'error-input' : ''}
               />
+              {checkingEmail && !formErrors.correo && (
+                <span className="checking-message">Verificando correo...</span>
+              )}
               {formErrors.correo && <span className="error-message">{formErrors.correo}</span>}
             </div>
           </div>
-        </div>
 
-        <div className="modal-footer">
-          <button type="button" className="cancel-button" onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="button" className="submit-button" onClick={handleSubmit}>
-            {isEditMode ? 'Guardar Cambios' : 'Crear Cliente'}
-          </button>
-        </div>
+          <div className="modal-footer">
+            <button type="button" className="cancel-button" onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className="submit-button" disabled={checkingEmail}>
+              {isEditMode ? 'Guardar Cambios' : 'Crear Cliente'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
